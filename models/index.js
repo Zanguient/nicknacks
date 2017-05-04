@@ -1,6 +1,3 @@
-//load environment variables
-require('dotenv').load();
-
 var databaseUrl = process.env.DB_URL;
 var logging = process.env.DB_LOGGING ? console.log : false;
 
