@@ -28,5 +28,28 @@ router.post('/', function (req, res) {
 
 });
 
+router.post('/charge-succeeded', function (req, res) {
+    
+    console.log('******');
+    console.log(req.query.token);
+
+    // save the data
+    return DB.Transaction.create({
+        transaction: req.body,
+        status: 'pending'
+    })
+    .then(function (transaction) {
+        // send success
+        return res.send({
+            success: true
+        });
+    })
+    .catch(function (err) {
+        // log the error
+        console.log(err);
+    });
+
+});
+
 
 module.exports = router;
