@@ -2,7 +2,7 @@ function Transaction(sequelize, DataTypes) {
 
     var Transaction = sequelize.define('Transaction', {
         TransactionID: {
-            type: DataTypes.BIGINT(8),
+            type: DataTypes.BIGINT,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true
