@@ -31,8 +31,9 @@ router.post('/', function (req, res) {
 });
 
 router.post('/charge-succeeded', function (req, res) {
-    
-    if(req.query.token !== process.ENV.stripe_simple_token) return res.status(403).send();
+console.log(1111);
+console.log(process.env.STRIPE_SIMPLE_TOKEN);    
+    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
     // save the data
     return DB.Transaction.create({
