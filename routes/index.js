@@ -15,23 +15,24 @@ router.post('/', function (req, res) {
         transaction: req.body,
         status: 'pending'
     })
-        .then(function (transaction) {
-            // send success
-            return res.send({
-                success: true
-            });
-        })
-        .catch(function (err) {
-            // log the error
-            console.log(err);
+    .then(function (transaction) {
+        // send success
+        return res.send({
+            success: true
         });
+    })
+    .catch(function (err) {
+        // log the error
+        console.log(err);
+
+        res.send();
+    });
 
 });
 
 router.post('/charge-succeeded', function (req, res) {
     
-    console.log('******');
-    console.log(req.query.token);
+    if(req.query.token !== process.ENV.stripe_simple_token) return res.status(403).send();
 
     // save the data
     return DB.Transaction.create({
