@@ -55,7 +55,7 @@ console.log(process.env.STRIPE_SIMPLE_TOKEN);
 });
 
 
-app.get('/requestToken', function(req, res) {
+router.get('/requestToken', function(req, res) {
   var postBody = {
     url: QuickBooks.REQUEST_TOKEN_URL,
     oauth: {
@@ -72,7 +72,7 @@ app.get('/requestToken', function(req, res) {
   })
 })
 
-app.get('/callback', function(req, res) {
+router.get('/callback', function(req, res) {
     console.log(req.query);
   var postBody = {
     url: QuickBooks.ACCESS_TOKEN_URL,
