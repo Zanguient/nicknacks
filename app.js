@@ -10,7 +10,39 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var qbo = require('node-quickbooks');
+var request = require('request');
+
+var QuickBooks = require('node-quickbooks');
+var QBO, QBO_SECRET;
+
+// connect to quickbooks
+function connectToQBO () {
+    request.post({
+        url: QuickBooks.REQUEST_TOKEN_URL,
+        oauth: {
+            callback: process.env.DOMAIN + '/callback',
+            consumer_key: process.env.qbo_consumerKey,
+            consumer_secret: process.env.qbo_consumerSecret,
+        }
+    }, function(e, r, data) {
+        var requestToken = qs.parse(data)
+        QBO_SECRET = requestToken.oauth_token_secret;
+        console.log(requestToken);
+            QBO = new QuickBooks(
+                process.env.qbo_consumerKey,
+                process.env.qbo_consumerSecret,
+                process.env.qbo_oauthToken,
+                process.env.qbo_oauthTokenSecret,
+                realmId,
+                false,
+                true
+            )
+    });
+}
+
+connectToQBO();
+
+
 
 
 var index = require('./routes/index');
