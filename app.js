@@ -10,7 +10,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var session = require('session');
+var session = require('express-session');
 var request = require('request');
 var qs = require('querystring');
 
