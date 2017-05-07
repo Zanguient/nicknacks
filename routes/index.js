@@ -92,13 +92,16 @@ router.get('/callback', function(req, res) {
     console.log(accessToken)
     console.log(postBody.oauth.realmId)
 
+    global.QBO_ACCESS_TOKEN = accessToken.oauth_token;
+    global.QBO_ACCESS_TOKEN_SECRET = accessToken.oauth_token_secret;
+
     // save the access token somewhere on behalf of the logged in user
-    qbo = new QuickBooks(process.env.qbo_consumerKey,
+    global.QBO = new QuickBooks(process.env.qbo_consumerKey,
                          process.env.qbo_consumerSecret,
                          accessToken.oauth_token,
                          accessToken.oauth_token_secret,
                          postBody.oauth.realmId,
-                         true, // use the Sandbox
+                         false, // use the Sandbox
                          true); // turn debugging on
 
     // test out account access
@@ -110,6 +113,16 @@ router.get('/callback', function(req, res) {
   });
   res.send('<!DOCTYPE html><html lang="en"><head></head><body><script>window.opener.location.reload(); window.close();</script></body></html>')
 })
+
+router.get('/accounts', function(req, res, next) {
+    if (QBO) console.log(QBO);
+    
+    QBO.findAccounts(function(_, accounts) {
+      accounts.QueryResponse.Account.forEach(function(account) {
+        console.log(account.Name)
+      })
+    })
+});
 
 
 module.exports = router;
