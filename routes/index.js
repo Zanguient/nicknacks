@@ -79,8 +79,8 @@ router.get('/callback', function(req, res) {
   var postBody = {
     url: QuickBooks.ACCESS_TOKEN_URL,
     oauth: {
-      consumer_key:    consumerKey,
-      consumer_secret: consumerSecret,
+      consumer_key:    process.env.qbo_consumerKey,
+      consumer_secret: process.env.qbo_consumerSecret,
       token:           req.query.oauth_token,
       token_secret:    req.session.oauth_token_secret,
       verifier:        req.query.oauth_verifier,
