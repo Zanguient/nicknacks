@@ -14,7 +14,7 @@ var request = require('request');
 var qs = require('querystring');
 
 var QuickBooks = require('node-quickbooks');
-var QBO, QBO_SECRET;
+var QBO, QBO_TOKEN, QBO_SECRET;
 
 // connect to quickbooks
 function connectToQBO () {
@@ -27,12 +27,13 @@ function connectToQBO () {
         }
     }, function(e, r, data) {
         var requestToken = qs.parse(data)
+        QBO_TOKEN = requestToken.oauth_token;
         QBO_SECRET = requestToken.oauth_token_secret;
         console.log(requestToken);
             QBO = new QuickBooks(
                 process.env.qbo_consumerKey,
                 process.env.qbo_consumerSecret,
-                process.env.qbo_oauthToken,
+                QBO_TOKEN,
                 QBO_SECRET,
                 process.env.qbo_realmID,
                 false,
@@ -47,7 +48,7 @@ function connectToQBO () {
     });
 }
 
-connectToQBO();
+//connectToQBO();
 
 
 
