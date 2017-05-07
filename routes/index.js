@@ -93,8 +93,8 @@ router.get('/callback', function(req, res) {
     console.log(postBody.oauth.realmId)
 
     // save the access token somewhere on behalf of the logged in user
-    qbo = new QuickBooks(consumerKey,
-                         consumerSecret,
+    qbo = new QuickBooks(process.env.qbo_consumerKey,
+                         process.env.qbo_consumerSecret,
                          accessToken.oauth_token,
                          accessToken.oauth_token_secret,
                          postBody.oauth.realmId,
