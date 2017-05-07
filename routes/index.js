@@ -73,6 +73,7 @@ app.get('/requestToken', function(req, res) {
 })
 
 app.get('/callback', function(req, res) {
+    console.log(req.query);
   var postBody = {
     url: QuickBooks.ACCESS_TOKEN_URL,
     oauth: {
