@@ -33,7 +33,7 @@ function connectToQBO () {
                 process.env.qbo_consumerKey,
                 process.env.qbo_consumerSecret,
                 process.env.qbo_oauthToken,
-                process.env.qbo_oauthTokenSecret,
+                QBO_SECRET,
                 process.env.qbo_realmID,
                 false,
                 true
