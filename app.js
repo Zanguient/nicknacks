@@ -37,7 +37,13 @@ function connectToQBO () {
                 process.env.qbo_realmID,
                 false,
                 true
-            )
+            );
+
+            QBO.findAccounts(function(_, accounts) {
+              accounts.QueryResponse.Account.forEach(function(account) {
+                console.log(account.Name)
+              })
+            })
     });
 }
 
