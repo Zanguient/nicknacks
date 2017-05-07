@@ -34,7 +34,7 @@ function connectToQBO () {
                 process.env.qbo_consumerSecret,
                 process.env.qbo_oauthToken,
                 process.env.qbo_oauthTokenSecret,
-                realmId,
+                process.env.qbo_realmID,
                 false,
                 true
             )
