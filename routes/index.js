@@ -105,7 +105,7 @@ router.get('/callback', function(req, res) {
                          true); // turn debugging on
 
     // test out account access
-    qbo.findAccounts(function(_, accounts) {
+    QBO.findAccounts(function(_, accounts) {
       accounts.QueryResponse.Account.forEach(function(account) {
         console.log(account.Name)
       })
@@ -116,7 +116,7 @@ router.get('/callback', function(req, res) {
 
 router.get('/accounts', function(req, res, next) {
     if (QBO) console.log(QBO);
-    
+
     QBO.findAccounts(function(_, accounts) {
       accounts.QueryResponse.Account.forEach(function(account) {
         console.log(account.Name)
