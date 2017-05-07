@@ -13,7 +13,7 @@ var bodyParser = require('body-parser');
 var request = require('request');
 var qs = require('querystring');
 
-var QuickBooks = require('node-quickbooks');
+//var QuickBooks = require('node-quickbooks');
 var QBO, QBO_TOKEN, QBO_SECRET;
 
 // connect to quickbooks

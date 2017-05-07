@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var qs = require('querystring');
+var QuickBooks = require('node-quickbooks');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
