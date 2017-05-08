@@ -3,6 +3,7 @@ var router = express.Router();
 var qs = require('querystring');
 var QuickBooks = require('node-quickbooks');
 var request = require('request');
+var rp = require('request-promise');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -58,39 +59,74 @@ console.log(process.env.STRIPE_SIMPLE_TOKEN);
 
 
 router.get('/requestToken', function(req, res) {
-  var postBody = {
-    url: QuickBooks.REQUEST_TOKEN_URL,
-    oauth: {
-        callback: process.env.DOMAIN + '/callback',
-                    consumer_key: process.env.qbo_consumerKey,
-                    consumer_secret: process.env.qbo_consumerSecret,
-    }
-  }
-  request.post(postBody, function (e, r, data) {
-    var requestToken = qs.parse(data)
-    req.session.oauth_token_secret = requestToken.oauth_token_secret
-    console.log(requestToken)
-    res.redirect(QuickBooks.APP_CENTER_URL + requestToken.oauth_token)
-  })
+
+    if(process.env.GET_FRESH_TOKEN !== 'true') return res.status(400).send();
+
+    var postBody = {
+        url: QuickBooks.REQUEST_TOKEN_URL,
+        oauth: {
+            callback: process.env.DOMAIN + '/callback',
+            consumer_key: process.env.qbo_consumerKey,
+            consumer_secret: process.env.qbo_consumerSecret
+        }
+    };
+
+
+    var options = ;
+
+    rp({
+        method: 'POST',
+        uri: QuickBooks.REQUEST_TOKEN_URL,
+        body: {
+            oauth: {
+                callback: process.env.DOMAIN + '/callback',
+                consumer_key: process.env.qbo_consumerKey,
+                consumer_secret: process.env.qbo_consumerSecret
+            }
+        },
+        json: true
+    }).then(function (response) {
+        
+        console.log(response);
+
+    }).catch(function (err) {
+        
+        res.status(500).send(err);
+        
+    });
+
+
+
+    // request.post(postBody, function (e, r, data) {
+    //     var requestToken = qs.parse(data)
+    //     req.session.oauth_token_secret = requestToken.oauth_token_secret
+    //     res.redirect(QuickBooks.APP_CENTER_URL + requestToken.oauth_token);
+    // });
 })
 
 router.get('/callback', function(req, res) {
     console.log(req.query);
-  var postBody = {
-    url: QuickBooks.ACCESS_TOKEN_URL,
-    oauth: {
-      consumer_key:    process.env.qbo_consumerKey,
-      consumer_secret: process.env.qbo_consumerSecret,
-      token:           req.query.oauth_token,
-      token_secret:    req.session.oauth_token_secret,
-      verifier:        req.query.oauth_verifier,
-      realmId:         req.query.realmId
+
+    var postBody = {
+        url: QuickBooks.ACCESS_TOKEN_URL,
+        oauth: {
+            consumer_key:    process.env.qbo_consumerKey,
+            consumer_secret: process.env.qbo_consumerSecret,
+            token:           req.query.oauth_token,
+            token_secret:    req.session.oauth_token_secret,
+            verifier:        req.query.oauth_verifier,
+            realmId:         req.query.realmId
+        }
     }
-  }
+
   request.post(postBody, function (e, r, data) {
-    var accessToken = qs.parse(data)
+    var accessToken = qs.parse(data);
     console.log(accessToken)
     console.log(postBody.oauth.realmId)
+
+    if (e) {
+
+    }
 
     global.QBO_ACCESS_TOKEN = accessToken.oauth_token;
     global.QBO_ACCESS_TOKEN_SECRET = accessToken.oauth_token_secret;
