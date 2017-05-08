@@ -60,19 +60,7 @@ console.log(process.env.STRIPE_SIMPLE_TOKEN);
 
 router.get('/requestToken', function(req, res) {
 
-    if(process.env.GET_FRESH_TOKEN !== 'true') return res.status(400).send();
-
-    var postBody = {
-        url: QuickBooks.REQUEST_TOKEN_URL,
-        oauth: {
-            callback: process.env.DOMAIN + '/callback',
-            consumer_key: process.env.qbo_consumerKey,
-            consumer_secret: process.env.qbo_consumerSecret
-        }
-    };
-
-
-    var options = ;
+    if(process.env.QBO_ALLOW_GET_FRESH_TOKEN !== 'true') return res.status(400).send();
 
     rp({
         method: 'POST',
@@ -92,7 +80,7 @@ router.get('/requestToken', function(req, res) {
     }).catch(function (err) {
         
         res.status(500).send(err);
-        
+
     });
 
 
