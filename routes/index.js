@@ -65,12 +65,11 @@ router.get('/requestToken', function(req, res) {
     rp({
         method: 'POST',
         uri: QuickBooks.REQUEST_TOKEN_URL,
-        body: {
-            oauth: {
-                callback: process.env.DOMAIN + '/callback',
-                consumer_key: process.env.qbo_consumerKey,
-                consumer_secret: process.env.qbo_consumerSecret
-            }
+        body: {},
+        oauth: {
+            callback: process.env.DOMAIN + '/callback',
+            consumer_key: process.env.qbo_consumerKey,
+            consumer_secret: process.env.qbo_consumerSecret
         },
         json: true
     }).then(function (response) {
@@ -79,7 +78,13 @@ router.get('/requestToken', function(req, res) {
 
     }).catch(function (err) {
         
-        res.status(500).send(err);
+        if (err.statusCode) {
+            res.status(err.statusCode)
+        } else {
+            res.status(500);
+        }
+        
+        res.send(err);
 
     });
 
