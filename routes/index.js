@@ -71,7 +71,7 @@ router.get('/requestToken', function(req, res) {
             consumer_key: process.env.qbo_consumerKey,
             consumer_secret: process.env.qbo_consumerSecret
         },
-        json: true
+        json: false
     }).then(function (response) {
         
         console.log(response);
