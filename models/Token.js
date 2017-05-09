@@ -19,6 +19,6 @@ function Token(sequelize, DataTypes) {
         classMethods: {}
     });
     return Token;
-};
+}
 
 module.exports = Token;
