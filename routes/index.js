@@ -19,7 +19,7 @@ router.post('/charge-succeeded', function (req, res) {
     return DB.Transaction.create({
         transaction: req.body,
         status: 'pending',
-        eventType: 'charge'
+        eventType: 'charge-succeeded'
     })
     .then(function (transaction) {
         // send success
@@ -34,7 +34,7 @@ router.post('/charge-succeeded', function (req, res) {
 
 });
 
-router.post('/refund', function (req, res) {
+router.post('/refunded', function (req, res) {
 
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
@@ -42,7 +42,7 @@ router.post('/refund', function (req, res) {
     return DB.Transaction.create({
         transaction: req.body,
         status: 'pending',
-        eventType: 'refund'
+        eventType: 'refunded'
     })
     .then(function (transaction) {
         // send success

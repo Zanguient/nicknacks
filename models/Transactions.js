@@ -11,8 +11,8 @@ function Transaction(sequelize, DataTypes) {
             type: DataTypes.ENUM,
             allowNull: true,
             values: [
-                'charge',
-                'refund'
+                'charge-succeeded',
+                'refunded'
             ]
         },
         status: {
