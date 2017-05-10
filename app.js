@@ -2,6 +2,7 @@
 require('dotenv').load();
 
 //load models the last because it has dependencies on the previous globals.
+global.Promise = global.PROMISE = require('bluebird');
 global.DB = require('./models/index.js');
 
 global.serverStatus = 'All OK';
@@ -86,6 +87,7 @@ function retrieveTokenAndRefresh() {
         global.serverStatus = err;
 
     });
+
 
 
     // connect to quickbooks to refresh token. returns a promise
