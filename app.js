@@ -45,7 +45,7 @@ app.use('/users', users);
 function refreshQBOToken() {
 
     rp({
-        method: 'POST',
+        method: 'GET',
         uri: 'https://appcenter.intuit.com/api/v1/connection/reconnect',
         body: {},
         oauth: {
