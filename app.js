@@ -46,16 +46,20 @@ function refreshQBOToken() {
 
     rp({
         method: 'POST',
-        uri: QuickBooks.REQUEST_TOKEN_URL,
+        uri: 'https://appcenter.intuit.com/api/v1/connection/reconnect',
         body: {},
         oauth: {
-            callback: process.env.DOMAIN + '/callback',
-            consumer_key: process.env.qbo_consumerKey,
-            consumer_secret: process.env.qbo_consumerSecret
+            consumer_key: process.env.qbo_consumerKey
+            //,
+            //consumer_secret: process.env.qbo_consumerSecret
         },
         json: true
     })
         .then(function (response) {
+
+            res.send();
+
+            return console.log(response);
 
             var requestToken = qs.parse(response);
 
