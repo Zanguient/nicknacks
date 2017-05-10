@@ -24,6 +24,7 @@
     "request-promise": "^4.2.1",
     "sequelize": "^3.30.4",
     "sequelize-isunique-validator": "^1.1.1",
-    "serve-favicon": "~2.3.2"
+    "serve-favicon": "~2.3.2",
+    "xml2js": "^0.4.17"
   }
 }
