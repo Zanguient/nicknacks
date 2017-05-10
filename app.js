@@ -42,14 +42,11 @@ app.use('/', index);
 app.use('/users', users);
 
 
-// Get token from the database and refresh
-if (process.env.QBO_INITIALIZED) {
-    // attempt refresh on server start
-    retrieveTokenAndRefresh();
+// attempt refresh on server start
+retrieveTokenAndRefresh();
 
-    // attempt refresh every 1 week
-    setInterval(retrieveTokenAndRefresh, 6.048e+8);
-}
+// attempt refresh every 1 week
+setInterval(retrieveTokenAndRefresh, 6.048e+8);
 
 
 function retrieveTokenAndRefresh() {
