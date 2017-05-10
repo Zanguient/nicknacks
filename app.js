@@ -15,6 +15,7 @@ var request = require('request');
 var rp = require('request-promise');
 var QuickBooks = require('node-quickbooks');
 var qs = require('querystring');
+var parseString = require('xml2js').parseString;
 
 //var QuickBooks = require('node-quickbooks');
 var QBO, QBO_TOKEN, QBO_SECRET;
@@ -40,13 +41,13 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 app.use('/', index);
 app.use('/users', users);
 
-DB.Token.findById(1).then(function(token) {
-    
+DB.Token.findById(1).then(function (token) {
+
     // check validity of token data.
     if (!token || !token.data || !token.data.oauth_token || !token.data.oauth_token_secret) {
         throw new Error('CRITICAL: Obtaining token from database failed.');
     }
-    
+
     global.QBO_ACCESS_TOKEN = token.data.oauth_token;
     global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
 
@@ -64,24 +65,40 @@ function refreshQBOToken() {
         method: 'GET',
         uri: QuickBooks.APP_CENTER_BASE + '/api/v1/connection/reconnect',
         oauth: {
-            consumer_key:    process.env.qbo_consumerKey,
+            consumer_key: process.env.qbo_consumerKey,
             consumer_secret: process.env.qbo_consumerSecret,
-            token_secret:    global.QBO_ACCESS_TOKEN_SECRET,
-            token:           global.QBO_ACCESS_TOKEN
+            token_secret: global.QBO_ACCESS_TOKEN_SECRET,
+            token: global.QBO_ACCESS_TOKEN
         },
         json: true
     })
         .then(function (response) {
 
-            console.log(111);
+            console.log('response');
             console.log(response);
+            var responseParsed = {};
 
-            if (response.ErrorCode !== 0) throw new Error(response);
+            // check if the response is not an Object
+            if (typeof response === 'string' ) {
+                parseString(response, function (err, result) {
+                    if (err) {
+                        throw new Error(response)
+                    }
+                    // assign the parsedResponse
+                    responseParsed = result.ReconnectResponse;
+                });
+            }
 
 
-            var requestToken = qs.parse(response);
+            console.log(responseParsed);
 
-            if (!requestToken.oauth_token || !requestToken.oauth_token_secret) return res.status(400).send('Unable to get 2nd leg token from QBO API.');
+            if (responseParsed.ErrorCode[0] !== 0) throw new Error(response);
+
+
+
+            if (!responseParsed.oauth_token[0] || !responseParsed.oauth_token_secret[0]) {
+                throw new Error('Unable to get 2nd leg token from QBO API.');
+            }
 
             // attach session with secret
             req.session.oauth_token_secret = requestToken.oauth_token_secret;
@@ -89,10 +106,8 @@ function refreshQBOToken() {
 
         })
         .catch(function (err) {
-
-            // send out an email to notify failure
-            console.log(JSON.stringify(err));
-
+            // log the error
+            console.log(err);
         });
 }
 
