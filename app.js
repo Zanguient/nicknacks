@@ -40,17 +40,26 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 app.use('/', index);
 app.use('/users', users);
 
+DB.Token.findById(1).then(function(token) {
+ console.log(token);
+});
+
 
 // connect to quickbooks
 function refreshQBOToken() {
+
+    if (!global.QBO_ACCESS_TOKEN || )
 
     rp({
         method: 'GET',
         uri: 'https://appcenter.intuit.com/api/v1/connection/reconnect',
         body: {},
         oauth: {
-            consumer_key: process.env.qbo_consumerKey,
-            consumer_secret: process.env.qbo_consumerSecret
+            consumer_key:    process.env.qbo_consumerKey,
+            consumer_secret: process.env.qbo_consumerSecret,
+            token:           global.QBO_ACCESS_TOKEN,
+            token_secret:    global.QBO_ACCESS_TOKEN_SECRET,
+
         },
         json: true
     })
@@ -82,7 +91,7 @@ function refreshQBOToken() {
 }
 
 // refresh the QBO token
-refreshQBOToken();
+//refreshQBOToken();
 
 
 // catch 404 and forward to error handler
