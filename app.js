@@ -41,6 +41,7 @@ app.use('/', index);
 app.use('/users', users);
 
 DB.Token.findById(1).then(function(token) {
+    console.log(token.data)
     if (!token || token.data.oauth_token || token.data.oauth_token_secret) throw new Error('CRITICAL: Obtaining token from database failed.');
     
     global.QBO_ACCESS_TOKEN = token.data.oauth_token;
