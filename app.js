@@ -41,75 +41,121 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 app.use('/', index);
 app.use('/users', users);
 
-DB.Token.findById(1).then(function (token) {
 
-    // check validity of token data.
-    if (!token || !token.data || !token.data.oauth_token || !token.data.oauth_token_secret) {
-        throw new Error('CRITICAL: Obtaining token from database failed.');
-    }
+// Get token from the database and refresh
+if (process.env.QBO_INITIALIZED) {
+    // attempt refresh on server start
+    getTokenAndRefresh();
 
-    global.QBO_ACCESS_TOKEN = token.data.oauth_token;
-    global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
-
-    refreshQBOToken();
-
-});
+// attempt refresh every 1 week
+    setInterval(getTokenAndRefresh, 6.048e+8);
+}
 
 
-// connect to quickbooks
-function refreshQBOToken() {
-
-    if (!global.QBO_ACCESS_TOKEN || !global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
-
-    rp({
-        method: 'GET',
-        uri: QuickBooks.APP_CENTER_BASE + '/api/v1/connection/reconnect',
-        oauth: {
-            consumer_key: process.env.qbo_consumerKey,
-            consumer_secret: process.env.qbo_consumerSecret,
-            token_secret: global.QBO_ACCESS_TOKEN_SECRET,
-            token: global.QBO_ACCESS_TOKEN
-        },
-        json: true
-    })
-        .then(function (response) {
-
-            console.log('response');
-            console.log(response);
-            var responseParsed = {};
-
-            // check if the response is not an Object
-            if (typeof response === 'string' ) {
-                parseString(response, function (err, result) {
-                    if (err) {
-                        throw new Error(response)
-                    }
-                    // assign the parsedResponse
-                    responseParsed = result.ReconnectResponse;
-                });
+function getTokenAndRefresh() {
+    // get the token
+    DB.Token.findById(1)
+        .then(function (token) {
+            // check validity of token data.
+            if (!token || !token.data || !token.data.oauth_token || !token.data.oauth_token_secret) {
+                throw new Error('CRITICAL: Obtaining token from database failed.');
             }
 
+            // save token to global variables
+            global.QBO_ACCESS_TOKEN = token.data.oauth_token;
+            global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
 
-            console.log(responseParsed);
+            // send request to refresh token
+            return refreshQBOToken();
 
-            if (responseParsed.ErrorCode[0] !== 0) throw new Error(response);
-
-
-
-            if (!responseParsed.oauth_token[0] || !responseParsed.oauth_token_secret[0]) {
-                throw new Error('Unable to get 2nd leg token from QBO API.');
-            }
-
-            // attach session with secret
-            req.session.oauth_token_secret = requestToken.oauth_token_secret;
-
-
+        })
+        .then(function (accessToken) {
+            // save the token
+            return DB.Token.findOrCreate({
+                where: {
+                    TokenID: 1
+                },
+                defaults: {
+                    data: accessToken
+                }
+            });
         })
         .catch(function (err) {
             // log the error
             console.log(err);
-        });
+        })
+
 }
+
+// connect to quickbooks to refresh token
+function refreshQBOToken() {
+    // return a promise
+    return new Promise(function (resolve, reject) {
+        if (!global.QBO_ACCESS_TOKEN || !global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
+
+        rp({
+            method: 'GET',
+            uri: QuickBooks.APP_CENTER_BASE + '/api/v1/connection/reconnect',
+            oauth: {
+                consumer_key: process.env.qbo_consumerKey,
+                consumer_secret: process.env.qbo_consumerSecret,
+                token_secret: global.QBO_ACCESS_TOKEN_SECRET,
+                token: global.QBO_ACCESS_TOKEN
+            },
+            json: true
+        })
+            .then(function (response) {
+
+                // set the responseParsed store
+                var responseParsed = {};
+
+                // check if the response is not an Object
+                if (typeof response === 'string') {
+                    parseString(response, function (err, result) {
+                        if (err) {
+                            throw new Error(response)
+                        }
+                        // assign the parsedResponse
+                        responseParsed = result.ReconnectResponse;
+                    });
+                }
+
+                // check if there is an error
+                if (parseInt(responseParsed.ErrorCode[0]) !== 0) {
+                    // check if error code is 212
+                    if (parseInt(responseParsed.ErrorCode[0]) === 212) {
+                        // throw error with the message
+                        throw new Error(responseParsed.ErrorMessage);
+                    }
+                    // throw the error response by default
+                    throw new Error(response);
+
+                }
+
+                // check for tokens
+                if (!responseParsed.oauth_token[0] || !responseParsed.oauth_token_secret[0]) {
+                    throw new Error('Unable to get 2nd leg token from QBO API.');
+                }
+
+                // attach session with secret
+                req.session.oauth_token_secret = requestToken.oauth_token_secret;
+
+                var token = {
+                    oauth_token: responseParsed.OAuthToken[0],
+                    oauth_token_secret: responseParsed.OAuthTokenSecret[0]
+                };
+
+                // resolve the promise
+                resolve(token);
+
+            })
+            .catch(function (err) {
+                // reject the promise
+                resolve(err);
+            });
+    });
+}
+
 
 // refresh the QBO token
 //refreshQBOToken();
