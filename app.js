@@ -41,7 +41,12 @@ app.use('/', index);
 app.use('/users', users);
 
 DB.Token.findById(1).then(function(token) {
- console.log(token.data.oauth_token);
+    if (!token || token.data.oauth_token || token.data.oauth_token_secret) throw new Error('CRITICAL: Obtaining token from database failed.');
+    
+    global.QBO_ACCESS_TOKEN = token.data.oauth_token;
+    global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
+
+    refreshQBOToken();
 
 });
 
@@ -49,11 +54,11 @@ DB.Token.findById(1).then(function(token) {
 // connect to quickbooks
 function refreshQBOToken() {
 
-    if (!global.QBO_ACCESS_TOKEN || global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to obtain tokens from database.');
+    if (!global.QBO_ACCESS_TOKEN || global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
 
     rp({
         method: 'GET',
-        uri: 'https://appcenter.intuit.com/api/v1/connection/reconnect',
+        uri: QuickBooks.APP_CENTER_URL + '/api/v1/connection/reconnect',
         body: {},
         oauth: {
             consumer_key:    process.env.qbo_consumerKey,
