@@ -45,14 +45,14 @@ app.use('/users', users);
 // Get token from the database and refresh
 if (process.env.QBO_INITIALIZED) {
     // attempt refresh on server start
-    getTokenAndRefresh();
+    retrieveTokenAndRefresh();
 
-// attempt refresh every 1 week
-    setInterval(getTokenAndRefresh, 6.048e+8);
+    // attempt refresh every 1 week
+    setInterval(retrieveTokenAndRefresh, 6.048e+8);
 }
 
 
-function getTokenAndRefresh() {
+function retrieveTokenAndRefresh() {
     // get the token
     DB.Token.findById(1)
         .then(function (token) {
@@ -151,7 +151,7 @@ function refreshQBOToken() {
             })
             .catch(function (err) {
                 // reject the promise
-                resolve(err);
+                reject(err);
             });
     });
 }
