@@ -20,6 +20,7 @@
     "path": "^0.12.7",
     "pg": "^6.1.5",
     "pg-hstore": "^2.3.2",
+    "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "sequelize": "^3.30.4",
     "sequelize-isunique-validator": "^1.1.1",
