@@ -56,6 +56,9 @@ function refreshQBOToken() {
     })
         .then(function (response) {
 
+            console.log(111)
+            console.log(response)
+
             if (response.ErrorCode !== 0) throw new Error(response);
 
 
