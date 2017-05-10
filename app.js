@@ -41,8 +41,11 @@ app.use('/', index);
 app.use('/users', users);
 
 DB.Token.findById(1).then(function(token) {
- console.log(token.get('oauth_token'));
- console.log(111)
+ console.log(token.oauth_token);
+
+ var token_plain = token.get({plain: true});
+
+ console.log(token_plain.oauth_token);
 });
 
 
