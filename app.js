@@ -110,23 +110,17 @@ function refreshQBOToken() {
                 if (typeof response === 'string') {
                     parseString(response, function (err, result) {
                         if (err) {
-                            throw new Error(response)
+                            throw new Error('Unable to receive valid XML response.')
                         }
                         // assign the parsedResponse
-                        responseParsed = result.ReconnectResponse;
+                        responseParsed = result.ReconnectResponse ? result.ReconnectResponse : result.PlatformResponse;
                     });
                 }
 
                 // check if there is an error
                 if (parseInt(responseParsed.ErrorCode[0]) !== 0) {
-                    // check if error code is 212
-                    if (parseInt(responseParsed.ErrorCode[0]) === 212) {
-                        // throw error with the message
-                        throw new Error(responseParsed.ErrorMessage);
-                    }
-                    // throw the error response by default
-                    throw new Error(response);
-
+                    // throw error with the message
+                    throw new Error(responseParsed.ErrorMessage);
                 }
 
                 // check for tokens
