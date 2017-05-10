@@ -2,6 +2,7 @@
 require('dotenv').load();
 
 //load models the last because it has dependencies on the previous globals.
+global.Promise = global.PROMISE = require('bluebird');
 global.DB = require('./models/index.js');
 
 var express = require('express');
@@ -62,19 +63,21 @@ function retrieveTokenAndRefresh() {
             global.QBO_ACCESS_TOKEN = token.data.oauth_token;
             global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
 
+            var promises = [];
+
+            // pass the token to the next chain
+            promises.push(token);
+
             // send request to refresh token
-            return refreshQBOToken();
+            promises.push(refreshQBOToken());
+
+            return Promise.all(promises);
 
         })
-        .then(function (accessToken) {
+        .spread(function (token, newAccessToken) {
             // save the token
-            return DB.Token.findOrCreate({
-                where: {
-                    TokenID: 1
-                },
-                defaults: {
-                    data: accessToken
-                }
+            return token.updateAttributes({
+                data: newAccessToken
             });
         })
         .catch(function (err) {
