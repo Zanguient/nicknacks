@@ -24,7 +24,7 @@ var parseString = require('xml2js').parseString;
 var QBO, QBO_TOKEN, QBO_SECRET;
 
 var index = require('./routes/index');
-var users = require('./routes/users');
+var users = require('./routes/qbo');
 
 var app = express();
 
