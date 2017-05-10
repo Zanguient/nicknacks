@@ -8,7 +8,7 @@ function Transaction(sequelize, DataTypes) {
             autoIncrement: true
         },
         eventType: {
-            type: DataTypes.ENUM,
+            type: DataTypes.STRING,
             allowNull: true,
             values: [
                 'charge-succeeded',
@@ -16,7 +16,7 @@ function Transaction(sequelize, DataTypes) {
             ]
         },
         status: {
-            type: DataTypes.ENUM,
+            type: DataTypes.STRING,
             allowNull: false,
             values: [
                 'pending',
