@@ -42,7 +42,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
 app.use('/', index);
-app.use('/users', users);
+app.use('/qbo', qbo);
 
 
 // attempt refresh on server start
