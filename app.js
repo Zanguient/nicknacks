@@ -131,6 +131,7 @@ function retrieveTokenAndRefresh() {
             if (errorCode === 212) {
 
                 // token is not refreshed, return nothing, life goes on...
+                console.log('NOTE: Token refresh is attempted. Existing token still valid.')
                 return false;
 
             } else if (errorCode === 0) {
