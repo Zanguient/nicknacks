@@ -61,22 +61,20 @@ function refreshQBOToken() {
     if (!global.QBO_ACCESS_TOKEN || !global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
 
     rp({
-        method: 'POST',
-        uri: QuickBooks.APP_CENTER_URL + '/api/v1/connection/reconnect',
-        body: {},
+        method: 'GET',
+        uri: QuickBooks.APP_CENTER_BASE + '/api/v1/connection/reconnect',
         oauth: {
             consumer_key:    process.env.qbo_consumerKey,
             consumer_secret: process.env.qbo_consumerSecret,
-            token:           global.QBO_ACCESS_TOKEN,
             token_secret:    global.QBO_ACCESS_TOKEN_SECRET,
-
+            token:           global.QBO_ACCESS_TOKEN
         },
         json: true
     })
         .then(function (response) {
 
-            console.log(111)
-            console.log(response)
+            console.log(111);
+            console.log(response);
 
             if (response.ErrorCode !== 0) throw new Error(response);
 
@@ -88,8 +86,6 @@ function refreshQBOToken() {
             // attach session with secret
             req.session.oauth_token_secret = requestToken.oauth_token_secret;
 
-            // redirect to QBO authorisation
-            res.redirect(QuickBooks.APP_CENTER_URL + requestToken.oauth_token);
 
         })
         .catch(function (err) {
