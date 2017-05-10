@@ -73,7 +73,7 @@ function refreshQBOToken() {
         .catch(function (err) {
 
             // send out an email to notify failure
-            console.log(err);
+            console.log(JSON.stringify(err));
 
         });
 }
