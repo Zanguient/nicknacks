@@ -48,7 +48,7 @@ DB.Token.findById(1).then(function(token) {
 // connect to quickbooks
 function refreshQBOToken() {
 
-    if (!global.QBO_ACCESS_TOKEN || )
+    if (!global.QBO_ACCESS_TOKEN || global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to obtain tokens from database.');
 
     rp({
         method: 'GET',
