@@ -23,9 +23,6 @@ var parseString = require('xml2js').parseString;
 //var QuickBooks = require('node-quickbooks');
 var QBO, QBO_TOKEN, QBO_SECRET;
 
-var index = require('./routes/index');
-var users = require('./routes/qbo');
-
 var app = express();
 
 // view engine setup
@@ -41,8 +38,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
-app.use('/', index);
-app.use('/qbo', qbo);
+app.use('/', require('./routes/index'));
+app.use('/qbo', require('./routes/qbo'));
 
 
 // attempt refresh on server start
