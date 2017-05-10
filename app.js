@@ -51,14 +51,14 @@ DB.Token.findById(1).then(function(token) {
     global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
 
     refreshQBOToken();
-    
+
 });
 
 
 // connect to quickbooks
 function refreshQBOToken() {
 
-    if (!global.QBO_ACCESS_TOKEN || global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
+    if (!global.QBO_ACCESS_TOKEN || !global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
 
     rp({
         method: 'GET',
