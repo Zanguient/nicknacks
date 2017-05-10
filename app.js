@@ -61,7 +61,7 @@ function refreshQBOToken() {
     if (!global.QBO_ACCESS_TOKEN || !global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
 
     rp({
-        method: 'GET',
+        method: 'POST',
         uri: QuickBooks.APP_CENTER_URL + '/api/v1/connection/reconnect',
         body: {},
         oauth: {
