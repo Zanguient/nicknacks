@@ -39,33 +39,7 @@ Object.keys(db).forEach(function (modelName) {
 });
 
 //call db.[Model].sync() to sync only one model.
-//db.PriceRule.sync({force:true});
-//db.PriceRulePriceHour.sync({force:true});
-//db.BoatAttribute.sync({force:true});
-//db.Boat.sync({force:true});
-//db.Attribute.sync({force:true});
-//db.Order.sync({force: true});
-//db.AccountSettings.sync({force: true});
-/*db.SiteSettings.sync({force: true})
- .then(function () {
- // Table created
- return db.SiteSettings.bulkCreate([{
- name: 'siteTitle',
- value: 'Waterspot',
- type: 'text'
- },
- {
- name: 'siteDescription',
- value: 'Singapore’s first one-stop booking platform for water activities. Fast and Easy Bookings · Competitively Priced · Discounts · Wide Range of Water Activities!',
- type: 'text'
- }]);
- });
- */
-//db.Booking.drop();
-//db.Content.sync({force: true});
-//db.Card.sync({force: true});
-//db.Coupon.sync({force: true});
-//db.CalendarDay.sync({force: true});
+//db.Token.sync({force: true});
 //sequelize.sync();
 
 
