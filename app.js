@@ -57,8 +57,6 @@ function refreshQBOToken() {
     })
         .then(function (response) {
 
-            res.send();
-
             return console.log(response);
 
             var requestToken = qs.parse(response);
