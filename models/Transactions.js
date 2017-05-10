@@ -7,9 +7,13 @@ function Transaction(sequelize, DataTypes) {
             allowNull: false,
             autoIncrement: true
         },
-        data: {
-            type: DataTypes.DATE,
-            allowNull: true
+        eventType: {
+            type: DataTypes.ENUM,
+            allowNull: true,
+            values: [
+                'charge',
+                'refund'
+            ]
         },
         status: {
             type: DataTypes.ENUM,
