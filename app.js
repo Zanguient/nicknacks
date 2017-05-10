@@ -49,15 +49,15 @@ function refreshQBOToken() {
         uri: 'https://appcenter.intuit.com/api/v1/connection/reconnect',
         body: {},
         oauth: {
-            consumer_key: process.env.qbo_consumerKey
-            //,
-            //consumer_secret: process.env.qbo_consumerSecret
+            consumer_key: process.env.qbo_consumerKey,
+            consumer_secret: process.env.qbo_consumerSecret
         },
         json: true
     })
         .then(function (response) {
 
-            return console.log(response);
+            if (response.ErrorCode !== 0) throw new Error(response);
+
 
             var requestToken = qs.parse(response);
 
@@ -72,13 +72,8 @@ function refreshQBOToken() {
         })
         .catch(function (err) {
 
-            if (err.statusCode) {
-                res.status(err.statusCode)
-            } else {
-                res.status(500);
-            }
-
-            res.send(err);
+            // send out an email to notify failure
+            console.log(err);
 
         });
 }
