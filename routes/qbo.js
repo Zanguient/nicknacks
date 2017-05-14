@@ -14,8 +14,6 @@ router.get('/requestToken', function(req, res) {
 
     if (process.env.QBO_ALLOW_LOCKED_ROUTES !== 'true') return res.status(403).send();
 
-    console.log(1111);
-
     rp({
         method: 'POST',
         uri: QuickBooks.REQUEST_TOKEN_URL,
@@ -57,7 +55,7 @@ router.get('/callback', function(req, res) {
     if(process.env.QBO_ALLOW_LOCKED_ROUTES !== 'true') return res.status(400).send();
 
     if(req.query.realmId !== process.env.qbo_realmID) return res.status(400).send('The server is not value for the company you have selected.');
-
+console.log(1111)
     rp({
         method: 'POST',
         uri: QuickBooks.ACCESS_TOKEN_URL,
@@ -72,7 +70,7 @@ router.get('/callback', function(req, res) {
         },
         json: true
     }).then(function (response) {
-
+console.log(2222)
         var accessToken = qs.parse(response);
 
         global.QBO_ACCESS_TOKEN = accessToken.oauth_token;
