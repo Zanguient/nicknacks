@@ -56,6 +56,7 @@ router.get('/callback', function(req, res) {
 
     if(req.query.realmId !== process.env.qbo_realmID) return res.status(400).send('The server is not value for the company you have selected.');
 
+    var _ACCESS_TOKEN;
     rp({
         method: 'POST',
         uri: QuickBooks.ACCESS_TOKEN_URL,
@@ -71,21 +72,29 @@ router.get('/callback', function(req, res) {
         json: true
     }).then(function (response) {
 
-        var accessToken = qs.parse(response);
+        var _ACCESS_TOKEN = qs.parse(response);
 
-        global.QBO_ACCESS_TOKEN = accessToken.oauth_token;
-        global.QBO_ACCESS_TOKEN_SECRET = accessToken.oauth_token_secret;
+        global.QBO_ACCESS_TOKEN = _ACCESS_TOKEN.oauth_token;
+        global.QBO_ACCESS_TOKEN_SECRET = _ACCESS_TOKEN.oauth_token_secret;
 
         // save the token
         return DB.Token.findOrCreate({
 
             where: { TokenID: 1 },
 
-            defaults: { data: accessToken }
+            defaults: { data: _ACCESS_TOKEN }
 
         });
 
     }).then(function(token, created) {
+
+        // if not created, update the current token
+        if (!created) {
+            token.data = _ACCESS_TOKEN;
+            return token.save();
+        } else { return false; }
+
+    }).then(function() {
 
         // save the access token somewhere on behalf of the logged in user
         global.QBO = new QuickBooks(
