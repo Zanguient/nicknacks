@@ -61,13 +61,24 @@ router.post('/refunded', function (req, res) {
 
 });
 
+router.get('/test', function(req, res) {
+    QBO.findAccounts(function(_, accounts) {
+      accounts.QueryResponse.Account.forEach(function(account) {
+        console.log(account.Name)
+      })
+    })
+})
+
 router.post('/create-sales-receipt', function(req, res) {
 
     var salesReceipt = require('../apps/QBOSalesReceipt');
 
-    DB.Transaction.find(req.transactionID).then(function(transaction) {
+    DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
 
-        return QBO.getCustomer([{
+        console.log(transaction);
+        console.log(111111);
+        console.log(transaction.customerEmail);
+        return QBO.findCustomers([{
             field: 'PrimaryEmailAddr.Address', value: transaction.email
         }]);
 
