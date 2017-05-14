@@ -63,7 +63,7 @@ router.post('/refunded', function (req, res) {
 
 router.post('/create-sales-receipt', function(req, res) {
 
-    var salesReceipt = require('../apps/qboSalesReceipt');
+    var salesReceipt = require('../apps/QBOSalesReceipt');
 
     DB.Transaction.find(req.transactionID).then(function(transaction) {
 
