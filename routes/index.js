@@ -30,6 +30,8 @@ router.post('/charge-succeeded', function (req, res) {
     .catch(function (err) {
         // log the error
         console.log(err);
+
+        res.status(500).send();
     });
 
 });
@@ -53,8 +55,70 @@ router.post('/refunded', function (req, res) {
     .catch(function (err) {
         // log the error
         console.log(err);
+
+        res.status(500).send();
     });
 
+});
+
+router.post('/create-sales-receipt', function(req, res) {
+
+    var salesReceipt = require('../apps/qboSalesReceipt');
+
+    DB.Transaction.find(req.transactionID).then(function(transaction) {
+
+        return QBO.getCustomer([{
+            field: 'PrimaryEmailAddr.Address', value: transaction.email
+        }]);
+
+    }).then(function(qboCustomer) {
+
+        return console.log(qboCustomer);
+
+        salesReceipt.TxnDate = transaction.transactionDateQBOFormat;
+
+        // to upgrade this portion when magento can send meta data
+        salesReceipt.Line = [
+          {
+            //"Id": "1",
+            "LineNum": 1,
+            "Description": transaction.generalDescription,
+            "Amount": transaction.totalAmount,
+            "DetailType": "SalesItemLineDetail",
+            "SalesItemLineDetail": {
+              // "ItemRef": {
+              //   "value": "4",
+              //   "name": "Design"
+              // },
+              "UnitPrice": transaction.totalAmount,
+              "Qty": 1,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            }
+          },
+          {
+            "Amount": transaction.totalAmount,
+            "DetailType": "SubTotalLineDetail",
+            "SubTotalLineDetail": {}
+          }
+        ];
+
+
+    })
+    .catch(function (err) {
+        // log the error
+        console.log('CRITICAL: ' + err);
+
+        res.status(500).send();
+
+    });
+
+    
+
+    QBO.createSalesReceipt({}, function(e, ff) {
+
+    });
 });
 
 
