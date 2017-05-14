@@ -74,6 +74,8 @@ router.get('/callback', function(req, res) {
 
         var _ACCESS_TOKEN = qs.parse(response);
 
+        console.log(_ACCESS_TOKEN);
+
         global.QBO_ACCESS_TOKEN = _ACCESS_TOKEN.oauth_token;
         global.QBO_ACCESS_TOKEN_SECRET = _ACCESS_TOKEN.oauth_token_secret;
 
