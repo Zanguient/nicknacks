@@ -16,6 +16,7 @@
     "express-session": "^1.15.2",
     "fs": "0.0.1-security",
     "hbs": "~4.0.1",
+    "momentjs": "^2.0.0",
     "morgan": "~1.7.0",
     "node-quickbooks": "git+https://github.com/oneelement/node-quickbooks.git",
     "path": "^0.12.7",
