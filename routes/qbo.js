@@ -5,8 +5,9 @@ var rp = require('request-promise');
 var QuickBooks = require('node-quickbooks');
 var qs = require('querystring');
 
-router.all('*', function() {
+router.all('*', function(req, res, next) {
     if (process.env.QBO_ALLOW_LOCKED_ROUTES !== 'true') return res.status(403).send();
+    next();
 });
 
 router.get('/requestToken', function(req, res) {
