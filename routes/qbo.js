@@ -3,6 +3,7 @@ var router = express.Router();
 var request = require('request');
 var rp = require('request-promise');
 var QuickBooks = require('node-quickbooks');
+var qs = require('querystring');
 
 router.all('*', function() {
     if (process.env.QBO_ALLOW_LOCKED_ROUTES !== 'true') return res.status(403).send();
@@ -11,6 +12,8 @@ router.all('*', function() {
 router.get('/requestToken', function(req, res) {
 
     if (process.env.QBO_ALLOW_LOCKED_ROUTES !== 'true') return res.status(403).send();
+
+    console.log(1111);
 
     rp({
         method: 'POST',
