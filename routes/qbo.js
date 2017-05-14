@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var request = require('request');
 var rp = require('request-promise');
+var QuickBooks = require('node-quickbooks');
 
 router.all('*', function() {
     if (process.env.QBO_ALLOW_LOCKED_ROUTES !== 'true') return res.status(403).send();
