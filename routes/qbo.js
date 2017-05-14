@@ -21,7 +21,7 @@ router.get('/requestToken', function(req, res) {
         uri: QuickBooks.REQUEST_TOKEN_URL,
         body: {},
         oauth: {
-            callback: process.env.DOMAIN + '/callback',
+            callback: process.env.DOMAIN + '/qbo/callback',
             consumer_key: process.env.qbo_consumerKey,
             consumer_secret: process.env.qbo_consumerSecret
         },
