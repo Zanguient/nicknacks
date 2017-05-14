@@ -48,7 +48,7 @@ function Transaction(sequelize, DataTypes) {
             },
             transactionDateQBOFormat: function() {
                 var self = this;
-                return MOMENT.unix(D.get(self, 'data.object.created').format('YYYY-MM-DD');
+                return MOMENT.unix(D.get(self, 'data.object.created')).format('YYYY-MM-DD');
             },
             generalDescription: function() {
              return this.data.object.description;   
