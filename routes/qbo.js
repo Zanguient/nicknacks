@@ -87,15 +87,12 @@ router.get('/callback', function(req, res) {
         });
 
     }).spread(function(token, created) {
-        console.log(token)
-        console.log(created)
-        console.log(11111)
+
         // if not created, update the current token
         if (!created) {
-            console.log(_ACCESS_TOKEN);
-
+            
             return token.update({ data: _ACCESS_TOKEN });
-            //return token.save({fields: ['data']});
+
         } else { return false; }
 
     }).then(function() {
