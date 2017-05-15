@@ -93,29 +93,30 @@ router.get('/callback', function(req, res) {
         // if not created, update the current token
         if (!created) {
             token.data = _ACCESS_TOKEN;
+            token.changed('data');
             return token.save();
         } else { return false; }
 
     }).then(function() {
 
-        // save the access token somewhere on behalf of the logged in user
-        // global.QBO = new QuickBooks(
-        //     process.env.qbo_consumerKey,
-        //     process.env.qbo_consumerSecret,
-        //     _ACCESS_TOKEN.oauth_token,
-        //     _ACCESS_TOKEN.oauth_token_secret,
-        //     process.env.qbo_realmID,
-        //     false, // use the Sandbox
-        //     true
-        // ); // turn debugging on
+        save the access token somewhere on behalf of the logged in user
+        global.QBO = new QuickBooks(
+            process.env.qbo_consumerKey,
+            process.env.qbo_consumerSecret,
+            _ACCESS_TOKEN.oauth_token,
+            _ACCESS_TOKEN.oauth_token_secret,
+            process.env.qbo_realmID,
+            false, // use the Sandbox
+            true
+        ); // turn debugging on
 
 
-        // // test out account access
-        // QBO.findAccounts(function(_, accounts) {
-        //   accounts.QueryResponse.Account.forEach(function(account) {
-        //     console.log(account.Name)
-        //   })
-        // });
+        // test out account access
+        QBO.findAccounts(function(_, accounts) {
+          accounts.QueryResponse.Account.forEach(function(account) {
+            console.log(account.Name)
+          })
+        });
 
         res.send('success');
 
