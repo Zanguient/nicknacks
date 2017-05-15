@@ -99,7 +99,7 @@ router.get('/callback', function(req, res) {
 
     }).then(function() {
 
-        save the access token somewhere on behalf of the logged in user
+        //save the access token somewhere on behalf of the logged in user
         global.QBO = new QuickBooks(
             process.env.qbo_consumerKey,
             process.env.qbo_consumerSecret,
