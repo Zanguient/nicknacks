@@ -92,8 +92,11 @@ router.get('/callback', function(req, res) {
         console.log(11111)
         // if not created, update the current token
         if (!created) {
-
-            return token.update({ data: _ACCESS_TOKEN }, { fields: ['data']});
+            return DB.Token.update({ data: _ACCESS_TOKEN }, {
+                where: { TokenID: 1},
+                limit: 1
+            });
+            //return token.update({ data: _ACCESS_TOKEN }, { fields: ['data']});
             //return token.save({fields: ['data']});
         } else { return false; }
 
