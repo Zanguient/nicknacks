@@ -72,7 +72,7 @@ router.get('/callback', function(req, res) {
         json: true
     }).then(function (response) {
 
-        var _ACCESS_TOKEN = qs.parse(response);
+        _ACCESS_TOKEN = qs.parse(response);
 
         global.QBO_ACCESS_TOKEN = _ACCESS_TOKEN.oauth_token;
         global.QBO_ACCESS_TOKEN_SECRET = _ACCESS_TOKEN.oauth_token_secret;
@@ -93,12 +93,8 @@ router.get('/callback', function(req, res) {
         // if not created, update the current token
         if (!created) {
             console.log(_ACCESS_TOKEN);
-            return token.updateAttributes({ data: _ACCESS_TOKEN });
-            // return DB.Token.update({ data: _ACCESS_TOKEN }, {
-            //     where: { TokenID: 1},
-            //     limit: 1
-            // });
-            //return token.update({ data: _ACCESS_TOKEN }, { fields: ['data']});
+
+            return token.update({ data: _ACCESS_TOKEN });
             //return token.save({fields: ['data']});
         } else { return false; }
 
