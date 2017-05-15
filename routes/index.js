@@ -79,7 +79,7 @@ router.post('/create-sales-receipt', function(req, res) {
         // console.log(111111);
         // console.log(transaction.customerEmail);
         return QBO.findCustomers([{
-            field: 'PrimaryEmailAddr', value: transaction.email
+            field: 'PrimaryEmailAddr.Address', value: transaction.customerEmail
         //field: 'PrimaryEmailAddr', value: 'tan'
         }]);
 
