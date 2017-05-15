@@ -64,8 +64,23 @@ function retrieveTokenAndRefresh() {
         global.QBO_ACCESS_TOKEN = token.data.oauth_token;
         global.QBO_ACCESS_TOKEN_SECRET = token.data.oauth_token_secret;
 
+
+
+
         // send request to attempt to refresh token
-        return refreshQBOToken();
+
+        // NOTE: Oauth Access tokens expire 180 days from the date they were created.
+        //       Oauth token Reconnect API can be called between 151 days and 179 days 
+        //       (after 5 months and before expiry).
+
+        var ageOfToken = MOMENT() - MOMENT(token.updatedAt);
+
+        // ageOfToken > 160 days. (using 160 days to be safe.)
+        if (ageOfToken > 1.382e+10) {
+            return refreshQBOToken();
+        } else {
+            return false;
+        } 
 
     }).then(function() {
 
@@ -130,7 +145,9 @@ function retrieveTokenAndRefresh() {
             if (errorCode === 212) {
 
                 // token is not refreshed, return nothing, life goes on...
-                console.log('NOTE: Token refresh is attempted. Existing token still valid.')
+                console.log('CRITICAL: Token refresh is attempted and failed due to current token still valid. Token invalidated, please re-auth to get new token.');
+                
+                // SEND EMAIL!!!!
                 return false;
 
             } else if (errorCode === 0) {
@@ -157,6 +174,8 @@ function retrieveTokenAndRefresh() {
 
             } else {
 
+                // SEND EMAIL!!!!
+                
                 // any other errorCode, print out the error.
                 throw { message: 'Error code: ' + responseParsed.ErrorCode[0] + ' Message: ' + responseParsed.ErrorMessage[0] };
             
