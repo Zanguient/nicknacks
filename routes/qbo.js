@@ -74,8 +74,6 @@ router.get('/callback', function(req, res) {
 
         var _ACCESS_TOKEN = qs.parse(response);
 
-        console.log(_ACCESS_TOKEN);
-
         global.QBO_ACCESS_TOKEN = _ACCESS_TOKEN.oauth_token;
         global.QBO_ACCESS_TOKEN_SECRET = _ACCESS_TOKEN.oauth_token_secret;
 
@@ -88,8 +86,10 @@ router.get('/callback', function(req, res) {
 
         });
 
-    }).then(function(token, created) {
-
+    }).spread(function(token, created) {
+        console.log(token)
+        console.log(created)
+        console.log(11111)
         // if not created, update the current token
         if (!created) {
             token.data = _ACCESS_TOKEN;
