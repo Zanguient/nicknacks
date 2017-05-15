@@ -99,15 +99,15 @@ router.get('/callback', function(req, res) {
     }).then(function() {
 
         // save the access token somewhere on behalf of the logged in user
-        global.QBO = new QuickBooks(
-            process.env.qbo_consumerKey,
-            process.env.qbo_consumerSecret,
-            _ACCESS_TOKEN.oauth_token,
-            _ACCESS_TOKEN.oauth_token_secret,
-            process.env.qbo_realmID,
-            false, // use the Sandbox
-            true
-        ); // turn debugging on
+        // global.QBO = new QuickBooks(
+        //     process.env.qbo_consumerKey,
+        //     process.env.qbo_consumerSecret,
+        //     _ACCESS_TOKEN.oauth_token,
+        //     _ACCESS_TOKEN.oauth_token_secret,
+        //     process.env.qbo_realmID,
+        //     false, // use the Sandbox
+        //     true
+        // ); // turn debugging on
 
 
         // // test out account access
