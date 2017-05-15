@@ -93,8 +93,7 @@ router.get('/callback', function(req, res) {
         // if not created, update the current token
         if (!created) {
             token.data = _ACCESS_TOKEN;
-            token.changed('data');
-            return token.save();
+            return token.save({fields: ['data']});
         } else { return false; }
 
     }).then(function() {
