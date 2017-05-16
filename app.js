@@ -88,8 +88,8 @@ function retrieveTokenAndRefresh() {
         return global.QBO = new QuickBooks(
             process.env.qbo_consumerKey,
             process.env.qbo_consumerSecret,
-            global.QBO_ACCESS_TOKEN.oauth_token,
-            global.QBO_ACCESS_TOKEN_SECRET.oauth_token_secret,
+            global.QBO_ACCESS_TOKEN,
+            global.QBO_ACCESS_TOKEN_SECRET,
             process.env.qbo_realmID,
             false, // use the Sandbox
             true // turn debugging on
