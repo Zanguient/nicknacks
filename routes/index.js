@@ -127,9 +127,9 @@ router.post('/create-sales-receipt', function(req, res) {
 
     
 
-    QBO.createSalesReceipt({}, function(e, ff) {
+    // QBO.createSalesReceipt({}, function(e, ff) {
 
-    });
+    // });
 });
 
 
