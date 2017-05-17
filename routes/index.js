@@ -78,6 +78,13 @@ router.post('/create-sales-receipt', function(req, res) {
 
         _TRANSACTION = transaction;
 
+        // if somehow there is not customerEmail, which is our minimum requirement,
+        // we will fail the server
+        if (!transaction.customerEmail) {
+            // SEND EMAIL !!!
+            throw 'CRITICAL: There is no email given in the stripe transaction.';
+        }
+
         return QBO.findCustomers([{
             field: 'PrimaryEmailAddr', value: transaction.customerEmail
         }]);
@@ -89,8 +96,11 @@ router.post('/create-sales-receipt', function(req, res) {
         // if valid, `customer` is an array 
         var customer = D.get(qboCustomer, 'QueryResponse.Customer');
 
-        // if there is an existing customer, update the details
+        
         if (customer) {
+
+            // if there is an existing customer, update the details
+
             customer = customer[0];
 
             // get and increment the sync token
@@ -105,16 +115,35 @@ router.post('/create-sales-receipt', function(req, res) {
             };
 
 
-            if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1');
-            if (_TRANSACTION.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode');
-            if (_TRANSACTION.addressCountry) D.set(sparseUpdates, 'BillAddr.Country');
+            if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1', _TRANSACTION.address);
+            if (_TRANSACTION.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
+            if (_TRANSACTION.addressCountry) D.set(sparseUpdates, 'BillAddr.Country', _TRANSACTION.addressCountry);
         
             // do the update
-            //QBO.updateCustomer(sparseUpdates)
+            return QBO.updateCustomerAsync(sparseUpdates);
 
+        } else {
+
+            // if there is no existing customer, create a new one.
+            var newCustomer = {};
+
+            // the minimum
+            D.set(newCustomer, 'PrimaryEmailAddr.Address', _TRANSACTION.customerEmail);
+            D.set(newCustomer, 'DisplayName', _TRANSACTION.customerName);
+
+            // other information
+
+            // address
+            if (_TRANSACTION.address) D.set(newCustomer, 'BillAddr.Line1', _TRANSACTION.address);
+            if (_TRANSACTION.addressZip) D.set(newCustomer, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
+            if (_TRANSACTION.addressCountry) D.set(newCustomer, 'BillAddr.Country', _TRANSACTION.addressCountry);
+
+
+            // create the customer
+            return QBO.createCustomer(newCustomer);
         }
 
-        // if there is no existing customer, create a new one.
+        
 
         salesReceipt.TxnDate = transaction.transactionDateQBOFormat;
 
@@ -146,6 +175,9 @@ router.post('/create-sales-receipt', function(req, res) {
         ];
 
 
+    }).then(function(customer) {
+        console.log(11111);
+        console.log(customer);
     })
     .catch(function (err) {
         // log the error

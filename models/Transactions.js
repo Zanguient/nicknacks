@@ -81,6 +81,9 @@ function Transaction(sequelize, DataTypes) {
                 }
                 return email;
             },
+            customerName: function() {
+                return D.get(this.data.data.object.source.name) || 'Anonymous';
+            },
             totalAmount: function() {
                 // stripe amount is in cents. need to divide by 100;
                 return parseInt(D.get(this.data.data.object.amount))/100;

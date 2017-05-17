@@ -108,9 +108,10 @@ router.get('/callback', function(req, res) {
             true
         ); // turn debugging on
 
+        global.QBO = PROMISE.promisifyAll(global.QBO);
 
         // test out account access
-        QBO.findAccounts(function(_, accounts) {
+        return QBO.findAccountsAsync(function(_, accounts) {
           accounts.QueryResponse.Account.forEach(function(account) {
             console.log(account.Name)
           })
