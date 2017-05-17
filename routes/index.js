@@ -138,9 +138,6 @@ router.post('/create-sales-receipt', function(req, res) {
             if (_TRANSACTION.addressZip) D.set(newCustomer, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
             if (_TRANSACTION.addressCountry) D.set(newCustomer, 'BillAddr.Country', _TRANSACTION.addressCountry);
 
-            console.log('111111');
-            console.log(newCustomer);
-
             // create the customer
             return QBO.createCustomerAsync(newCustomer);
         }
@@ -170,8 +167,8 @@ router.post('/create-sales-receipt', function(req, res) {
           {
             //"Id": "1",
             "LineNum": 1,
-            "Description": transaction.generalDescription,
-            "Amount": transaction.totalAmount,
+            "Description": _TRANSACTION.generalDescription,
+            "Amount": _TRANSACTION.totalAmount,
             "DetailType": "SalesItemLineDetail",
             "SalesItemLineDetail": {
 
@@ -180,7 +177,7 @@ router.post('/create-sales-receipt', function(req, res) {
                 "value": "42",
                 "name": "Custom item"
               },
-              "UnitPrice": transaction.totalAmount,
+              "UnitPrice": _TRANSACTION.totalAmount,
               "Qty": 1,
               "TaxCodeRef": {
                 "value": "NON"
@@ -188,7 +185,7 @@ router.post('/create-sales-receipt', function(req, res) {
             }
           },
           {
-            "Amount": transaction.totalAmount,
+            "Amount": _TRANSACTION.totalAmount,
             "DetailType": "SubTotalLineDetail",
             "SubTotalLineDetail": {}
           }
