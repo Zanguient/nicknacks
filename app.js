@@ -18,7 +18,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var request = require('request');
 var rp = require('request-promise');
-var QuickBooks = PROMISE.promisifyAll(require('node-quickbooks'));
+var QuickBooks = require('node-quickbooks');
 var qs = require('querystring');
 var parseString = require('xml2js').parseString;
 
@@ -85,7 +85,7 @@ function retrieveTokenAndRefresh() {
     }).then(function() {
 
         // initialise quickbooks
-        return global.QBO = new QuickBooks(
+        global.QBO = new QuickBooks(
             process.env.qbo_consumerKey,
             process.env.qbo_consumerSecret,
             global.QBO_ACCESS_TOKEN,
@@ -93,7 +93,8 @@ function retrieveTokenAndRefresh() {
             process.env.qbo_realmID,
             false, // use the Sandbox
             true // turn debugging on
-        ); 
+        );
+        global.QBO = PROMISE.promisifyAll(global.QBO);
 
     }).catch(function (err) {
         // log the error
