@@ -98,7 +98,10 @@ router.post('/create-sales-receipt', function(req, res) {
 
             // if there is an existing customer, update the details
 
-            customer = _CUSTOMER = customer[0];
+            customer = customer[0];
+
+            console.log('$$#^$%$#^$');
+            console.log(customer.Id);
 
             // we save customer id and name into private global
             // because QuickBooks may error the updating of customer
