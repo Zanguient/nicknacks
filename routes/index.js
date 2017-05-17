@@ -78,6 +78,8 @@ router.post('/create-sales-receipt', function(req, res) {
 
         _TRANSACTION = transaction;
 
+        console.log(transaction);
+
         // if somehow there is not customerEmail, which is our minimum requirement,
         // we will fail the server
         if (!transaction.customerEmail) {
@@ -138,9 +140,11 @@ router.post('/create-sales-receipt', function(req, res) {
             if (_TRANSACTION.addressZip) D.set(newCustomer, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
             if (_TRANSACTION.addressCountry) D.set(newCustomer, 'BillAddr.Country', _TRANSACTION.addressCountry);
 
+            console.log('111111');
+            console.log(newCustomer);
 
             // create the customer
-            return QBO.createCustomer(newCustomer);
+            return QBO.createCustomerAsync(newCustomer);
         }
 
         
