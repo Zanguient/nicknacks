@@ -76,8 +76,6 @@ router.post('/create-sales-receipt', function(req, res) {
 
         _TRANSACTION = transaction;
 
-        console.log(transaction);
-
         // if somehow there is not customerEmail, which is our minimum requirement,
         // we will fail the server
         if (!transaction.customerEmail) {
@@ -100,15 +98,12 @@ router.post('/create-sales-receipt', function(req, res) {
 
             customer = customer[0];
 
-            console.log('$$#^$%$#^$');
-            console.log(customer.Id);
-
             // we save customer id and name into private global
             // because QuickBooks may error the updating of customer
             // which is not critical to creation of sales receipt
             // so we need the id and name to continue
             _CUSTOMER = {
-                id: customer.Id,
+                Id: customer.Id,
                 DisplayName: customer.DisplayName
             };
 
@@ -123,9 +118,6 @@ router.post('/create-sales-receipt', function(req, res) {
                 Active: true,
                 sparse: true
             };
-
-            console.log(4578324);
-
 
             if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1', _TRANSACTION.address);
             if (_TRANSACTION.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
