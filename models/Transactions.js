@@ -50,6 +50,12 @@ function Transaction(sequelize, DataTypes) {
                 var self = this;
                 return MOMENT.unix(D.get(self, 'data.data.object.created')).format('YYYY-MM-DD');
             },
+            transactedCurrency: function() {
+                return this.data.data.object.currency;
+            },
+            transactionReferenceCode: function() {
+                return this.data.data.object.id;
+            },
             generalDescription: function() {
              return this.data.data.object.description;   
             },

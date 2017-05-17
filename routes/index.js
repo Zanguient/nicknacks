@@ -71,8 +71,6 @@ router.get('/test', function(req, res) {
 
 router.post('/create-sales-receipt', function(req, res) {
 
-    var salesReceipt = require('../apps/QBOSalesReceipt');
-
     var _TRANSACTION;
     DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
 
@@ -93,11 +91,8 @@ router.post('/create-sales-receipt', function(req, res) {
 
     }).then(function(qboCustomer) {
 
-        console.log(qboCustomer);
-
         // if valid, `customer` is an array 
         var customer = D.get(qboCustomer, 'QueryResponse.Customer');
-        console.log(128089204);
         
         if (customer) {
 
@@ -116,6 +111,8 @@ router.post('/create-sales-receipt', function(req, res) {
                 Active: true,
                 sparse: true
             };
+
+            console.log(4578324);
 
 
             if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1', _TRANSACTION.address);
@@ -148,10 +145,26 @@ router.post('/create-sales-receipt', function(req, res) {
             return QBO.createCustomerAsync(newCustomer);
         }
 
-        
+    }).then(function(customer) {
 
-        salesReceipt.TxnDate = transaction.transactionDateQBOFormat;
+        // once customer is created, create the sales receipt
+        var salesReceipt = require('../apps/QBOSalesReceipt');
 
+
+        // customer
+        D.set(salesReceipt, 'CustomerRef', {
+            value: customer.Id,
+            name: customer.DisplayName
+        });
+
+        // transaction date
+        salesReceipt.TxnDate = _TRANSACTION.transactionDateQBOFormat;
+        salesReceipt.PaymentRefNum = _TRANSACTION.transactionReferenceCode;
+
+        // reference number
+        salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber;
+
+        // create single product line
         // to upgrade this portion when magento can send meta data
         salesReceipt.Line = [
           {
@@ -161,10 +174,12 @@ router.post('/create-sales-receipt', function(req, res) {
             "Amount": transaction.totalAmount,
             "DetailType": "SalesItemLineDetail",
             "SalesItemLineDetail": {
-              // "ItemRef": {
-              //   "value": "4",
-              //   "name": "Design"
-              // },
+
+              // currently just peg everything as custom
+              "ItemRef": {
+                "value": "42",
+                "name": "Custom item"
+              },
               "UnitPrice": transaction.totalAmount,
               "Qty": 1,
               "TaxCodeRef": {
@@ -179,10 +194,11 @@ router.post('/create-sales-receipt', function(req, res) {
           }
         ];
 
+        console.log(salesReceipt);
 
-    }).then(function(customer) {
-        console.log(11111);
-        console.log(customer);
+        return QBO.createSalesReceiptAsync(salesReceipt);
+
+
     })
     .catch(function (err) {
         // log the error

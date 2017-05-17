@@ -45,34 +45,37 @@ var qboSalesReceiptModel = {
     "TxnTaxDetail": {
       "TotalTax": 0
     },
-    "CustomerRef": {
-      "value": "6",
-      "name": "Dylan Sollfrank"
-    },
-    "CustomerMemo": {
-      "value": "Thank you for your business and have a great day!"
-    },
-    "BillAddr": {
-      "Id": "49",
-      "Line1": "Dylan Sollfrank",
-      "Lat": "INVALID",
-      "Long": "INVALID"
-    },
-    "TotalAmt": 337.5,
+    // "CustomerRef": {
+    //   "value": "6",
+    //   "name": "Dylan Sollfrank"
+    // },
+    // "CustomerMemo": {
+    //   "value": "Thank you for your business and have a great day!"
+    // },
+    // "BillAddr": {
+    //   "Id": "49",
+    //   "Line1": "Dylan Sollfrank",
+    //   "Lat": "INVALID",
+    //   "Long": "INVALID"
+    // },
+    //"TotalAmt": 337.5,
     "ApplyTaxAfterDiscount": false,
     "PrintStatus": "NotSet",
     "EmailStatus": "NotSet",
     "Balance": 0,
     "PaymentMethodRef": {
-      "value": "2",
-      "name": "Check"
+      "value": "3",
+      "name": "Credit Card"
     },
-    "PaymentRefNum": "10264",
+    //"PaymentRefNum": "10264",
+
+    // default to current account
     "DepositToAccountRef": {
-      "value": "35",
-      "name": "Checking"
+      "value": "31",
+      "name": "Current"
     }
+
   },
-  "time": "2015-07-29T09:29:56.229-07:00"
+  //"time": "2015-07-29T09:29:56.229-07:00"
 }
 module.exports = qboSalesReceiptModel;
