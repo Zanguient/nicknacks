@@ -18,7 +18,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var request = require('request');
 var rp = require('request-promise');
-var QuickBooks = require('node-quickbooks');
+var QuickBooks = PROMISE.promisifyAll(require('node-quickbooks'));
 var qs = require('querystring');
 var parseString = require('xml2js').parseString;
 

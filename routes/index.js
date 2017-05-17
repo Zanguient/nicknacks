@@ -62,7 +62,7 @@ router.post('/refunded', function (req, res) {
 });
 
 router.get('/test', function(req, res) {
-    QBO.findAccounts(function(_, accounts) {
+    QBO.findAccountsAsync(function(_, accounts) {
       accounts.QueryResponse.Account.forEach(function(account) {
         console.log(account.Name)
       })
@@ -73,11 +73,11 @@ router.post('/create-sales-receipt', function(req, res) {
 
     var salesReceipt = require('../apps/QBOSalesReceipt');
 
+    var _TRANSACTION;
     DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
 
-        // console.log(transaction);
-        // console.log(111111);
-        // console.log(transaction.customerEmail);
+        _TRANSACTION = transaction;
+
         return QBO.findCustomers([{
             field: 'PrimaryEmailAddr', value: transaction.customerEmail
         }]);
@@ -85,6 +85,36 @@ router.post('/create-sales-receipt', function(req, res) {
     }).then(function(qboCustomer) {
 
         return console.log(qboCustomer);
+
+        // if valid, `customer` is an array 
+        var customer = D.get(qboCustomer, 'QueryResponse.Customer');
+
+        // if there is an existing customer, update the details
+        if (customer) {
+            customer = customer[0];
+
+            // get and increment the sync token
+            var syncToken = D.get(customer, 'SyncToken');
+            syncToken = parseInt(syncToken) + 1;
+
+            // set all the updates
+            var sparseUpdates = {
+                Id: customer.Id,
+                SyncToken: syncToken,
+                sparse: true
+            };
+
+
+            if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1');
+            if (_TRANSACTION.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode');
+            if (_TRANSACTION.addressCountry) D.set(sparseUpdates, 'BillAddr.Country');
+        
+            // do the update
+            //QBO.updateCustomer(sparseUpdates)
+
+        }
+
+        // if there is no existing customer, create a new one.
 
         salesReceipt.TxnDate = transaction.transactionDateQBOFormat;
 
