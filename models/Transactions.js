@@ -82,20 +82,23 @@ function Transaction(sequelize, DataTypes) {
                 return email;
             },
             customerName: function() {
-                return D.get(this.data.data.object.source.name) || 'Anonymous';
+                var self = this;
+                return D.get(self, 'data.data.object.source.name') || 'Anonymous';
             },
             totalAmount: function() {
+                if (typeof this.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe transaction missing `amount`.');
+                
                 // stripe amount is in cents. need to divide by 100;
-                return parseInt(D.get(this.data.data.object.amount))/100;
+                return parseInt(this.data.data.object.amount)/100;
             },
             address: function() {
-                return D.get(this.data.data.object.source.address_line1);
+                return D.get(this, 'data.data.object.source.address_line1');
             },
             addressZip: function() {
-                return D.get(this.data.data.object.source.address_zip);
+                return D.get(this, 'data.data.object.source.address_zip');
             },
             addressCountry: function() {
-                return D.get(this.data.data.object.source.country);
+                return D.get(this, 'data.data.object.source.country');
             }
         },
         classMethods: {}
