@@ -87,7 +87,7 @@ router.post('/create-sales-receipt', function(req, res) {
             throw 'CRITICAL: There is no email given in the stripe transaction.';
         }
 
-        return QBO.findCustomers([{
+        return QBO.findCustomersAsync([{
             field: 'PrimaryEmailAddr', value: transaction.customerEmail
         }]);
 
@@ -113,6 +113,7 @@ router.post('/create-sales-receipt', function(req, res) {
             var sparseUpdates = {
                 Id: customer.Id,
                 SyncToken: syncToken,
+                Active: true,
                 sparse: true
             };
 
