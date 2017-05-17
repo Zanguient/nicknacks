@@ -100,6 +100,15 @@ router.post('/create-sales-receipt', function(req, res) {
 
             customer = _CUSTOMER = customer[0];
 
+            // we save customer id and name into private global
+            // because QuickBooks may error the updating of customer
+            // which is not critical to creation of sales receipt
+            // so we need the id and name to continue
+            _CUSTOMER = {
+                id: customer.id,
+                DisplayName: customer.DisplayName
+            };
+
             // get and increment the sync token
             var syncToken = D.get(customer, 'SyncToken');
             syncToken = parseInt(syncToken) + 1;
@@ -143,17 +152,35 @@ router.post('/create-sales-receipt', function(req, res) {
         }
 
     }).then(function(customer) {
-        
-        if (D.get(customer, 'Fault')) throw customer;
 
-        // once customer is created, create the sales receipt
+        // sometimes updating customer causes error
+        if (D.get(customer, 'Fault')) {
+
+            // if there are more than one error, throw
+            var errors = customer.Fault.Error;
+            if (errors.length > 1) throw customer;
+
+            // if there are less than 1 error, check if it is
+            // stale object 5010
+
+            if (error[0].code === "5010") {
+                console.log('Note: ' + error[0].Message + ' for updating customer ' + _CUSTOMER.id + ' ' + _CUSTOMER.DisplayName);
+            } else {
+                throw customer;
+            }
+
+        }
+
+        // once customer is created/updated, create the sales receipt
         var salesReceipt = require('../apps/QBOSalesReceipt');
 
 
         // customer
         D.set(salesReceipt, 'CustomerRef', {
-            value: customer.Id,
-            name: customer.DisplayName
+            // use _CUSTOMER which is updated further upstream
+            // to prevent quickbooks from screwing things up.
+            value: _CUSTOMER.Id,
+            name: _CUSTOMER.DisplayName
         });
 
         // transaction date
@@ -202,6 +229,7 @@ router.post('/create-sales-receipt', function(req, res) {
     .catch(function (err) {
         // log the error
         console.log('CRITICAL: ' + err);
+        if (typeof err === "object") console.log(JSON.stringify(err));
         if (D.get(err, 'stack')) console.log(err.stack);
 
         res.status(500).send();
