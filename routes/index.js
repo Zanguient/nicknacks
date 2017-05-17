@@ -181,9 +181,10 @@ router.post('/create-sales-receipt', function(req, res) {
         // transaction date
         salesReceipt.TxnDate = _TRANSACTION.transactionDateQBOFormat;
         salesReceipt.PaymentRefNum = _TRANSACTION.transactionReferenceCode;
+        salesReceipt.TxnSource = 'stripe';
 
         // reference number
-        salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber;
+        salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
 
         // create single product line
         // to upgrade this portion when magento can send meta data
@@ -214,6 +215,8 @@ router.post('/create-sales-receipt', function(req, res) {
             "SubTotalLineDetail": {}
           }
         ];
+
+        salesReceipt.TotalAmt = _TRANSACTION.totalAmount;
 
         console.log('$$$$$$$$$$$$$$')
         console.log(salesReceipt);
