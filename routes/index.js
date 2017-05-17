@@ -93,7 +93,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
     }).then(function(qboCustomer) {
 
-        return console.log(qboCustomer);
+        console.log(qboCustomer);
 
         // if valid, `customer` is an array 
         var customer = D.get(qboCustomer, 'QueryResponse.Customer');
