@@ -186,6 +186,7 @@ router.post('/create-sales-receipt', function(req, res) {
     .catch(function (err) {
         // log the error
         console.log('CRITICAL: ' + err);
+        if (D.get(err, 'stack')) console.log(err.stack);
 
         res.status(500).send();
 
