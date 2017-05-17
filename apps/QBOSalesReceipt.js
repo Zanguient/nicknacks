@@ -60,8 +60,8 @@ var qboSalesReceiptModel = {
     // },
     //"TotalAmt": 337.5,
     "ApplyTaxAfterDiscount": false,
-    "PrintStatus": "NotSet",
-    "EmailStatus": "NotSet",
+    // "PrintStatus": "NotSet",
+    // "EmailStatus": "NotSet",
     "Balance": 0,
     "PaymentMethodRef": {
       "value": "3",

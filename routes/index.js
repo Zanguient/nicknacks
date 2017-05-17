@@ -105,7 +105,7 @@ router.post('/create-sales-receipt', function(req, res) {
             // which is not critical to creation of sales receipt
             // so we need the id and name to continue
             _CUSTOMER = {
-                id: customer.id,
+                id: customer.Id,
                 DisplayName: customer.DisplayName
             };
 
@@ -164,7 +164,7 @@ router.post('/create-sales-receipt', function(req, res) {
             // stale object 5010
 
             if (errors[0].code === "5010") {
-                console.log('Note: ' + errors[0].Message + ' for updating customer ' + _CUSTOMER.id + ' ' + _CUSTOMER.DisplayName);
+                console.log('Note: ' + errors[0].Message + ' for updating customer ' + _CUSTOMER.Id + ' ' + _CUSTOMER.DisplayName);
             } else {
                 throw customer;
             }
@@ -220,6 +220,7 @@ router.post('/create-sales-receipt', function(req, res) {
           }
         ];
 
+        console.log('$$$$$$$$$$$$$$')
         console.log(salesReceipt);
 
         return QBO.createSalesReceiptAsync(salesReceipt);
