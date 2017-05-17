@@ -163,8 +163,8 @@ router.post('/create-sales-receipt', function(req, res) {
             // if there are less than 1 error, check if it is
             // stale object 5010
 
-            if (error[0].code === "5010") {
-                console.log('Note: ' + error[0].Message + ' for updating customer ' + _CUSTOMER.id + ' ' + _CUSTOMER.DisplayName);
+            if (errors[0].code === "5010") {
+                console.log('Note: ' + errors[0].Message + ' for updating customer ' + _CUSTOMER.id + ' ' + _CUSTOMER.DisplayName);
             } else {
                 throw customer;
             }
