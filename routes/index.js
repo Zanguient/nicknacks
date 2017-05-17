@@ -71,7 +71,7 @@ router.get('/test', function(req, res) {
 
 router.post('/create-sales-receipt', function(req, res) {
 
-    var _TRANSACTION;
+    var _TRANSACTION, _CUSTOMER;
     DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
 
         _TRANSACTION = transaction;
@@ -98,7 +98,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
             // if there is an existing customer, update the details
 
-            customer = customer[0];
+            customer = _CUSTOMER = customer[0];
 
             // get and increment the sync token
             var syncToken = D.get(customer, 'SyncToken');
@@ -143,6 +143,8 @@ router.post('/create-sales-receipt', function(req, res) {
         }
 
     }).then(function(customer) {
+        
+        if (D.get(customer, 'Fault')) throw customer;
 
         // once customer is created, create the sales receipt
         var salesReceipt = require('../apps/QBOSalesReceipt');
