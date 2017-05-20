@@ -71,7 +71,7 @@ router.get('/test', function(req, res) {
 
 router.post('/create-sales-receipt', function(req, res) {
 
-    var _TRANSACTION, _CUSTOMER;
+    var _TRANSACTION, _CUSTOMER, _SALESRECEIPT;
     DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
 
         _TRANSACTION = transaction;
@@ -166,6 +166,9 @@ router.post('/create-sales-receipt', function(req, res) {
 
         }
 
+        var promises = [];
+        var docNumber, TxnDate;
+
         // once customer is created/updated, create the sales receipt
         var salesReceipt = require('../apps/QBOSalesReceipt');
 
@@ -179,12 +182,12 @@ router.post('/create-sales-receipt', function(req, res) {
         });
 
         // transaction date
-        salesReceipt.TxnDate = _TRANSACTION.transactionDateQBOFormat;
+        TxnDate = salesReceipt.TxnDate = _TRANSACTION.transactionDateQBOFormat;
         salesReceipt.PaymentRefNum = _TRANSACTION.transactionReferenceCode;
         //salesReceipt.TxnSource = 'stripe'; //invalid enumeration
 
         // reference number
-        salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
+        docNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
 
         // create single product line
         // to upgrade this portion when magento can send meta data
@@ -218,28 +221,74 @@ router.post('/create-sales-receipt', function(req, res) {
 
         salesReceipt.TotalAmt = _TRANSACTION.totalAmount;
 
-        console.log('$$$$$$$$$$$$$$')
-        console.log(salesReceipt);
+        var createSalesReceipt = QBO.createSalesReceiptAsync(salesReceipt);
+        promise.push(createSalesReceipt);
 
-        return QBO.createSalesReceiptAsync(salesReceipt);
+        // create expense - expense is called `purchase` by QuickBooks
+        var expense = require('../apps/QBOPurchase');
 
+        expense.docNumber = docNumber;
+        expense.TxnDate = TxnDate;
+
+        expense.Line: [
+          {
+            // convert totalAmount to 100s and take 3.4%, round off, then convert back to 2 decimals, add 50 cents
+            "Amount": Math.round(_TRANSACTION.totalAmount * 100 * 0.034)/100 + 0.50,
+            "DetailType": "AccountBasedExpenseLineDetail",
+            "AccountBasedExpenseLineDetail": {
+              "AccountRef": {
+                "value": "33",
+                "name": "Stripe Charges"
+              },
+              "BillableStatus": "NotBillable",
+              "TaxCodeRef": {
+                "value": "9"
+              }
+            }
+          }
+        ];
+        var createExpense = QBO.createPurchase(expense);
+        promise.push(createExpense);
+
+        // create journal entry
+
+
+        return promises;
+
+    }).spread(function(salesReceipt, expense) {
+        console.log(expense);
+
+        var errors = []
+        
+
+        // pushing errors
+        if (D.get(salesReceipt, 'Fault')) errors.push(salesReceipt);
+
+        if (errors.length > 0) {
+            // deleteAllEntriesItSomeErrorsOccur
+            throw errors;
+        }
+
+
+        //then finally update the entry as completed.
 
     })
     .catch(function (err) {
         // log the error
+
         console.log('CRITICAL: ' + err);
         if (typeof err === "object") console.log(JSON.stringify(err));
         if (D.get(err, 'stack')) console.log(err.stack);
 
-        res.status(500).send();
+        res.status(500).send(JSON.stringify(err));
 
     });
 
     
 
-    // QBO.createSalesReceipt({}, function(e, ff) {
+    function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
 
-    // });
+    }
 });
 
 

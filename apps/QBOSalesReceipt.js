@@ -1,4 +1,4 @@
-var qboSalesReceiptModel = {
+var QBOSalesReceiptModel = {
     "domain": "QBO",
     "sparse": false,
     //"Id": "11", //required for updates
@@ -74,4 +74,4 @@ var qboSalesReceiptModel = {
       "name": "Current"
     }
 }
-module.exports = qboSalesReceiptModel;
+module.exports = QBOSalesReceiptModel;
