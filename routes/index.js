@@ -222,7 +222,7 @@ router.post('/create-sales-receipt', function(req, res) {
         salesReceipt.TotalAmt = _TRANSACTION.totalAmount;
 
         var createSalesReceipt = QBO.createSalesReceiptAsync(salesReceipt);
-        promise.push(createSalesReceipt);
+        promises.push(createSalesReceipt);
 
         // create expense - expense is called `purchase` by QuickBooks
         var expense = require('../apps/QBOPurchase');
@@ -248,7 +248,7 @@ router.post('/create-sales-receipt', function(req, res) {
           }
         ];
         var createExpense = QBO.createPurchase(expense);
-        promise.push(createExpense);
+        promises.push(createExpense);
 
         // create journal entry
 
