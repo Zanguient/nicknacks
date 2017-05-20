@@ -181,7 +181,7 @@ router.post('/create-sales-receipt', function(req, res) {
         // transaction date
         salesReceipt.TxnDate = _TRANSACTION.transactionDateQBOFormat;
         salesReceipt.PaymentRefNum = _TRANSACTION.transactionReferenceCode;
-        //salesReceipt.TxnSource = 'stripe';
+        salesReceipt.TxnSource = 'stripe';
 
         // reference number
         salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
@@ -205,7 +205,7 @@ router.post('/create-sales-receipt', function(req, res) {
               "UnitPrice": _TRANSACTION.totalAmount,
               "Qty": 1,
               "TaxCodeRef": {
-                "value": "NON"
+                "value": "15"
               }
             }
           },
