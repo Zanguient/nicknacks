@@ -1,5 +1,5 @@
 var qboSalesReceiptModel = {
-  "SalesReceipt": {
+  //"SalesReceipt": {
     "domain": "QBO",
     "sparse": false,
     //"Id": "11", //required for updates
@@ -75,7 +75,7 @@ var qboSalesReceiptModel = {
       "name": "Current"
     }
 
-  },
+  //},
   //"time": "2015-07-29T09:29:56.229-07:00"
 }
 module.exports = qboSalesReceiptModel;
