@@ -230,7 +230,7 @@ router.post('/create-sales-receipt', function(req, res) {
         expense.docNumber = docNumber;
         expense.TxnDate = TxnDate;
 
-        expense.Line: [
+        expense.Line = [
           {
             // convert totalAmount to 100s and take 3.4%, round off, then convert back to 2 decimals, add 50 cents
             "Amount": Math.round(_TRANSACTION.totalAmount * 100 * 0.034)/100 + 0.50,
