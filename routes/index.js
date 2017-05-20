@@ -167,7 +167,9 @@ router.post('/create-sales-receipt', function(req, res) {
         }
 
         var promises = [];
-        var docNumber, TxnDate;
+
+        // common info for QBO
+        var DocNumber, TxnDate;
 
         // once customer is created/updated, create the sales receipt
         var salesReceipt = require('../apps/QBOSalesReceipt');
@@ -187,7 +189,7 @@ router.post('/create-sales-receipt', function(req, res) {
         //salesReceipt.TxnSource = 'stripe'; //invalid enumeration
 
         // reference number
-        docNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
+        DocNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
 
         // create single product line
         // to upgrade this portion when magento can send meta data
@@ -227,7 +229,7 @@ router.post('/create-sales-receipt', function(req, res) {
         // create expense - expense is called `purchase` by QuickBooks
         var expense = require('../apps/QBOPurchase');
 
-        expense.docNumber = docNumber;
+        expense.DocNumber = DocNumber;
         expense.TxnDate = TxnDate;
 
         expense.Line = [

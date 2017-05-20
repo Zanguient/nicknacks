@@ -27,4 +27,4 @@ var QBOPurchase = {
   // ]
     
 }
-module.exports = QBOPurchase
+module.exports = QBOPurchase;
