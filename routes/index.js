@@ -317,6 +317,7 @@ router.post('/create-sales-receipt', function(req, res) {
         _TRANSACTION.status = 'completed';
         return _TRANSACTION.save().catch(function(err) {
             console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
+            
             return deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalEntry);
         });
 
@@ -357,7 +358,7 @@ router.post('/create-sales-receipt', function(req, res) {
             }
 
             if (journalCOGS) {
-                var deleteJournalCOGS = QBO.deleteJournalCOGSAsync({
+                var deleteJournalCOGS = QBO.deleteJournalEntryAsync({
                     "Id": journalCOGS.Id,
                     "SyncToken": journalCOGS.SyncToken
                 });
@@ -371,8 +372,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
         }).catch(function(e) {
             console.log('CRITCAL: Errors occured when reversing entries.');
-            console.log(JSON.stringify(e));
-            res.status(500).send(JSON.stringify(e));
+            throw e;
         });
     }
 });
