@@ -241,7 +241,7 @@ router.post('/create-sales-receipt', function(req, res) {
         //salesReceipt.TxnSource = 'stripe'; //invalid enumeration
 
         // reference number
-        DocNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber.replace('#', '');
+        DocNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber;
 
         // create single product line
         // to upgrade this portion when magento can send meta data
