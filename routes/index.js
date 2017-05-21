@@ -78,7 +78,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
     var decimalPlaces = require('../apps/decimalPlaces');
     var _COGS = parseFloat(req.body.COGS);
-    if ([undefined, null, false].indexOf(COGS) > -1 || isNaN(COGS)) {
+    if ([undefined, null, false].indexOf(_COGS) > -1 || isNaN(_COGS)) {
         return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}});
     } 
     if (decimalPlaces(_COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
