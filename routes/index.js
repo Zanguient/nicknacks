@@ -283,10 +283,10 @@ router.post('/create-sales-receipt', function(req, res) {
         // create journal entry
         var Entry = require('../apps/QBOJournalCOGS');
         var entry = Entry({
-            "DocNumber": _TRANSACTION.salesOrderNumber,
-            "TxnDate": _TRANSACTION.TxnDate,
+            "DocNumber": DocNumber,
+            "TxnDate": TxnDate,
             "PrivateNote": _TRANSACTION.generalDescription,
-            "Amount": _COGS
+            "TotalAmt": _COGS
         });
 
         console.log('%%%%%%%');

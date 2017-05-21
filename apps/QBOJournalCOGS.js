@@ -5,7 +5,7 @@ function QBOJournalCOGS(object) {
     {
       "Id": "0",
       //"Description": "Craig TV Console",
-      "Amount": object.Amount,
+      "Amount": object["TotalAmt"],
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
         "PostingType": "Credit",
@@ -23,7 +23,7 @@ function QBOJournalCOGS(object) {
     {
       "Id": "1",
       //"Description": "Craig TV Console",
-      "Amount": object.Amount,
+      "Amount": object["TotalAmt"],
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
         "PostingType": "Debit",
