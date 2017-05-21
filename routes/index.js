@@ -86,6 +86,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
 
     var _TRANSACTION, _CUSTOMER, _SALESRECEIPT;
+    var _CREATED_SALES_RECEIPT, _CREATED_EXPENSE, _CREATED_JOURNAL;
 
     DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
 
@@ -298,6 +299,10 @@ router.post('/create-sales-receipt', function(req, res) {
 
     }).spread(function(salesReceipt, expense, journalEntry) {
 
+        _CREATED_SALES_RECEIPT = salesReceipt;
+        _CREATED_EXPENSE = expense;
+        _CREATED_JOURNAL = journalEntry;
+
         var errors = []
         
 
@@ -309,7 +314,6 @@ router.post('/create-sales-receipt', function(req, res) {
         }
 
         if (errors.length > 0) {
-            deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalEntry);
             throw errors;
         }
 
@@ -332,32 +336,32 @@ router.post('/create-sales-receipt', function(req, res) {
         if (typeof err === "object") console.log(JSON.stringify(err));
         if (D.get(err, 'stack')) console.log(err.stack);
 
-        res.status(500).send(JSON.stringify(err));
+        return deleteAllEntriesIfSomeErrorsOccur(_CREATED_SALES_RECEIPT, _CREATED_EXPENSE, _CREATED_JOURNAL, res);
 
     });
 
     
 
-    function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
+    function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS, res) {
         return PROMISE.resolve().then(function() {
 
             var deleteSalesReceipt, deleteExpense, deleteJournalCOGS;
 
-            if (salesReceipt) {
+            if (D.get(salesReceipt, "Id")) {
                 var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({ 
                     "Id": salesReceipt.Id,
                     "SyncToken": salesReceipt.SyncToken
                 });
             }
 
-            if (expense) {
+            if (D.get(expense, "Id")) {
                 var deleteExpense = QBO.deletePurchaseAsync({
                     "Id": expense.Id,
                     "SyncToken": expense.SyncToken
                 });
             }
 
-            if (journalCOGS) {
+            if (D.get(journalCOGS, "Id")) {
                 var deleteJournalCOGS = QBO.deleteJournalEntryAsync({
                     "Id": journalCOGS.Id,
                     "SyncToken": journalCOGS.SyncToken
@@ -372,7 +376,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
         }).catch(function(e) {
             console.log('CRITCAL: Errors occured when reversing entries.');
-            throw e;
+            res.status(500).send(JSON.stringify(err));
         });
     }
 });
