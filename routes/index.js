@@ -309,7 +309,7 @@ router.post('/create-sales-receipt', function(req, res) {
         }
 
         if (errors.length > 0) {
-            deleteAllEntriesItSomeErrorsOccur(salesReceipt, expense, journalEntry);
+            deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalEntry);
             throw errors;
         }
 
@@ -317,7 +317,7 @@ router.post('/create-sales-receipt', function(req, res) {
         _TRANSACTION.status = 'completed';
         return _TRANSACTION.save().catch(function(err) {
             console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
-            return deleteAllEntriesItSomeErrorsOccur(salesReceipt, expense, journalEntry);
+            return deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalEntry);
         });
 
     })
