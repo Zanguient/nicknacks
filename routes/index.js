@@ -10,20 +10,39 @@ router.get('/', function (req, res, next) {
     res.render('index', {title: 'Express'});
 });
 
+router.get('/panel', funciton(req, res, next) {
+
+    var where = {};
+
+    if (req.query.filter === "all") {
+
+    } else {
+        where.status = 'pending';
+    }
+
+    DB.Transaction.find({
+        where: where
+    }).then(function(transactions) {
+        res.render('index', transactions);
+    });
+});
+
 
 router.post('/charge-succeeded', function (req, res) {
 
-    return console.log(req.body);
+    if(D.get(req.body.livemode) === false) {
+        console.log(req.body);
+        return res.send({ success: true });
+    }
 
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
     // get sales order number
-    // var salesOrderNumber = req.body.data.object.description.split(','))[0].trim();
-    //salesOrderNumber = salesOrderNumber.replace('#', '');
+    var salesOrderNumber = req.body.data.object.description.split(','))[0].trim();
 
     // save the data
     return DB.Transaction.create({
-        transaction: req.body,
+        data: req.body,
         status: 'pending',
         eventType: 'charge-succeeded',
         salesOrderNumber: salesOrderNumber
@@ -36,8 +55,7 @@ router.post('/charge-succeeded', function (req, res) {
     })
     .catch(function (err) {
         // log the error
-        console.log(err);
-
+        console.log("CRITICAL: Failed to capture stripe charge with error: " + err);
         res.status(500).send();
     });
 
@@ -280,20 +298,23 @@ router.post('/create-sales-receipt', function(req, res) {
         var createExpense = QBO.createPurchaseAsync(expense);
         promises.push(createExpense);
 
-        // create journal entry
-        var Entry = require('../apps/QBOJournalCOGS');
-        var entry = Entry({
-            "DocNumber": DocNumber,
-            "TxnDate": TxnDate,
-            "PrivateNote": _TRANSACTION.generalDescription,
-            "TotalAmt": _COGS
-        });
+        if (_COGS === 0) {
 
-        console.log('%%%%%%%');
-        console.log(entry);
-        var createJournalCOGS = QBO.createJournalEntryAsync(entry);
-        promises.push(createJournalCOGS);
+            promises.push(false);
 
+        } else {
+            // create journal entry
+            var Entry = require('../apps/QBOJournalCOGS');
+            var entry = Entry({
+                "DocNumber": DocNumber,
+                "TxnDate": TxnDate,
+                "PrivateNote": _TRANSACTION.generalDescription,
+                "TotalAmt": _COGS
+            });
+
+            var createJournalCOGS = QBO.createJournalEntryAsync(entry);
+            promises.push(createJournalCOGS);
+        }
         return promises;
 
     }).spread(function(salesReceipt, expense, journalEntry) {
@@ -318,6 +339,10 @@ router.post('/create-sales-receipt', function(req, res) {
 
         //then finally update the entry as completed.
         _TRANSACTION.status = 'completed';
+        if (D.get(_CREATED_SALES_RECEIPT, "Id")) _TRANSACTION.qboSalesReceiptId = D.get(_CREATED_SALES_RECEIPT);
+        if (D.get(_CREATED_EXPENSE, "Id")) _TRANSACTION.qboStripeExpenseId = D.get(_CREATED_EXPENSE, "Id");
+        if (D.get(_CREATED_JOURNAL, "Id")) _TRANSACTION.qboCOGSJournalId = D.get(_CREATED_JOURNAL, "Id");
+
         return _TRANSACTION.save().catch(function(err) {
             console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
             
