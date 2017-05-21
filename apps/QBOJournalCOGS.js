@@ -44,4 +44,4 @@ function QBOJournalCOGS(object) {
 
 }
 
-module.exports = QBOJournalCOGSObject;
+module.exports = QBOJournalCOGS;
