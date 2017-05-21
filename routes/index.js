@@ -23,7 +23,9 @@ router.get('/panel', function(req, res, next) {
     DB.Transaction.find({
         where: where
     }).then(function(transactions) {
-        res.render('index', transactions);
+        res.render('panel', { 
+            data: transactions 
+        });
     });
 });
 
