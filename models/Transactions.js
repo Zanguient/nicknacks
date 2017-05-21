@@ -57,7 +57,8 @@ function Transaction(sequelize, DataTypes) {
                 return this.data.data.object.id;
             },
             generalDescription: function() {
-             return this.data.data.object.description + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
+                var self = this;
+                return this.data.data.object.description + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
             },
             salesOrderNumber: function() {
                 try {
