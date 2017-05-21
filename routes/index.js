@@ -81,7 +81,7 @@ router.post('/create-sales-receipt', function(req, res) {
     if ([undefined, null, false].indexOf(COGS) > -1 || isNaN(COGS)) {
         return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}});
     } 
-    if (decimalPlaces(COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
+    if (decimalPlaces(_COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
 
 
 
