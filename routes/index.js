@@ -347,21 +347,21 @@ router.post('/create-sales-receipt', function(req, res) {
 
             var deleteSalesReceipt, deleteExpense, deleteJournalCOGS;
 
-            if (D.get(salesReceipt, "Id")) {
+            if (!D.get(salesReceipt, "Fault")) {
                 var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({ 
                     "Id": salesReceipt.Id,
                     "SyncToken": salesReceipt.SyncToken
                 });
             }
 
-            if (D.get(expense, "Id")) {
+            if (!D.get(expense, "Fault")) {
                 var deleteExpense = QBO.deletePurchaseAsync({
                     "Id": expense.Id,
                     "SyncToken": expense.SyncToken
                 });
             }
 
-            if (D.get(journalCOGS, "Id")) {
+            if (!D.get(journalCOGS, "Fault")) {
                 var deleteJournalCOGS = QBO.deleteJournalEntryAsync({
                     "Id": journalCOGS.Id,
                     "SyncToken": journalCOGS.SyncToken
