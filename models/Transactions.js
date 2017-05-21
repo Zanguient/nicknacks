@@ -57,7 +57,7 @@ function Transaction(sequelize, DataTypes) {
                 return this.data.data.object.id;
             },
             generalDescription: function() {
-             return this.data.data.object.description;   
+             return this.data.data.object.description + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
             },
             salesOrderNumber: function() {
                 try {
@@ -70,7 +70,7 @@ function Transaction(sequelize, DataTypes) {
             },
             salesOrderNumber: function() {
                 try {
-                    var orderNumber = (this.data.data.object.description.split(','))[0].trim();
+                    var orderNumber = '#' + (this.data.data.object.description.split(','))[0].trim();
                 } catch(err) {
                     console.log('CRITICAL: Transaction model unable to parse Sales Order Number.');
                     console.log(err);

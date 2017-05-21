@@ -71,8 +71,35 @@ router.get('/test', function(req, res) {
 
 router.post('/create-sales-receipt', function(req, res) {
 
+    // request checking
+    if ([undefined, null, false].indexOf(req.body.transactionID) || isNaN(parseInt(req.body.transactionID))) {
+        return res.status(400).send({ success: false, error: { message: '`transactionID is missing or invalid.'}});
+    } 
+
+    var decimalPlaces = require('../apps/decimalPlaces');
+    var _COGS = parseFloat(req.body.COGS);
+    if ([undefined, null, false].indexOf(COGS) || isNaN(COGS)) {
+        return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}});
+    } 
+    if (decimalPlaces(COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
+
+
+
     var _TRANSACTION, _CUSTOMER, _SALESRECEIPT;
+
     DB.Transaction.findById(req.body.transactionID).then(function(transaction) {
+
+        if (!transaction) {
+            return res.status(400).send({
+                success: false,
+                error: {
+                    message: 'Unable to find transaction using `transactionID` provided',
+                    hideMessage: false,
+                    debug: {}
+                }
+            });
+        }
+        
 
         _TRANSACTION = transaction;
 
@@ -237,6 +264,7 @@ router.post('/create-sales-receipt', function(req, res) {
             // convert totalAmount to 100s and take 3.4%, round off, then convert back to 2 decimals, add 50 cents
             "Amount": Math.round(_TRANSACTION.totalAmount * 100 * 0.034)/100 + 0.50,
             "DetailType": "AccountBasedExpenseLineDetail",
+            "Description": "SO: " + _TRANSACTION.salesOrderNumber + ", Name: " + _TRANSACTION.customerName + ", Email: " + _TRANSACTION.customerEmail,
             "AccountBasedExpenseLineDetail": {
               "AccountRef": {
                 "value": "33",
@@ -249,31 +277,52 @@ router.post('/create-sales-receipt', function(req, res) {
             }
           }
         ];
-        var createExpense = QBO.createPurchase(expense);
+        var createExpense = QBO.createPurchaseAsync(expense);
         promises.push(createExpense);
 
         // create journal entry
+        var Entry = require('../apps/QBOJournalCOGS');
+        var entry = Entry({
+            "DocNumber": _TRANSACTION.salesOrderNumber,
+            "TxnDate": _TRANSACTION.TxnDate,
+            "PrivateNote": _TRANSACTION.generalDescription,
+            "Amount": _COGS
+        });
 
+        console.log('%%%%%%%');
+        console.log(entry);
+        var createJournalCOGS = QBO.createJournalEntryAsyn(entry);
+        promises.push(createJournalCOGS);
 
         return promises;
 
-    }).spread(function(salesReceipt, expense) {
-        console.log(expense);
+    }).spread(function(salesReceipt, expense, journalEntry) {
 
         var errors = []
         
 
         // pushing errors
-        if (D.get(salesReceipt, 'Fault')) errors.push(salesReceipt);
+        var elements = [ salesReceipt, expense, journalEntry];
+        for (var i = 0; i < elements.length; i++) {
+            var element = elements[i];
+            if (D.get(element, 'Fault')) errors.push(element);
+        }
 
         if (errors.length > 0) {
-            // deleteAllEntriesItSomeErrorsOccur
+            deleteAllEntriesItSomeErrorsOccur(salesReceipt, expense, journalEntry);
             throw errors;
         }
 
-
         //then finally update the entry as completed.
+        _TRANSACTION.status = 'completed';
+        return _TRANSACTION.save().catch(function(err) {
+            console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
+            return deleteAllEntriesItSomeErrorsOccur(salesReceipt, expense, journalEntry);
+        });
 
+    })
+    .then(function(transaction) {
+        res.send({ success: true });
     })
     .catch(function (err) {
         // log the error
@@ -289,7 +338,42 @@ router.post('/create-sales-receipt', function(req, res) {
     
 
     function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
+        return PROMISE.resolve().then(function() {
 
+            var deleteSalesReceipt, deleteExpense, deleteJournalCOGS;
+
+            if (salesReceipt) {
+                var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({ 
+                    "Id": salesReceipt.Id,
+                    "SyncToken": salesReceipt.SyncToken
+                });
+            }
+
+            if (deleteExpense) {
+                var deleteExpense = QBO.deletePurchaseAsync({
+                    "Id": expense.Id,
+                    "SyncToken": expense.SyncToken
+                });
+            }
+
+            if (deleteJournalCOGS) {
+                var deleteJournalCOGS = QBO.deleteJournalCOGSAsync({
+                    "Id": journalCOGS.Id,
+                    "SyncToken": journalCOGS.SyncToken
+                });
+            }
+
+            return [ 
+                deleteSalesReceipt, 
+                deleteExpense, 
+                deleteJournalCOGS 
+            ];
+
+        }).catch(function(e) {
+            console.log('CRITCAL: Errors occured when reversing entries.');
+            console.log(JSON.stringify(e));
+            res.status(500).send(JSON.stringify(e));
+        });
     }
 });
 
