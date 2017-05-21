@@ -12,12 +12,13 @@ function QBOJournalCOGS(object) {
         "AccountRef": {
           "value": "8",
           "name": "Inventory"
-        },
-        "TaxCodeRef": {
-          "value": "17"
-        },
-        "TaxApplicableOn": "Purchase",
-        //"TaxAmount": 0.0
+        }
+        // ,
+        // "TaxCodeRef": {
+        //   "value": "17"
+        // },
+        // "TaxApplicableOn": "Purchase",
+        // "TaxAmount": 0.0
       }
     },
     {
@@ -30,33 +31,18 @@ function QBOJournalCOGS(object) {
         "AccountRef": {
           "value": "25",
           "name": "Cost of Sales"
-        },
-        "TaxCodeRef": {
-          "value": "17"
-        },
-        "TaxApplicableOn": "Purchase",
-        //"TaxAmount": 0.0
+        }
+        // ,
+        // "TaxCodeRef": {
+        //   "value": "17"
+        // },
+        // "TaxApplicableOn": "Purchase",
+        // //"TaxAmount": 0.0
       }
     }
   ];
 
-  QBOJournalCOGSObject.TxnTaxDetail =  {
-    "TaxLine": [
-      {
-        //"Amount": 0,
-        "DetailType": "TaxLineDetail",
-        "TaxLineDetail": {
-          "TaxRateRef": {
-            "value": "15"
-          },
-          "PercentBased": true,
-          "TaxPercent": 0
-          //,
-          //"NetAmountTaxable": 0
-        }
-      }
-    ]
-  };
+  //QBOJournalCOGSObject.TxnTaxDetail =  {};
 
   
   return QBOJournalCOGSObject;
