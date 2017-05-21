@@ -15,8 +15,7 @@ function QBOJournalCOGS(object) {
         },
         "TaxCodeRef": {
           "value": "17"
-        }
-        //,
+        },
         "TaxApplicableOn": "Purchase",
         //"TaxAmount": 0.0
       }
@@ -34,8 +33,7 @@ function QBOJournalCOGS(object) {
         },
         "TaxCodeRef": {
           "value": "17"
-        }
-        //,
+        },
         "TaxApplicableOn": "Purchase",
         //"TaxAmount": 0.0
       }

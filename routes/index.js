@@ -333,8 +333,11 @@ router.post('/create-sales-receipt', function(req, res) {
         // log the error
 
         console.log('CRITICAL: ' + err);
+
         if (typeof err === "object") console.log(JSON.stringify(err));
         if (D.get(err, 'stack')) console.log(err.stack);
+
+        console.log('INFO: Reversing entries...');
 
         return deleteAllEntriesIfSomeErrorsOccur(_CREATED_SALES_RECEIPT, _CREATED_EXPENSE, _CREATED_JOURNAL, res);
 
@@ -374,7 +377,7 @@ router.post('/create-sales-receipt', function(req, res) {
                 deleteJournalCOGS 
             ];
 
-        }).catch(function(e) {
+        }).catch(function(err) {
             console.log('CRITCAL: Errors occured when reversing entries.');
             res.status(500).send(JSON.stringify(err));
         });
