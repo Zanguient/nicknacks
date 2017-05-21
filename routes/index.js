@@ -349,14 +349,14 @@ router.post('/create-sales-receipt', function(req, res) {
                 });
             }
 
-            if (deleteExpense) {
+            if (expense) {
                 var deleteExpense = QBO.deletePurchaseAsync({
                     "Id": expense.Id,
                     "SyncToken": expense.SyncToken
                 });
             }
 
-            if (deleteJournalCOGS) {
+            if (journalCOGS) {
                 var deleteJournalCOGS = QBO.deleteJournalCOGSAsync({
                     "Id": journalCOGS.Id,
                     "SyncToken": journalCOGS.SyncToken
