@@ -41,21 +41,22 @@ function QBOJournalCOGS(object) {
   ];
 
   QBOJournalCOGSObject.TxnTaxDetail =  {
-          "TaxLine": [
-            {
-              //"Amount": 0,
-              "DetailType": "TaxLineDetail",
-              "TaxLineDetail": {
-                "TaxRateRef": {
-                  "value": "15"
-                },
-                "PercentBased": true,
-                "TaxPercent": 0
-                //,
-                //"NetAmountTaxable": 0
-              }
-            }
-          ];
+    "TaxLine": [
+      {
+        //"Amount": 0,
+        "DetailType": "TaxLineDetail",
+        "TaxLineDetail": {
+          "TaxRateRef": {
+            "value": "15"
+          },
+          "PercentBased": true,
+          "TaxPercent": 0
+          //,
+          //"NetAmountTaxable": 0
+        }
+      }
+    ]
+  };
 
   
   return QBOJournalCOGSObject;
