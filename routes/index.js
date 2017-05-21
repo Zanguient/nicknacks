@@ -291,7 +291,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
         console.log('%%%%%%%');
         console.log(entry);
-        var createJournalCOGS = QBO.createJournalEntryAsyn(entry);
+        var createJournalCOGS = QBO.createJournalEntryAsync(entry);
         promises.push(createJournalCOGS);
 
         return promises;
