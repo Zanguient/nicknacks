@@ -38,7 +38,14 @@ router.post('/charge-succeeded', function (req, res) {
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
     // get sales order number
-    var salesOrderNumber = req.body.data.object.description.split(','))[0].trim();
+    var salesOrderNumber = D.get(req, 'body.data.object.description');
+
+    if(!salesOrderNumber) {
+        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
+    } else {
+        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
+    }
+    
 
     // save the data
     return DB.Transaction.create({
