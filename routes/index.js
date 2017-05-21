@@ -10,7 +10,7 @@ router.get('/', function (req, res, next) {
     res.render('index', {title: 'Express'});
 });
 
-router.get('/panel', funciton(req, res, next) {
+router.get('/panel', function(req, res, next) {
 
     var where = {};
 
