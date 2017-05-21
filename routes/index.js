@@ -72,13 +72,13 @@ router.get('/test', function(req, res) {
 router.post('/create-sales-receipt', function(req, res) {
 
     // request checking
-    if ([undefined, null, false].indexOf(req.body.transactionID) || isNaN(parseInt(req.body.transactionID))) {
+    if ([undefined, null, false].indexOf(req.body.transactionID) > -1 || isNaN(parseInt(req.body.transactionID))) {
         return res.status(400).send({ success: false, error: { message: '`transactionID is missing or invalid.'}});
     } 
 
     var decimalPlaces = require('../apps/decimalPlaces');
     var _COGS = parseFloat(req.body.COGS);
-    if ([undefined, null, false].indexOf(COGS) || isNaN(COGS)) {
+    if ([undefined, null, false].indexOf(COGS) > -1 || isNaN(COGS)) {
         return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}});
     } 
     if (decimalPlaces(COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
