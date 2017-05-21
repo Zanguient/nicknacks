@@ -25,6 +25,10 @@ function Transaction(sequelize, DataTypes) {
                 'completed'
             ]
         },
+        salesOrderNumber: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         data: {
             type: DataTypes.JSON,
             allowNull: false,
@@ -34,6 +38,22 @@ function Transaction(sequelize, DataTypes) {
                 admin: true,
                 member: true
             }
+        },
+        qboSalesReceiptId: {
+            type: DataTypes.BIGINT,
+            allowNull: true
+        },
+        qboCOGSJournalId: {
+            type: DataTypes.BIGINT,
+            allowNull: true
+        },
+        qboStripeExpenseId: {
+            type: DataTypes.BIGINT,
+            allowNull: true
+        },
+        qboRefundJournalId: {
+            type: DataTypes.BIGINT,
+            allowNull: true
         }
     }, {
         timestamps: true,

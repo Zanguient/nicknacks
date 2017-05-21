@@ -13,13 +13,20 @@ router.get('/', function (req, res, next) {
 
 router.post('/charge-succeeded', function (req, res) {
 
+    return console.log(req.body);
+
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
+
+    // get sales order number
+    // var salesOrderNumber = req.body.data.object.description.split(','))[0].trim();
+    //salesOrderNumber = salesOrderNumber.replace('#', '');
 
     // save the data
     return DB.Transaction.create({
         transaction: req.body,
         status: 'pending',
-        eventType: 'charge-succeeded'
+        eventType: 'charge-succeeded',
+        salesOrderNumber: salesOrderNumber
     })
     .then(function (transaction) {
         // send success
@@ -60,14 +67,6 @@ router.post('/refunded', function (req, res) {
     });
 
 });
-
-router.get('/test', function(req, res) {
-    QBO.findAccountsAsync(function(_, accounts) {
-      accounts.QueryResponse.Account.forEach(function(account) {
-        console.log(account.Name)
-      })
-    })
-})
 
 router.post('/create-sales-receipt', function(req, res) {
 
