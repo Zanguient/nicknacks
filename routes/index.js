@@ -32,7 +32,7 @@ router.get('/panel', function(req, res, next) {
 
 router.post('/charge-succeeded', function (req, res) {
 
-    if(D.get(req.body.livemode) === false) {
+    if(D.get(req, 'body.livemode') === false) {
         console.log(req.body);
         return res.send({ success: true });
     }

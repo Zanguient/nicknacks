@@ -71,14 +71,16 @@ function Transaction(sequelize, DataTypes) {
                 return MOMENT.unix(D.get(self, 'data.data.object.created')).format('YYYY-MM-DD');
             },
             transactedCurrency: function() {
-                return this.data.data.object.currency;
+                var self = this;
+                return D.get(self, 'data.data.object.currency');
             },
             transactionReferenceCode: function() {
-                return this.data.data.object.id;
+                var self = this;
+                return D.get(self, 'data.data.object.id');
             },
             generalDescription: function() {
                 var self = this;
-                return this.data.data.object.description + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
+                return D.get(self 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
             },
             salesOrderNumber: function() {
                 try {
