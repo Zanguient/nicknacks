@@ -80,7 +80,7 @@ function Transaction(sequelize, DataTypes) {
             },
             generalDescription: function() {
                 var self = this;
-                return D.get(self 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
+                return D.get(self, 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
             },
             salesOrderNumber: function() {
                 try {
