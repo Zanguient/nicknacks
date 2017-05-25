@@ -20,11 +20,12 @@ router.get('/panel', function(req, res, next) {
         where.status = 'pending';
     }
 
-    DB.Transaction.find({
+    DB.Transaction.findAll({
         where: where
     }).then(function(transactions) {
-        res.render('panel', { 
-            data: transactions 
+ 
+       res.render('panel', { 
+            data: transactions
         });
     });
 });

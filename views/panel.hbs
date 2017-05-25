@@ -4,6 +4,8 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+
 </head>
 <body>
     <table class="table">
@@ -16,8 +18,49 @@
         </tr>
 
         {{#each data}}
-        <tr data={{this}}></tr>
+        <tr data-id="{{this.TransactionID}}">
+	    <td>{{this.salesOrderNumber}}</td>
+            <td>{{this.data.data.object.description}}</td>
+	    <td>{{this.transactionDateUnixTS}}</td>
+            <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
+            <td><button class="createSalesReceiptButton" type="button" data-id="{{this.TransactionID}}">Submit</button></td>
+        </tr>
         {{/each}}
     </table>
+
+    <script>
+    $('.createSalesReceiptButton').on('click', function() {
+	var self = this;
+        var transactionID = $(this).attr('data-id');
+        var COGSfield = $('input[data-id="' + transactionID + '"]');
+	var COGS = COGSfield.val();
+
+	if (COGS.length === 0) return alert('Please enter a valid COGS');
+
+        $(this).attr('disabled','disabled');
+        
+        var post = $.ajax({
+            type: "POST",
+            url: "create-sales-receipt",
+            data: { transactionID: transactionID, COGS: COGS }
+        });
+	
+	post.done(function(data) { 
+
+	   if(data.success) {
+                return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
+           }
+           self.removeAttr('disabled');
+           alert(JSON.stringify(data));
+	});
+
+        post.fail(function(data) {
+	    alert(JSON.stringify(data));
+	});
+
+
+
+    });
+    </script>
 </body>
 
