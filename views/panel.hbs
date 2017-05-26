@@ -23,7 +23,7 @@
             <td>{{this.data.data.object.description}}</td>
 	    <td>{{this.transactionDateUnixTS}}</td>
             <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
-            <td><button class="createSalesReceiptButton" type="button" data-id="{{this.TransactionID}}">Submit</button></td>
+            <td><button class="createSalesReceiptButton" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
         {{/each}}
     </table>
@@ -37,7 +37,8 @@
 
 	if (COGS.length === 0) return alert('Please enter a valid COGS');
 
-        $(this).attr('disabled','disabled');
+        $('span[data-id="' + transactionID + '"]').show()
+        $(this).hide();
         
         var post = $.ajax({
             type: "POST",
@@ -48,6 +49,8 @@
 	post.done(function(data) { 
 
 	   if(data.success) {
+                alert('success!');
+
                 return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
            }
            self.removeAttr('disabled');
