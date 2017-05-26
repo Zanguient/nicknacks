@@ -50,10 +50,9 @@
 
 	   if(data.success) {
                 alert('success!');
-
                 return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
            }
-           self.removeAttr('disabled');
+           self.show();
            alert(JSON.stringify(data));
 	});
 
