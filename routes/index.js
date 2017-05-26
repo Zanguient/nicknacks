@@ -219,6 +219,12 @@ router.post('/create-sales-receipt', function(req, res) {
                 throw customer;
             }
 
+        } else {
+            
+            _CUSTOMER = {
+                Id: customer.Id,
+                DisplayName: customer.DisplayName
+            };   
         }
 
         var promises = [];
