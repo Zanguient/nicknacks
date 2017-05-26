@@ -30,35 +30,40 @@
 
     <script>
     $('.createSalesReceiptButton').on('click', function() {
-	var self = this;
+
+    	var self = this;
         var transactionID = $(this).attr('data-id');
         var COGSfield = $('input[data-id="' + transactionID + '"]');
-	var COGS = COGSfield.val();
+    	var COGS = COGSfield.val();
+        var submittingSpan = $('span[data-id="' + transactionID + '"]').show();
 
-	if (COGS.length === 0) return alert('Please enter a valid COGS');
 
-        $('span[data-id="' + transactionID + '"]').show()
-        $(this).hide();
-        
-        var post = $.ajax({
-            type: "POST",
-            url: "create-sales-receipt",
-            data: { transactionID: transactionID, COGS: COGS }
-        });
-	
-	post.done(function(data) { 
+    	if (COGS.length === 0) return alert('Please enter a valid COGS');
 
-	   if(data.success) {
-                alert('success!');
-                return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
-           }
-           self.show();
-           alert(JSON.stringify(data));
-	});
+            submittingSpan.show();
+            $(this).hide();
+            
+            var post = $.ajax({
+                type: "POST",
+                url: "create-sales-receipt",
+                data: { transactionID: transactionID, COGS: COGS }
+            });
+    	
+    	post.done(function(data) { 
+
+    	   if(data.success) {
+                    alert('success!');
+                    return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
+               }
+               self.show();
+               alert(JSON.stringify(data));
+    	});
 
         post.fail(function(data) {
-	    alert(JSON.stringify(data));
-	});
+            self.show();
+            submittingSpan.hide();
+    	    alert(JSON.stringify(data));
+    	});
 
 
 
