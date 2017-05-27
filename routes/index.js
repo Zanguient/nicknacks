@@ -101,13 +101,13 @@ router.post('/refunded', function (req, res) {
         var stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(transaction.data);
 
         // create a journal entry to reduce stripe commission
-        QBO.createJournalEntryAsync({
-            "DocNumber": transaction.salesOrderNumber + '-R',
+        return QBO.createJournalEntryAsync({
+ //           "DocNumber": transaction.salesOrderNumber + '-R',
             "TxnDate": transaction.transactionDateQBOFormat,
             "Line": [{
                 // credit cash for refund
                 "Id": "0",
-                "Amount": D.get(req, 'body.data.object.amount_refunded'),
+                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
                     "PostingType": "Credit",
@@ -118,7 +118,7 @@ router.post('/refunded', function (req, res) {
                 }
             }, {
                 // debit sales refund
-                "Amount": D.get(req, 'body.data.object.amount_refunded'),
+                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
                     "PostingType": "Debit",
@@ -155,7 +155,8 @@ router.post('/refunded', function (req, res) {
 
     })
     .then(function(journalEntry) {
-
+console.log(journalEntry)
+console.log('$$$$$$')
         if (!journalEntry || D.get(journalEntry, 'Fault')) throw journalEntry;
 
         _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
