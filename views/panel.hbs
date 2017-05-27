@@ -14,6 +14,7 @@
             <th>Description</th>
             <th>Date of charge</th>
             <th>COGS</th>
+            <th>Note</th>
             <th>Submit</th>
         </tr>
 
@@ -23,6 +24,7 @@
             <td>{{this.data.data.object.description}}</td>
 	    <td>{{this.transactionDateQBOFormat}}</td>
             <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
+            <td><input type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
             <td><button class="createSalesReceiptButton" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
         {{/each}}
@@ -33,7 +35,9 @@
 
     	var self = this;
         var transactionID = $(this).attr('data-id');
-        var COGSfield = $('input[data-id="' + transactionID + '"]');
+        var COGSfield = $('input[name="COGS"][data-id="' + transactionID + '"]');
+        var privateNoteField = $('input[name="PrivateNote"][data-id="' + transactionID + '"]');
+        var privateNote = (typeof privateNoteField.val() === "string" && privateNoteField.length > 0) ? privateNoteField() || null;
     	var COGS = COGSfield.val();
         var submittingSpan = $('span[data-id="' + transactionID + '"]').show();
 

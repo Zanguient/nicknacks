@@ -371,6 +371,7 @@ router.post('/create-sales-receipt', function(req, res) {
         ];
 
         salesReceipt.TotalAmt = _TRANSACTION.totalAmount;
+        if (req.body.privateNote) salesReceipt.PrivateNote = req.body.privateNote;
 
         var createSalesReceipt = QBO.createSalesReceiptAsync(salesReceipt);
         promises.push(createSalesReceipt);
