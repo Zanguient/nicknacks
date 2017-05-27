@@ -75,6 +75,11 @@ router.post('/refunded', function (req, res) {
 
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
+    if(D.get(req, 'body.livemode') === false) {
+        console.log(req.body);
+        return res.send({ success: true });
+    }
+
     // get sales order number
     var salesOrderNumber = D.get(req, 'body.data.object.description');
 
@@ -102,7 +107,7 @@ router.post('/refunded', function (req, res) {
 
         // create a journal entry to reduce stripe commission
         return QBO.createJournalEntryAsync({
- //           "DocNumber": transaction.salesOrderNumber + '-R',
+            "DocNumber": transaction.salesOrderNumber + '-R',
             "TxnDate": transaction.transactionDateQBOFormat,
             "Line": [{
                 // credit cash for refund
@@ -155,8 +160,7 @@ router.post('/refunded', function (req, res) {
 
     })
     .then(function(journalEntry) {
-console.log(journalEntry)
-console.log('$$$$$$')
+
         if (!journalEntry || D.get(journalEntry, 'Fault')) throw journalEntry;
 
         _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
