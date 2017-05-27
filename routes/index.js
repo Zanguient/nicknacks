@@ -144,7 +144,7 @@ router.post('/refunded', function (req, res) {
                 "Amount": stripeCommissionReturned,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
-                    "PostingType": "Crebit",
+                    "PostingType": "Credit",
                     "AccountRef": {
                         "value": "33",
                         "name": "Stripe Charges"
