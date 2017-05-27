@@ -75,13 +75,96 @@ router.post('/refunded', function (req, res) {
 
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
+    // get sales order number
+    var salesOrderNumber = D.get(req, 'body.data.object.description');
+
+    if(!salesOrderNumber) {
+        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
+    } else {
+        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
+    }
+
+    var _TRANSACTION;
+
     // save the data
     return DB.Transaction.create({
-        transaction: req.body,
+        data: req.body,
         status: 'pending',
-        eventType: 'refunded'
+        eventType: 'refunded',
+        salesOrderNumber: salesOrderNumber
     })
     .then(function (transaction) {
+
+        _TRANSACTION = transaction;
+
+        var calculateStripeCommissionAmountOnRefund = require('../apps/calculateStripeCommissionAmountOnRefund');
+        var stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(transaction.data);
+
+        // create a journal entry to reduce stripe commission
+        QBO.createJournalEntryAsync({
+            "DocNumber": transaction.salesOrderNumber + '-R',
+            "TxnDate": transactionDateQBOFormat,
+            "Line": [{
+                // credit cash for refund
+                "Id": "0",
+                "Amount": D.get(req, 'body.data.object.amount_refunded'),
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Credit",
+                    "AccountRef": {
+                        "value": "31",
+                        "name": "Current"
+                    }
+                }
+            }, {
+                // debit sales refund
+                "Amount": D.get(req, 'body.data.object.amount_refunded'),
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Debit",
+                    "AccountRef": {
+                        "value": "30",
+                        "name": "Sales Refund"
+                    }
+                }
+            }, {
+                // debit current to adjust stripe commission
+                "Id": "1",
+                "Amount": stripeCommissionReturned,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Debit",
+                    "AccountRef": {
+                        "value": "31",
+                        "name": "Current"
+                    }
+                }
+            }, {
+                // credit to lower expenses
+                "Amount": stripeCommissionReturned,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Crebit",
+                    "AccountRef": {
+                        "value": "33",
+                        "name": "Stripe Charges"
+                    }
+                }
+            }]
+        });
+
+    })
+    .then(function(journalEntry) {
+
+        if (!journalEntry || D.get(journalEntry, 'Fault')) throw journalEntry;
+
+        _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
+        _TRANSACTION.status = "completed";
+
+        return _TRANSACTION.save();
+
+    })
+    .then(function(transaction) {
         // send success
         return res.send({
             success: true
@@ -220,7 +303,7 @@ router.post('/create-sales-receipt', function(req, res) {
             }
 
         } else {
-            
+
             _CUSTOMER = {
                 Id: customer.Id,
                 DisplayName: customer.DisplayName
