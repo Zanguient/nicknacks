@@ -103,7 +103,7 @@ router.post('/refunded', function (req, res) {
         // create a journal entry to reduce stripe commission
         QBO.createJournalEntryAsync({
             "DocNumber": transaction.salesOrderNumber + '-R',
-            "TxnDate": transactionDateQBOFormat,
+            "TxnDate": transaction.transactionDateQBOFormat,
             "Line": [{
                 // credit cash for refund
                 "Id": "0",
