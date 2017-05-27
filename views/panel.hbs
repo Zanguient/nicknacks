@@ -50,7 +50,7 @@
             var post = $.ajax({
                 type: "POST",
                 url: "create-sales-receipt",
-                data: { transactionID: transactionID, COGS: COGS }
+                data: { transactionID: transactionID, COGS: COGS, privateNote: privateNote }
             });
     	
     	post.done(function(data) { 
