@@ -37,7 +37,7 @@
         var transactionID = $(this).attr('data-id');
         var COGSfield = $('input[name="COGS"][data-id="' + transactionID + '"]');
         var privateNoteField = $('input[name="PrivateNote"][data-id="' + transactionID + '"]');
-        var privateNote = (typeof privateNoteField.val() === "string" && privateNoteField.length > 0) ? privateNoteField() || null;
+        var privateNote = (typeof privateNoteField.val() === "string" && privateNoteField.length > 0) ? privateNoteField.val() : null;
     	var COGS = COGSfield.val();
         var submittingSpan = $('span[data-id="' + transactionID + '"]').show();
 
