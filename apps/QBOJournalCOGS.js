@@ -4,7 +4,7 @@ function QBOJournalCOGS(object) {
   QBOJournalCOGSObject.Line = [
     {
       "Id": "0",
-      //"Description": "Craig TV Console",
+      "Description": "COGS: " + _TRANSACTION.generalDescription + "(" + object.TotalAmt + ")",
       "Amount": object["TotalAmt"],
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
@@ -23,7 +23,7 @@ function QBOJournalCOGS(object) {
     },
     {
       "Id": "1",
-      //"Description": "Craig TV Console",
+      "Description": "COGS: " + _TRANSACTION.generalDescription + "(" + object.TotalAmt + ")",
       "Amount": object["TotalAmt"],
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
