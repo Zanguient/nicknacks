@@ -7,6 +7,6 @@ a {
   color: #00B7FF;
 }
 
-table td {
+table td, table th {
     padding: 15px;
 }
