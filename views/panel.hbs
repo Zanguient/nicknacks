@@ -1,7 +1,8 @@
-
+    
     <h1>Pending sales receipts</h1>
     <table class="table-striped">
         <tr>
+            <th>No.</th>
             <th>SO#</th>
             <th>Description</th>
             <th>Date of charge</th>
@@ -10,35 +11,38 @@
             <th>Submit</th>
         </tr>
 
-        {{ #each data.sales }}
+        {{#each data.sales}}
         <tr data-id="{{this.TransactionID}}">
-	    <td>{{this.salesOrderNumber}}</td>
+            <td>{{@index}}</td>
+    	    <td>{{this.salesOrderNumber}}</td>
             <td>{{this.data.data.object.description}}</td>
-	    <td>{{this.transactionDateQBOFormat}}</td>
+    	    <td>{{this.transactionDateQBOFormat}}</td>
             <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
             <td><input type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
             <td><button class="createSalesReceiptButton btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
-        {{ /each }}
+        {{/each}}
     </table>
 
-    <h1>Pass payouts</h1>
+    <h1>Past payouts</h1>
     <table class="table-striped">
         <tr>
+            <th>No.</th>
             <th>eventId</th>
             <th>Date of payout</th>
             <th>Amount</th>
             <th>status</th>
         </tr>
 
-        {{ #each data.payouts }}
-        <tr data-id="{{this.TransactionID}}">
+        {{#each data.payouts}}
+        <tr>
+            <td>{{@index}}</td>
             <td>{{this.data.id}}</td>
             <td>{{this.payoutPaidDateQBOFormat}}</td>
             <td>{{this.amount}}</td>
             <td>{{this.status}}</td>
         </tr>
-        {{ /each }}
+        {{/each}}
     </table>
 
     <script>
