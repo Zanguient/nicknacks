@@ -12,23 +12,50 @@ router.get('/', function (req, res, next) {
 
 router.get('/panel', function(req, res, next) {
 
-    var where = {};
+    var optionsForTransaction = {
+        where: {},
+        order: [['TransactionID', 'DESC']]
+    };
+    var optionsForPayoutPaid = {
+        where :{},
+        limit: 20,
+        order: [['PayoutPaidID', 'DESC']]
+    };
 
     if (req.query.filter === "all") {
 
+        delete optionsForPayoutPaid.limit;
+
     } else {
-        where.status = 'pending';
+
+        optionsForTransaction.where.status = 'pending';
+
     }
 
-    DB.Transaction.findAll({
-        where: where
-    }).then(function(transactions) {
- 
-       res.render('panel', { 
-            data: transactions
+
+    PROMISE.resolve().then(function() {
+
+        return [
+
+            DB.Transaction.findAll(optionsForTransaction),
+            DB.PayoutPaid.findAll(optionsForPayoutPaid)
+
+        ];
+
+    }).then(function(transactions, payouts) {
+        
+        res.render('panel', { 
+            data: {
+                sales: transactions,
+                payouts: payouts
+            }   
         });
+
+    }).catch(function(err) {
+        res.send(JSON.stringify(err));
     });
 
+    
 });
 
 
