@@ -68,10 +68,10 @@ var QBOSalesReceiptModel = {
     },
     //"PaymentRefNum": "10264",
 
-    // default to current account
+    // default to stripe transit account
     "DepositToAccountRef": {
-      "value": "31",
-      "name": "Current"
+      "value": "46",
+      "name": "Stripe Transit"
     }
 }
 module.exports = QBOSalesReceiptModel;

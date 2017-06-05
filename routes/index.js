@@ -28,6 +28,7 @@ router.get('/panel', function(req, res, next) {
             data: transactions
         });
     });
+    
 });
 
 
@@ -110,15 +111,15 @@ router.post('/refunded', function (req, res) {
             "DocNumber": transaction.salesOrderNumber + '-R',
             "TxnDate": transaction.transactionDateQBOFormat,
             "Line": [{
-                // credit cash for refund
+                // credit stripe transit cash for refund
                 "Id": "0",
                 "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
                     "PostingType": "Credit",
                     "AccountRef": {
-                        "value": "31",
-                        "name": "Current"
+                        "value": "46",
+                        "name": "Stripe Transit"
                     }
                 }
             }, {
@@ -133,15 +134,15 @@ router.post('/refunded', function (req, res) {
                     }
                 }
             }, {
-                // debit current to adjust stripe commission
+                // debit stripe transit to adjust stripe commission
                 "Id": "1",
                 "Amount": stripeCommissionReturned,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
                     "PostingType": "Debit",
                     "AccountRef": {
-                        "value": "31",
-                        "name": "Current"
+                        "value": "46",
+                        "name": "Stripe Transit"
                     }
                 }
             }, {
@@ -511,6 +512,46 @@ router.post('/create-sales-receipt', function(req, res) {
             res.status(500).send(JSON.stringify(err));
         });
     }
+});
+
+router.post('/payout-paid', function (req, res) {
+
+    if(D.get(req, 'body.livemode') === false) {
+        console.log(req.body);
+        return res.send({ success: true });
+    }
+
+    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
+
+    // get sales order number
+    var salesOrderNumber = D.get(req, 'body.data.object.description');
+
+    if(!salesOrderNumber) {
+        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
+    } else {
+        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
+    }
+    
+
+    // save the data
+    return DB.Transaction.create({
+        data: req.body,
+        status: 'pending',
+        eventType: 'payout-paid',
+        salesOrderNumber: salesOrderNumber
+    })
+    .then(function (transaction) {
+        // send success
+        return res.send({
+            success: true
+        });
+    })
+    .catch(function (err) {
+        // log the error
+        console.log("CRITICAL: Failed to capture stripe charge with error: " + err);
+        res.status(500).send();
+    });
+
 });
 
 
