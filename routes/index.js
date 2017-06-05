@@ -528,11 +528,10 @@ router.post('/payout-paid', function (req, res) {
 
 
     // save the data
-    var _TRANSACTION;
-    return DB.Transaction.create({
+    var _PAYOUTPAID;
+    return DB.PayoutPaid.create({
         data: req.body,
         status: 'pending',
-        eventType: 'payout-paid',
         eventId: req.body.id
     })
     .then(function (transaction) {

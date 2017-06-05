@@ -43,6 +43,7 @@ function QBOJournalPayoutPaid(object) {
   ];
 
   QBOJournalObject.PrivateNote = "Stripe Payout";
+  QBOJournalObject.TxnDate = MOMENT.unix(D.get(QBOJournalObject, 'arrival_date')).format('YYYY-MM-DD')
 
   //QBOJournalCOGSObject.TxnTaxDetail =  {};
 
