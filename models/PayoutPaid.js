@@ -1,7 +1,7 @@
-function PayOutPaid(sequelize, DataTypes) {
+function PayoutPaid(sequelize, DataTypes) {
 
-    var PayOutPaid = sequelize.define('PayOutPaid', {
-        PayOutPaidID: {
+    var PayoutPaid = sequelize.define('PayoutPaid', {
+        PayoutPaidID: {
             type: DataTypes.BIGINT,
             primaryKey: true,
             allowNull: false,
@@ -33,16 +33,16 @@ function PayOutPaid(sequelize, DataTypes) {
         }
     }, {
         timestamps: true,
-        tableName: 'PayOutPaid',
+        tableName: 'PayoutPaid',
         instanceMethods: {},
         getterMethods: {
 
-            PayOutPaidDateUnixTS: function() {
+            PayoutPaidDateUnixTS: function() {
                 var self = this;
                 return D.get(self, 'data.data.object.arrival_date');
 
             },
-            PayOutPaidDateQBOFormat: function() {
+            PayoutPaidDateQBOFormat: function() {
                 var self = this;
                 return MOMENT.unix(D.get(self, 'data.data.object.arrival_date')).format('YYYY-MM-DD');
             },
@@ -51,7 +51,7 @@ function PayOutPaid(sequelize, DataTypes) {
                 return D.get(self, 'data.data.object.currency');
             },
             amount: function() {
-                if (typeof this.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe PayOutPaid missing `amount`.');
+                if (typeof this.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe PayoutPaid missing `amount`.');
                 
                 // stripe amount is in cents. need to divide by 100;
                 return parseInt(this.data.data.object.amount)/100;
@@ -59,7 +59,7 @@ function PayOutPaid(sequelize, DataTypes) {
         },
         classMethods: {}
     });
-    return PayOutPaid;
+    return PayoutPaid;
 };
 
-module.exports = PayOutPaid;
+module.exports = PayoutPaid;
