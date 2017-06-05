@@ -8,7 +8,7 @@ function PayoutPaid(sequelize, DataTypes) {
             autoIncrement: true
         },
         eventId: {
-            type: DataTypes.BIGINT,
+            type: DataTypes.STRING,
             allowNull: true
         },
         status: {

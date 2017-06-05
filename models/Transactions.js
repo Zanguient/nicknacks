@@ -56,7 +56,7 @@ function Transaction(sequelize, DataTypes) {
             allowNull: true
         },
         eventId: {
-            type: DataTypes.BIGINT,
+            type: DataTypes.STRING,
             allowNull: true
         }
     }, {
