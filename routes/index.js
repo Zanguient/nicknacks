@@ -42,7 +42,7 @@ router.get('/panel', function(req, res, next) {
 
         ];
 
-    }).then(function(transactions, payouts) {
+    }).spread(function(transactions, payouts) {
         
         res.render('panel', { 
             data: {
