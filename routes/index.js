@@ -139,13 +139,14 @@ router.post('/refunded', function (req, res) {
         return QBO.createJournalEntryAsync({
             "DocNumber": transaction.salesOrderNumber + '-R',
             "TxnDate": transaction.transactionDateQBOFormat,
-            "PrivateNote": "Refund for transaction.salesOrderNumber",
+            "PrivateNote": "Refund for " + transaction.salesOrderNumber,
             "Line": [{
                 // credit stripe transit cash for refund
                 "Id": "0",
                 "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
+                    // take out from stripe transit account
                     "PostingType": "Credit",
                     "AccountRef": {
                         "value": "46",
@@ -164,7 +165,7 @@ router.post('/refunded', function (req, res) {
                     }
                 }
             }, {
-                // debit stripe transit to adjust stripe commission
+                // debit stripe transit because stripe will return some money in refund.
                 "Id": "1",
                 "Amount": stripeCommissionReturned,
                 "DetailType": "JournalEntryLineDetail",
@@ -176,7 +177,7 @@ router.post('/refunded', function (req, res) {
                     }
                 }
             }, {
-                // credit to lower expenses
+                // credit expenses to lower expenses from recovered stripe commission
                 "Amount": stripeCommissionReturned,
                 "DetailType": "JournalEntryLineDetail",
                 "JournalEntryLineDetail": {
