@@ -54,6 +54,10 @@ function Transaction(sequelize, DataTypes) {
         qboRefundJournalId: {
             type: DataTypes.BIGINT,
             allowNull: true
+        },
+        eventId: {
+            type: DataTypes.BIGINT,
+            allowNull: true
         }
     }, {
         timestamps: true,

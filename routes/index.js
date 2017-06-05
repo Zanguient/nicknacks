@@ -28,7 +28,7 @@ router.get('/panel', function(req, res, next) {
             data: transactions
         });
     });
-    
+
 });
 
 
@@ -56,7 +56,8 @@ router.post('/charge-succeeded', function (req, res) {
         data: req.body,
         status: 'pending',
         eventType: 'charge-succeeded',
-        salesOrderNumber: salesOrderNumber
+        salesOrderNumber: salesOrderNumber,
+        eventId: req.body.id
     })
     .then(function (transaction) {
         // send success
@@ -97,7 +98,8 @@ router.post('/refunded', function (req, res) {
         data: req.body,
         status: 'pending',
         eventType: 'refunded',
-        salesOrderNumber: salesOrderNumber
+        salesOrderNumber: salesOrderNumber,
+        eventId: req.body.id
     })
     .then(function (transaction) {
 
@@ -110,6 +112,7 @@ router.post('/refunded', function (req, res) {
         return QBO.createJournalEntryAsync({
             "DocNumber": transaction.salesOrderNumber + '-R',
             "TxnDate": transaction.transactionDateQBOFormat,
+            "PrivateNote": "Refund for transaction.salesOrderNumber",
             "Line": [{
                 // credit stripe transit cash for refund
                 "Id": "0",
@@ -414,7 +417,7 @@ router.post('/create-sales-receipt', function(req, res) {
             var entry = Entry({
                 "DocNumber": DocNumber,
                 "TxnDate": TxnDate,
-                "PrivateNote": _TRANSACTION.generalDescription,
+                "PrivateNote": "COGS: "_TRANSACTION.generalDescription,
                 "TotalAmt": _COGS
             });
 
@@ -523,24 +526,33 @@ router.post('/payout-paid', function (req, res) {
 
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
-    // get sales order number
-    var salesOrderNumber = D.get(req, 'body.data.object.description');
-
-    if(!salesOrderNumber) {
-        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
-    } else {
-        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
-    }
-    
 
     // save the data
+    var _TRANSACTION;
     return DB.Transaction.create({
         data: req.body,
         status: 'pending',
         eventType: 'payout-paid',
-        salesOrderNumber: salesOrderNumber
+        eventId: req.body.id
     })
     .then(function (transaction) {
+
+        _TRANSACTION = transaction;
+
+        var Entry = require('../apps/QBOJournalPayoutPaid');
+        var entry = Entry(transaction.data.data.object);
+
+        return QBO.createJournalEntryAsync(entry);
+
+    })
+    .then(function(response) {
+
+        if (D.get(response, 'Fault')) throw response;
+
+        _TRANSACTION.status = 'completed';
+        return _TRANSACTION.save();
+    })
+    .then(function() {
         // send success
         return res.send({
             success: true
