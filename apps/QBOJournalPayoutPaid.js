@@ -1,11 +1,18 @@
 function QBOJournalPayoutPaid(object) {
-  var QBOJournalObject = object;
+
+  
+  var QBOJournalObject = {
+      "DocNumber": object.id,
+      "TxnDate": MOMENT.unix(D.get(object, 'data.object.arrival_date')).format('YYYY-MM-DD'),
+      "PrivateNote": "Stripe Payout"
+  };
+
 
   QBOJournalObject.Line = [
     {
       "Id": "0",
       //"Description": "",
-      "Amount": object["Amount"],
+      "Amount": parseInt(object.data.object.amount)/100,
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
         "PostingType": "Credit",
@@ -24,7 +31,7 @@ function QBOJournalPayoutPaid(object) {
     {
       "Id": "1",
       //"Description": "",
-      "Amount": object["Amount"],
+      "Amount": parseInt(object.data.object.amount)/100,
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
         "PostingType": "Debit",
@@ -41,9 +48,6 @@ function QBOJournalPayoutPaid(object) {
       }
     }
   ];
-
-  QBOJournalObject.PrivateNote = "Stripe Payout";
-  QBOJournalObject.TxnDate = MOMENT.unix(D.get(QBOJournalObject, 'arrival_date')).format('YYYY-MM-DD')
 
   //QBOJournalCOGSObject.TxnTaxDetail =  {};
 

@@ -539,7 +539,7 @@ router.post('/payout-paid', function (req, res) {
         _TRANSACTION = transaction;
 
         var Entry = require('../apps/QBOJournalPayoutPaid');
-        var entry = Entry(transaction.data.data.object);
+        var entry = Entry(transaction.data);
 
         return QBO.createJournalEntryAsync(entry);
 
@@ -559,7 +559,7 @@ router.post('/payout-paid', function (req, res) {
     })
     .catch(function (err) {
         // log the error
-        console.log("CRITICAL: Failed to capture stripe charge with error: " + err);
+        console.log("CRITICAL: Failed to capture stripe payoutpaid with error: " + err);
         res.status(500).send();
     });
 
