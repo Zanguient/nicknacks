@@ -519,10 +519,10 @@ router.post('/create-sales-receipt', function(req, res) {
 
 router.post('/payout-paid', function (req, res) {
 
-    if(D.get(req, 'body.livemode') === false) {
-        console.log(req.body);
-        return res.send({ success: true });
-    }
+    // if(D.get(req, 'body.livemode') === false) {
+    //     console.log(req.body);
+    //     return res.send({ success: true });
+    // }
 
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
 
