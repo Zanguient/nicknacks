@@ -6,10 +6,10 @@
             <th>SO#</th>
             <th>Cust. Name</th>
             <th>Description</th>
-            <th>Date of charge</th>
+            <th>Date/Time</th>
             <th>Sales Amount</th>
-            <th>COGS</th>
-            <th>Note</th>
+            <th>Enter COGS</th>
+            <th>Enter Note</th>
             <th>Submit</th>
         </tr>
 
@@ -19,11 +19,11 @@
     	    <td>{{this.salesOrderNumber}}</td>
             <td>{{this.customerName}}</td>
             <td>{{this.data.data.object.description}}</td>
+            <td>{{this.transactionDateTime}}</td>
             <td>{{this.amount}}</td>
-    	    <td>{{this.transactionDateQBOFormat}}</td>
-            <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
-            <td><input type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
-            <td><button class="createSalesReceiptButton btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
+            <td><input class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
+            <td><input class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
+            <td><button class="createSalesReceiptButton btn btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
         {{/each}}
     </table>
@@ -33,7 +33,7 @@
         <tr>
             <th>No.</th>
             <th>eventId</th>
-            <th>Date of payout</th>
+            <th>Date/Time of Payout</th>
             <th>Amount</th>
             <th>status</th>
         </tr>
@@ -42,7 +42,7 @@
         <tr>
             <td>{{@index}}</td>
             <td>{{this.data.id}}</td>
-            <td>{{this.payoutPaidDateQBOFormat}}</td>
+            <td>{{this.payoutPaidDateTime}}</td>
             <td>{{this.amount}}</td>
             <td>{{this.status}}</td>
         </tr>
