@@ -23,7 +23,7 @@ function QBOJournalCOGS(object) {
     },
     {
       "Id": "1",
-      "Description": "COGS: " + _TRANSACTION.generalDescription + "(" + object.TotalAmt + ")",
+      "Description": "COGS: " + object.generalDescription + "(" + object.TotalAmt + ")",
       "Amount": object["TotalAmt"],
       "DetailType": "JournalEntryLineDetail",
       "JournalEntryLineDetail": {
