@@ -1,7 +1,7 @@
 var QBOPurchase = {
   "AccountRef": {
-    "value": "31",
-    "name": "Current"
+    "value": "46",
+    "name": "Stripe Transit"
   },
   "PaymentMethodRef": {
     "value": "1"

@@ -4,6 +4,7 @@
         <tr>
             <th>No.</th>
             <th>SO#</th>
+            <th>Cust. Name</th>
             <th>Description</th>
             <th>Date of charge</th>
             <th>COGS</th>
@@ -15,6 +16,7 @@
         <tr data-id="{{this.TransactionID}}">
             <td>{{@index}}</td>
     	    <td>{{this.salesOrderNumber}}</td>
+            <td>{{this.customerName}}</td>
             <td>{{this.data.data.object.description}}</td>
     	    <td>{{this.transactionDateQBOFormat}}</td>
             <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>

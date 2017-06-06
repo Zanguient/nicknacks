@@ -37,12 +37,12 @@ function PayoutPaid(sequelize, DataTypes) {
         instanceMethods: {},
         getterMethods: {
 
-            PayoutPaidDateUnixTS: function() {
+            payoutPaidDateUnixTS: function() {
                 var self = this;
                 return D.get(self, 'data.data.object.arrival_date');
 
             },
-            PayoutPaidDateQBOFormat: function() {
+            payoutPaidDateQBOFormat: function() {
                 var self = this;
                 return MOMENT.unix(D.get(self, 'data.data.object.arrival_date')).format('YYYY-MM-DD');
             },
