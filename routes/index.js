@@ -562,12 +562,12 @@ router.post('/payout-paid', function (req, res) {
         status: 'pending',
         eventId: req.body.id
     })
-    .then(function (transaction) {
+    .then(function (payoutPaid) {
 
-        _TRANSACTION = transaction;
+       _PAYOUTPAID = payoutPaid;
 
         var Entry = require('../apps/QBOJournalPayoutPaid');
-        var entry = Entry(transaction.data);
+        var entry = Entry(payoutPaid.data);
 
         return QBO.createJournalEntryAsync(entry);
 
@@ -576,8 +576,8 @@ router.post('/payout-paid', function (req, res) {
 
         if (D.get(response, 'Fault')) throw response;
 
-        _TRANSACTION.status = 'completed';
-        return _TRANSACTION.save();
+        _PAYOUTPAID.status = 'completed';
+        return _PAYOUTPAID.save();
     })
     .then(function() {
         // send success
@@ -588,6 +588,10 @@ router.post('/payout-paid', function (req, res) {
     .catch(function (err) {
         // log the error
         console.log("CRITICAL: Failed to capture stripe payoutpaid with error: " + err);
+        if (_PAYOUTPAID) {
+            _PAYOUTPAID.status = 'failed';
+            _PAYOUTPAID.save().catch(function(err) { console.log("CRITICAL: Failed to set payout to `failed`"); });
+        }
         res.status(500).send();
     });
 
