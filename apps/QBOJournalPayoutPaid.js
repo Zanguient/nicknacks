@@ -4,7 +4,7 @@ function QBOJournalPayoutPaid(object) {
   var QBOJournalObject = {
       "DocNumber": object.id,
       "TxnDate": MOMENT.unix(D.get(object, 'data.object.arrival_date')).format('YYYY-MM-DD'),
-      "PrivateNote": "Stripe Payout (" + parseInt(object.data.object.amount)/100) + ")";
+      "PrivateNote": "Stripe Payout (" + parseInt(object.data.object.amount)/100) + ")"
   };
 
 
