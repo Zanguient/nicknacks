@@ -30,7 +30,17 @@ function PayoutPaid(sequelize, DataTypes) {
                 admin: true,
                 member: true
             }
-        }
+        },
+        errorJSON: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: {},
+            roles: {
+                vendor: true,
+                admin: true,
+                member: true
+            }
+        },
     }, {
         timestamps: true,
         tableName: 'PayoutPaid',

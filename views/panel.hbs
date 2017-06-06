@@ -1,4 +1,4 @@
-    
+
     <h1>Pending sales receipts</h1>
     <table class="table-striped">
         <tr>
@@ -7,6 +7,7 @@
             <th>Cust. Name</th>
             <th>Description</th>
             <th>Date of charge</th>
+            <th>Sales Amount</th>
             <th>COGS</th>
             <th>Note</th>
             <th>Submit</th>
@@ -18,6 +19,7 @@
     	    <td>{{this.salesOrderNumber}}</td>
             <td>{{this.customerName}}</td>
             <td>{{this.data.data.object.description}}</td>
+            <td>{{this.amount}}</td>
     	    <td>{{this.transactionDateQBOFormat}}</td>
             <td><input type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
             <td><input type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
