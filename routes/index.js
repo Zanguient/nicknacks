@@ -445,7 +445,7 @@ router.post('/create-sales-receipt', function(req, res) {
             var entry = Entry({
                 "DocNumber": DocNumber,
                 "TxnDate": TxnDate,
-                "PrivateNote": "COGS: " + _TRANSACTION.generalDescription + "(" + _COGS + ")",
+                "PrivateNote": "COGS: " + _TRANSACTION.generalDescription + "($" + _COGS + ")",
                 "TotalAmt": _COGS
             });
 
