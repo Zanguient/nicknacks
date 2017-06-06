@@ -4,8 +4,7 @@
         <tr>
             <th>No.</th>
             <th>SO#</th>
-            <th>Cust. Name</th>
-            <th>Description</th>
+            <th>Info</th>
             <th>Date/Time</th>
             <th>Sales Amount</th>
             <th>Enter COGS</th>
@@ -17,9 +16,7 @@
         <tr data-id="{{this.TransactionID}}">
             <td>{{@index}}</td>
     	    <td>{{this.salesOrderNumber}}</td>
-            <td>{{this.customerName}}</td>
-            <td>{{this.data.data.object.description}}</td>
-            <td>{{this.transactionDateTime}}</td>
+            <td>{{this.customerName}}<br>{{this.customerEmail}}<br>{{this.transactionDateTime}}</td>
             <td>{{this.totalAmount}}</td>
             <td><input class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
             <td><input class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
