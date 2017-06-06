@@ -58,7 +58,7 @@ function PayoutPaid(sequelize, DataTypes) {
             },
             payoutPaidDateTime: function() {
                 var self = this;
-                return MOMENT.unix(D.get(self, 'data.data.object.arrival_date')).format('Do MMM YY, hh:mm');
+                return MOMENT.unix(D.get(self, 'data.data.object.arrival_date')).format('Do MMM YY, HH:mm');
             },
             transactedCurrency: function() {
                 var self = this;
