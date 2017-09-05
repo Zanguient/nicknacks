@@ -414,10 +414,20 @@ router.post('/create-sales-receipt', function(req, res) {
         expense.DocNumber = DocNumber;
         expense.TxnDate = TxnDate;
 
+
+        // check the country of credit card origin to apply the commission correctly.
+        var stripeCommission;
+
+        if (_TRANSACTION.creditCardOriginCountryIsSG) {
+            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * 0.029)/100;
+        } else {
+            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * 0.034)/100;
+        }
+
         expense.Line = [
           {
             // convert totalAmount to 100s and take 3.4%, round off, then convert back to 2 decimals, add 50 cents
-            "Amount": Math.round(_TRANSACTION.totalAmount * 100 * 0.034)/100 + 0.50,
+            "Amount": stripeCommission + 0.50,
             "DetailType": "AccountBasedExpenseLineDetail",
             "Description": "SO: " + _TRANSACTION.salesOrderNumber + ", Name: " + _TRANSACTION.customerName + ", Email: " + _TRANSACTION.customerEmail,
             "AccountBasedExpenseLineDetail": {

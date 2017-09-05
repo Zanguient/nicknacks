@@ -135,7 +135,13 @@ function Transaction(sequelize, DataTypes) {
                 return D.get(this, 'data.data.object.source.address_zip');
             },
             addressCountry: function() {
-                return D.get(this, 'data.data.object.source.country');
+                return D.get(this, 'data.data.object.source.address_country');
+            },
+            creditCardOriginCountry: function() {
+                return D.get(this, 'data.data.object.country');
+            },
+            creditCardOriginCountryIsSG: function() {
+                return D.get(this, 'data.data.object.country') === 'SG';
             }
         },
         classMethods: {}
