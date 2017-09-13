@@ -138,10 +138,10 @@ function Transaction(sequelize, DataTypes) {
                 return D.get(this, 'data.data.object.source.address_country');
             },
             creditCardOriginCountry: function() {
-                return D.get(this, 'data.data.object.country');
+                return D.get(this, 'data.data.object.source.country');
             },
             creditCardOriginCountryIsSG: function() {
-                return D.get(this, 'data.data.object.country') === 'SG';
+                return D.get(this, 'data.data.object.source.country') === 'SG';
             }
         },
         classMethods: {}
