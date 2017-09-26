@@ -87,6 +87,7 @@ function wunderlistBot(mail) {
                     "task_id": taskData.id,
                     "content": htmlToText.fromString(bodyString, {
                         wordwrap: 130,
+                        ignoreImage: true,
                         ignoreHref: true
                     })
                 };
