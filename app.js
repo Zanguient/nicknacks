@@ -43,6 +43,22 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
 
+const notifier = require('mail-notifier');
+const wunderlistBot = require('./apps/wunderlistBot')
+
+const imap = {
+  user: 'root@greyandsanders.com',
+  password: process.env.ZOHO_EMAIL_PASSWORD,
+  host: 'imappro.zoho.com',
+  port: 993,
+  tls: true,
+  tlsOptions: { rejectUnauthorized: false }
+};
+
+notifier(imap)
+    .on('mail', mail => wunderlistBot(mail))
+    .start();
+
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
