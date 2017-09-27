@@ -12,6 +12,8 @@ const wunderlistAPI = new WunderlistSDK({
 });
 const htmlToText = require('html-to-text');
 
+const extractDate = require('./extractDate.js');
+
 function wunderlistBot(mail) {
 
     var o = { success: false, stack: ['wunderlistBot'] };
@@ -53,58 +55,284 @@ function wunderlistBot(mail) {
 
         // NOW THE SORTING STARTS
 
-        // original email sent out by the server
+            /*
+                1. Sales order
+                2. Update to sales order
+                3. Delivery order
+                4. Update to delivery order
+
+            */
+
+
         if (subject.indexOf('Your Grey and Sanders order confirmation') === 0) {
             
-            // extract date of delivery
-            var dateOfDelivery;
-            var dateOfDeliveryRaw = $body('body').find('#deliveryDate').html();
-            //console.log(dateOfDeliveryRaw)
-            if (dateOfDeliveryRaw === undefined) dateOfDelivery = false
+            // 1.  SALES ORDER  
 
-            dateOfDelivery = moment(dateOfDeliveryRaw, "Do MMMM YYYY, dddd");
+            // create wunderlist task, and make association in our own database.
+            (function(shortID, ID, name, $body) {
 
-            if (dateOfDelivery.format() === 'Invalid date') {
-                console.log('WARN: Invalid date format detected: ' + dateOfDeliveryRaw);
-            }
+                var taskObject = {
+                    'list_id': parseInt(process.env.WL_LIST_ID_FOR_SALES_DELIVERY),
+                    'title': shortID + ', ' + name,
+                    'starred': true
+                };
 
-            dateOfDelivery = dateOfDelivery.format('YYYY-MM-DD');
+                var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
+                if (dateOfDelivery) taskObject.due_date = dateOfDelivery;
 
-            var taskObject = {
-                'list_id': parseInt(process.env.WL_LIST_ID_FOR_SALES_DELIVERY),
-                'title': shortID + ', ' + name,
-                'starred': true
-            };
+                var TASK_DATA;
+                wunderlistAPI.http.tasks.create(taskObject).done(function(taskData, statusCode) {
+                    if(statusCode !== 201) {
+                        return console.log('CRITICAL: ' + shortID + ' errored with statusCode = ' + statusCode);
+                    }
 
-            if (dateOfDelivery) taskObject.due_date = dateOfDelivery;
+                    TASK_DATA = taskData;
 
-            wunderlistAPI.http.tasks.create(taskObject).done(function(taskData, statusCode) {
-                if(statusCode !== 201) {
-                    return console.log('CRITICAL: ' + shortID + ' errored with statusCode = ' + statusCode);
-                }
+                    var noteObject = {
+                        "task_id": taskData.id,
+                        "content": htmlToText.fromString(bodyString, {
+                            wordwrap: 130,
+                            ignoreImage: true,
+                            ignoreHref: true
+                        })
+                    };
 
-                var noteObject = {
-                    "task_id": taskData.id,
-                    "content": htmlToText.fromString(bodyString, {
+                    return wunderlistAPI.http.notes.create(noteObject).done(function(noteData, statusCode) {
+                        if (statusCode !== 201) {
+                            return console.log('CRITICAL: ' + shortID + ' note creation errored with statusCode = ' + statusCode);
+                        }
+
+                        // make the DB entry
+                        return DB.WunderlistTask.findOrCreate({
+                            where: { WunderlistTaskID: TASK_DATA.id },
+                            defaults: { salesOrderID: ID.substring(1, ID.length) }
+                        }).catch(function(err) {
+                            console.log('CRITICAL: ' + shortID + ' adding to db errored! Error is: ' + JSON.stringify(err));
+                        });
+
+
+                    }).fail(function(resp, code) {
+                        console.log('CRITICAL: ' + shortID + 'adding note errored! Error response is: ' + JSON.stringify(resp));
+                    });
+
+                }).fail(function(resp, code) {
+                    console.log('CRITICAL: ' + shortID + ' creation errored! Error response is: ' + JSON.stringify(resp));
+                });
+
+
+            })(shortID, ID, name, $body)
+
+        } else if (subject.indexOf('Update to your Grey and Sanders order') === 0) {
+
+            // 2. UPDATE TO SALES ORDER
+
+            (function (shortID, ID, name, $body) {
+
+                DB.WunderlistTask.find({
+                    where: { salesOrderID: ID.substring(1, ID.length) }
+                }).then(function(wunderlist) {
+
+
+                    if(!wunderlist) return console.log('WARN: ' + shortID + ' not found in database to update comments.');
+
+
+
+                    // check if there is any dates, if not don't need to update the task, only comments
+                    var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
+
+                    if (dateOfDelivery) {
+                        // get the wunderlist to update it
+                        wunderlistAPI.http.tasks.getID(wunderlist.WunderlistTaskID).done(function(taskData, statusCode) {
+                            
+                            if (statusCode !== 200) return console.log('WARN: ' + shortID + ' error in retrieving wunderlist: ' + statusCode);
+
+                            wunderlistAPI.http.tasks.update(taskData.id, taskData.revision + 1, { 'due_date': dateOfDelivery });
+
+                        }).fail(function(resp, code) {
+                            console.log('CRITICAL: ' + shortID + ' wunderlist retrieval error! Error response is: ' + JSON.stringify(resp));
+                        });
+                    }
+
+
+
+
+                    // now update the comments
+
+                    // prepare the comments
+                    var textBlock = '!!UPDATES!!\n\nShipping info: \n\n:';
+
+                    textBlock += htmlToText.fromString($body('body').find('#shippingInformation').html(), {
                         wordwrap: 130,
                         ignoreImage: true,
                         ignoreHref: true
-                    })
-                };
+                    });
 
-                return wunderlistAPI.http.notes.create(noteObject).done(function(noteData, statusCode) {
-                    if (statusCode !== 201) {
-                        return console.log('CRITICAL: ' + shortID + ' note creation errored with statusCode = ' + statusCode);
+                    textBlock += "\n\n";
+
+                    if ($body('body').find('#comment').html()) {
+                        textBlock += 'Other comments: \n\n';
+                        textBlock += htmlToText.fromString($body('body').find('#comment').html(), {
+                            wordwrap: 130,
+                            ignoreImage: true,
+                            ignoreHref: true
+                        });
                     }
-                }).fail(function(resp, code) {
-                    console.log('CRITICAL: ' + shortID + 'adding note errored! Error response is: ' + JSON.stringify(resp));
+                    // create the comments
+                    wunderlistAPI.http.task_comments.create({
+                        'task_id': wunderlist.WunderlistTaskID,
+                        'text': textBlock
+                    }).done(function(taskCommentData, statusCode) {
+                    
+                            if (statusCode !== 201) return console.log('WARN: ' + shortID + ' error in adding comment: ' + statusCode);
+
+                    }).fail(function(resp, code) {
+                        console.log('CRITICAL: ' + shortID + ' wunderlist add comment err! Error response is: ' + JSON.stringify(resp));
+                    });
+
+
+                }).catch(function(err) {
+                    console.log('WARN: ' + shortID + ' error in locating database record: ' + JSON.stringify(err));
                 });
 
-            }).fail(function(resp, code) {
-                console.log('CRITICAL: ' + shortID + ' creation errored! Error response is: ' + JSON.stringify(resp));
-            });
-        }
+            })(shortID, ID, name, $body)
 
+        } else if (subject.indexOf('Your Grey and Sanders order (') === 0 && subject.indexOf('is scheduled for delivery') !== -1) {
+
+            // 3. DELIVERY ORDER
+
+            (function (shortID, ID, name, $body) {
+
+                DB.WunderlistTask.find({
+                    where: { salesOrderID: ID.substring(1, ID.length) }
+                }).then(function(wunderlist) {
+
+                    if(!wunderlist) return console.log('WARN: ' + shortID + ' not found in database to make delivery.');
+
+                    // check if there is any dates, if not don't need to update the task, only comments
+                    var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
+
+                    if (dateOfDelivery) {
+                        // get the wunderlist to update it
+                        wunderlistAPI.http.tasks.getID(wunderlist.WunderlistTaskID).done(function(taskData, statusCode) {
+                            
+                            if (statusCode !== 200) return console.log('WARN: ' + shortID + ' error in retrieving wunderlist: ' + statusCode);
+
+                            wunderlistAPI.http.tasks.update(taskData.id, taskData.revision + 1, { 'due_date': dateOfDelivery, starred: 'false' });
+
+                        }).fail(function(resp, code) {
+                            console.log('CRITICAL: ' + shortID + ' wunderlist retrieval error! Error response is: ' + JSON.stringify(resp));
+                        });
+                    }
+
+                    // now update the comments
+
+                    // prepare the comments
+                    var textBlock = '!!SHIPPED!!\n\nShipping info: \n\n:';
+
+                    textBlock += htmlToText.fromString($body('body').find('#shippingInformation').html(), {
+                        wordwrap: 130,
+                        ignoreImage: true,
+                        ignoreHref: true
+                    });
+
+                    textBlock += "\n\n";
+
+                    if ($body('body').find('#comment').html()) {
+                        textBlock += 'Other comments: \n\n';
+                        textBlock += htmlToText.fromString($body('body').find('#comment').html(), {
+                            wordwrap: 130,
+                            ignoreImage: true,
+                            ignoreHref: true
+                        });
+                    }
+                    // create the comments
+                    wunderlistAPI.http.task_comments.create({
+                        'task_id': wunderlist.WunderlistTaskID,
+                        'text': textBlock
+                    }).done(function(taskCommentData, statusCode) {
+                    
+                            if (statusCode !== 201) return console.log('WARN: ' + shortID + ' error in adding comment: ' + statusCode);
+
+                    }).fail(function(resp, code) {
+                        console.log('CRITICAL: ' + shortID + ' wunderlist add comment err! Error response is: ' + JSON.stringify(resp));
+                    });
+
+
+                }).catch(function(err) {
+                    console.log('WARN: ' + shortID + ' error in locating database record: ' + JSON.stringify(err));
+                });
+
+            })(shortID, ID, name, $body)
+
+        } else if (subject.indexOf('Update to your Grey and Sanders delivery') === 0) {
+
+            // 4. UPDATES TO DELIVERY ORDER
+
+            (function (shortID, ID, name, $body) {
+
+                DB.WunderlistTask.find({
+                    where: { salesOrderID: ID.substring(1, ID.length) }
+                }).then(function(wunderlist) {
+
+                    if(!wunderlist) return console.log('WARN: ' + shortID + ' not found in database to update delivery.');
+
+                    // check if there is any dates, if not don't need to update the task, only comments
+                    var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
+
+                    if (dateOfDelivery) {
+                        // get the wunderlist to update it
+                        wunderlistAPI.http.tasks.getID(wunderlist.WunderlistTaskID).done(function(taskData, statusCode) {
+                            
+                            if (statusCode !== 200) return console.log('WARN: ' + shortID + ' error in retrieving wunderlist: ' + statusCode);
+
+                            wunderlistAPI.http.tasks.update(taskData.id, taskData.revision + 1, { 'due_date': dateOfDelivery, starred: 'false' });
+
+                        }).fail(function(resp, code) {
+                            console.log('CRITICAL: ' + shortID + ' wunderlist retrieval error! Error response is: ' + JSON.stringify(resp));
+                        });
+                    }
+
+                    // now update the comments
+
+                    // prepare the comments
+                    var textBlock = '!!UPDATES TO SHIPPING!!\n\nShipping info: \n\n:';
+
+                    textBlock += htmlToText.fromString($body('body').find('#shippingInformation').html(), {
+                        wordwrap: 130,
+                        ignoreImage: true,
+                        ignoreHref: true
+                    });
+
+                    textBlock += "\n\n";
+
+                    if ($body('body').find('#comment').html()) {
+                        textBlock += 'Other comments: \n\n';
+                        textBlock += htmlToText.fromString($body('body').find('#comment').html(), {
+                            wordwrap: 130,
+                            ignoreImage: true,
+                            ignoreHref: true
+                        });
+                    }
+                    // create the comments
+                    wunderlistAPI.http.task_comments.create({
+                        'task_id': wunderlist.WunderlistTaskID,
+                        'text': textBlock
+                    }).done(function(taskCommentData, statusCode) {
+                    
+                            if (statusCode !== 201) return console.log('WARN: ' + shortID + ' error in adding comment: ' + statusCode);
+
+                    }).fail(function(resp, code) {
+                        console.log('CRITICAL: ' + shortID + ' wunderlist add comment err! Error response is: ' + JSON.stringify(resp));
+                    });
+
+
+                }).catch(function(err) {
+                    console.log('WARN: ' + shortID + ' error in locating database record: ' + JSON.stringify(err));
+                });
+
+            })(shortID, ID, name, $body)
+
+        }
 
         
         function _rejector(mail) {
