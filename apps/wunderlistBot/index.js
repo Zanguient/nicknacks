@@ -93,7 +93,7 @@ function wunderlistBot(mail) {
 
             var o = { success: false, stack: ['_rejector'] }
 
-            if(process.env.WL_EMAIL_SECURITY === "disabled") {
+            if(process.env.WL_EMAIL_SECURITY === false) {
                 o.success = true;
                 return o;
             }
