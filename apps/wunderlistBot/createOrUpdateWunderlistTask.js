@@ -90,24 +90,20 @@ function createOrUpdateWunderlistTask(ID, name, $body, starred, commentToAdd) {
             // COMMENT
             // if there is a designated comment to add, we add the comment
             // else we dump the contents of the email in.
-            var commentObject = {};
+            var commentObject = { 'task_id': task.WunderlistTaskID };
 
             if (commentToAdd) {
-                commentObject.content = commentToAdd;
+                commentObject.text = commentToAdd;
             } else {
-                commentObject.content = htmlToText.fromString($body('body').html(), {
+                commentObject.text = htmlToText.fromString($body('body').html(), {
                     wordwrap: 130,
                     ignoreImage: true,
                     ignoreHref: true
                 })
             }
 
-
             // create the comments
-            WL.http.task_comments.create({
-                'task_id': task.id,
-                'text': commentObject
-            }).done(function(taskCommentData, statusCode) {
+            WL.http.task_comments.create(commentObject).done(function(taskCommentData, statusCode) {
             
                 if (statusCode !== 201) return console.log('WARN: ' + ID.stub + ' error in adding comment: ' + statusCode);
 
@@ -117,7 +113,8 @@ function createOrUpdateWunderlistTask(ID, name, $body, starred, commentToAdd) {
 
 
             // also get the task and check whether to star or unstar and update delivery date
-            WL.http.tasks.getID(task.id).done(function (taskData, statusCode) {
+            WL.http.tasks.getID(task.WunderlistTaskID).done(function (taskData, statusCode) {
+
                 if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' error getting task: ' + statusCode);
 
                 var taskUpdateObject = {

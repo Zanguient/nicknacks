@@ -86,7 +86,8 @@ function wunderlistBot(mail) {
 
         }
 
-        return o.success = true;
+        o.success = true;
+        return o;
 
         function _rejector(mail) {
 
@@ -115,7 +116,8 @@ function wunderlistBot(mail) {
                 return o;
             }
 
-            return o.success = true;
+            o.success = true;
+            return o;
         }
 
     }
