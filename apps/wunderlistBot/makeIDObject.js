@@ -2,7 +2,7 @@
 
 function makeIDObject(subject) {
 
-    var ID = subject.substring(subject.indexOf('(')+1, subject.indexOf(')'));
+    var ID = subject.substring(subject.indexOf('#'), subject.indexOf('#') + 11);
 
     var obj = {
         default: ID

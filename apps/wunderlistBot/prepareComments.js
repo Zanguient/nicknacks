@@ -3,6 +3,7 @@
 const htmlToText = require('html-to-text');
 
 function prepareComments(title, $body, options) {
+
     // prepare the comments
     var textBlock = title + '\n\n';
 

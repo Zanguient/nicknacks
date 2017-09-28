@@ -81,7 +81,7 @@ function wunderlistBot(mail) {
         } else if (subject.indexOf('Update to your Grey and Sanders delivery') === 0) {
 
             // 4. UPDATES TO DELIVERY ORDER
-            var comments = prepareComments("DELIVERY ARRANGED", $body); 
+            var comments = prepareComments("DELIVERY UPDATES", $body); 
             createOrUpdateWunderlistTask(ID, name, $body, false, comments);
 
         }
