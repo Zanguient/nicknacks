@@ -15,7 +15,7 @@ function wunderlistBot(mail) {
 
     var operation = _sorter(mail);
 
-    if (!operation.success) console.log('CRITICAL: Some operation failed: ' + operation);
+    if (!operation.success) console.log('CRITICAL: Some operation failed: ' + JSON.stringify(operation));
 
     function _sorter(mail) {
 
