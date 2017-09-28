@@ -9,6 +9,12 @@ global.D = require('dottie');
 
 global.serverStatus = 'All OK';
 
+const WunderlistSDK = require('wunderlist');
+global.WL = new WunderlistSDK({
+  'accessToken': process.env.WL_ACCESS_TOKEN,
+  'clientID': process.env.WL_CLIENT_ID
+});
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
