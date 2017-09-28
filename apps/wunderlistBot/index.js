@@ -32,7 +32,7 @@ function wunderlistBot(mail) {
         }
 
         // get ID
-        var ID = makeIDObject(ID);
+        var ID = makeIDObject(subject);
 
         // get body
         var bodyString = D.get(mail, 'html');

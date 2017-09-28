@@ -1,6 +1,8 @@
 'use strict';
 
-function makeIDObject(ID) {
+function makeIDObject(subject) {
+
+    var ID = subject.substring(subject.indexOf('('), subject.indexOf(')'));
 
     var obj = {
         default: ID
