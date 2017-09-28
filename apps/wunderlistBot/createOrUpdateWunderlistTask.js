@@ -90,7 +90,8 @@ function createOrUpdateWunderlistTask(ID, name, $body, starred, commentToAdd) {
             // COMMENT
             // if there is a designated comment to add, we add the comment
             // else we dump the contents of the email in.
-            var commentObject = { 'task_id': task.WunderlistTaskID };
+            // GOTCHA: wunderlistjs needs #parseInt here. Inconsistency
+            var commentObject = { 'task_id': parseInt(task.WunderlistTaskID) };
 
             if (commentToAdd) {
                 commentObject.text = commentToAdd;
@@ -109,6 +110,7 @@ function createOrUpdateWunderlistTask(ID, name, $body, starred, commentToAdd) {
 
             }).fail(function(resp, code) {
                 console.log('CRITICAL: ' + ID.stub + ' wunderlist add comment err! Error response is: ' + JSON.stringify(resp));
+                console.log('commentObject is ' + JSON.stringify(commentObject));
             });
 
 
