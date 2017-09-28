@@ -47,7 +47,8 @@ function wunderlistBot(mail) {
         }
 
         // get name
-        var name = $body('body').find('#customerName').html().replace(',', '');;
+        var name = $body('body').find('#customerName').html();
+        name = name ? name.replace(',', '') || 'nil';
 
         // NOW THE SORTING STARTS
 
