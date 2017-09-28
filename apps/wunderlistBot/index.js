@@ -93,6 +93,11 @@ function wunderlistBot(mail) {
 
             var o = { success: false, stack: ['_rejector'] }
 
+            if(process.env.WL_EMAIL_SECURITY === "disabled") {
+                o.success = true;
+                return o;
+            }
+
             // reject criterii
             if(D.get(mail, 'from.0.address') !== 'sayhi@greyandsanders.com') {
                 o.error = 'email address not from designated: ' + D.get(mail, 'from[0].address');
