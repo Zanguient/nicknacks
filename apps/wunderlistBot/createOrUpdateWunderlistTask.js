@@ -1,6 +1,7 @@
 'use strict';
 
 const extractDate = require('./extractDate.js');
+const htmlToText = require('html-to-text');
 
 /*
 ID.stub (string): #XXX
