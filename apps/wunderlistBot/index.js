@@ -2,6 +2,7 @@
 const D = require('dottie');
 const cheerio = require('cheerio');
 const moment = require('moment');
+const S = require('string');
 
 const M = require('./errorObjectMerger');
 const makeIDObject = require('./makeIDObject.js');
@@ -52,6 +53,7 @@ function wunderlistBot(mail) {
 
         // ADDRESS
         var address = $body('body').find('#shipping-address').html();
+        if (address) address = S(address).stripTags().s
 
         // NOW THE SORTING STARTS
 
