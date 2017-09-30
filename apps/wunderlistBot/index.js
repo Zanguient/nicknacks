@@ -50,6 +50,9 @@ function wunderlistBot(mail) {
         var name = $body('body').find('#customerName').html();
         name = name ? name.replace(',', '') : 'nil';
 
+        // ADDRESS
+        var address = $body('body').find('#shipping-address').html();
+
         // NOW THE SORTING STARTS
 
             /*
@@ -64,25 +67,25 @@ function wunderlistBot(mail) {
         if (subject.indexOf('Your Grey and Sanders order confirmation') === 0) {
             
             // 1.  SALES ORDER  
-            createOrUpdateWunderlistTask(ID, name, $body, true);
+            createOrUpdateWunderlistTask(ID, name, address, $body, true);
 
         } else if (subject.indexOf('Update to your Grey and Sanders order') === 0) {
 
             // 2. UPDATE TO SALES ORDER
             var comments = prepareComments("UPDATE TO SALES ORDER", $body);
-            createOrUpdateWunderlistTask(ID, name, $body, true, comments);
+            createOrUpdateWunderlistTask(ID, name, address, $body, true, comments);
 
         } else if (subject.indexOf('Your Grey and Sanders order (') === 0 && subject.indexOf('is scheduled for delivery') !== -1) {
 
             // 3. DELIVERY ORDER
             var comments = prepareComments("DELIVERY ARRANGED", $body); 
-            createOrUpdateWunderlistTask(ID, name, $body, false, comments);
+            createOrUpdateWunderlistTask(ID, name, address, $body, false, comments);
 
         } else if (subject.indexOf('Update to your Grey and Sanders delivery') === 0) {
 
             // 4. UPDATES TO DELIVERY ORDER
             var comments = prepareComments("DELIVERY UPDATES", $body); 
-            createOrUpdateWunderlistTask(ID, name, $body, false, comments);
+            createOrUpdateWunderlistTask(ID, name, address, $body, false, comments);
 
         }
 

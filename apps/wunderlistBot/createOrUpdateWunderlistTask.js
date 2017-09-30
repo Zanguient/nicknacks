@@ -22,12 +22,14 @@ But once a task pertaining to a Sales Order ID is created, it can only be update
 and no longer will create new tasks.
 
 */
-function createOrUpdateWunderlistTask(ID, name, $body, starred, commentToAdd) {
+function createOrUpdateWunderlistTask(ID, name, address, $body, starred, commentToAdd) {
 
     // DATE
     // date can sometimes be missing when orders are created using the backend.
     var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
 
+    var title = ID.stub + ', ' + name;
+    if (address) title += ', ' + address;
 
     DB.WunderlistTask.find({
         where: { salesOrderID: ID.withoutHex }
@@ -39,7 +41,7 @@ function createOrUpdateWunderlistTask(ID, name, $body, starred, commentToAdd) {
 
             var taskObject = {
                 'list_id': parseInt(process.env.WL_LIST_ID_FOR_SALES_DELIVERY),
-                'title': ID.stub + ', ' + name,
+                'title': title,
                 'starred': starred
             };
             if (dateOfDelivery) taskObject.due_date = dateOfDelivery;
