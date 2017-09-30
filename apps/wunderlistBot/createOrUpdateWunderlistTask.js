@@ -28,8 +28,10 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
     // date can sometimes be missing when orders are created using the backend.
     var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
 
-    var title = ID.stub + ', ' + name;
-    if (address) title += ', ' + address;
+    var title = ID.stub + ', ';
+    // if the address is valid, add the address (which has name)
+    // else just add name
+    title += (address) ? address : name;
 
     DB.WunderlistTask.find({
         where: { salesOrderID: ID.withoutHex }
