@@ -65,7 +65,6 @@ notifier(imap)
     .on('mail', mail => wunderlistBot(mail))
     .start();
 
-
 // attempt refresh on server start
 retrieveTokenAndRefresh();
 

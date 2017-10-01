@@ -130,7 +130,7 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
 
                 // only update the task if things are different.
                 if (taskUpdateObject.due_date !== taskData.due_date || taskUpdateObject.starred !== taskData.starred) {
-                    WL.http.tasks.update(taskData.id, taskData.revision + 1, taskUpdateObject).done(function(taskData, statusCode) {
+                    WL.http.tasks.update(taskData.id, taskData.revision, taskUpdateObject).done(function(taskData, statusCode) {
                         if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' updating task: ' + statusCode);
                     }).fail(function(resp, code) {
                         console.log('CRITICAL: ' + ID.stub + ' wunderlist update task err! Error response is: ' + JSON.stringify(resp));
