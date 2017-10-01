@@ -16,10 +16,10 @@ function calculateStripeCommissionAmountOnRefund(stripeObject) {
     // calucate the commission which strip will refund us
     if (countryOfOrigin === 'SG') {
         // 2.9% of the amount refunded
-        stripeCommissionAmount = Math.round(total * 0.029)/100;
+        stripeCommissionAmount = Math.round(amountRefunded * 0.029)/100;
     } else {
         // international charges, so 3.4% of the amount refunded
-        stripeCommissionAmount = Math.round(total * 0.034)/100;
+        stripeCommissionAmount = Math.round(amountRefunded * 0.034)/100;
     }
 
 
