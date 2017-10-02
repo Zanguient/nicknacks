@@ -112,33 +112,36 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
             
                 if (statusCode !== 201) return console.log('WARN: ' + ID.stub + ' error in adding comment: ' + statusCode);
 
+                
+                // also get the task and check whether to star or unstar and update delivery date
+                
+                // GOTCHA: Because updating comments will cascade a new revision index to the Task, this updating of 
+                //         task attributes needs to occur sequentially after the task comments have been inserted.
+                WL.http.tasks.getID(task.WunderlistTaskID).done(function (taskData, statusCode) {
+
+                    if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' error getting task: ' + statusCode);
+
+                    var taskUpdateObject = {
+                        'due_date': dateOfDelivery, 
+                        'starred': starred
+                    };
+
+                    // only update the task if things are different.
+                    if (taskUpdateObject.due_date !== taskData.due_date || taskUpdateObject.starred !== taskData.starred) {
+                        WL.http.tasks.update(taskData.id, taskData.revision, taskUpdateObject).done(function(taskData, statusCode) {
+                            if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' updating task: ' + statusCode);
+                        }).fail(function(resp, code) {
+                            console.log('CRITICAL: ' + ID.stub + ' wunderlist update task err! Error response is: ' + JSON.stringify(resp));
+                        });
+                    }
+
+                }).fail(function (resp, code) {
+                    console.log('CRITICAL: ' + ID.stub + ' wunderlist get task err! Error response is: ' + JSON.stringify(resp));
+                });
+                
             }).fail(function(resp, code) {
                 console.log('CRITICAL: ' + ID.stub + ' wunderlist add comment err! Error response is: ' + JSON.stringify(resp));
                 console.log('commentObject is ' + JSON.stringify(commentObject));
-            });
-
-
-            // also get the task and check whether to star or unstar and update delivery date
-            WL.http.tasks.getID(task.WunderlistTaskID).done(function (taskData, statusCode) {
-
-                if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' error getting task: ' + statusCode);
-
-                var taskUpdateObject = {
-                    'due_date': dateOfDelivery, 
-                    'starred': starred
-                };
-
-                // only update the task if things are different.
-                if (taskUpdateObject.due_date !== taskData.due_date || taskUpdateObject.starred !== taskData.starred) {
-                    WL.http.tasks.update(taskData.id, taskData.revision, taskUpdateObject).done(function(taskData, statusCode) {
-                        if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' updating task: ' + statusCode);
-                    }).fail(function(resp, code) {
-                        console.log('CRITICAL: ' + ID.stub + ' wunderlist update task err! Error response is: ' + JSON.stringify(resp));
-                    });
-                }
-
-            }).fail(function (resp, code) {
-                console.log('CRITICAL: ' + ID.stub + ' wunderlist get task err! Error response is: ' + JSON.stringify(resp));
             });
 
         }
