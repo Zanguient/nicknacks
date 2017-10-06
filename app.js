@@ -61,9 +61,17 @@ const imap = {
   tlsOptions: { rejectUnauthorized: false }
 };
 
-notifier(imap)
-    .on('mail', mail => wunderlistBot(mail))
-    .start();
+var n = notifier(imap);
+
+n.on('mail', function(mail) {
+    console.log('received new mail!');
+    wunderlistBot(mail)
+});
+n.on('end', function() {
+    console.log('notifier ended, restarting');
+    n.start();  
+});
+n.start();
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
