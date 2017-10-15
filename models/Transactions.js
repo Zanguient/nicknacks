@@ -142,6 +142,9 @@ function Transaction(sequelize, DataTypes) {
             },
             creditCardOriginCountryIsSG: function() {
                 return D.get(this, 'data.data.object.source.country') === 'SG';
+            },
+            creditCardIsAMEXorIsNotSG: function() {
+                return D.get(this, 'data.data.object.source.country') !== 'SG' || D.get(this, 'data.data.object.source.brand') === 'American Express';
             }
         },
         classMethods: {}
