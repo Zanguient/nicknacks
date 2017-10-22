@@ -7,12 +7,20 @@ global.DB = require('./models/index.js');
 global.MOMENT = require('moment');
 global.D = require('dottie');
 
-global.serverStatus = 'All OK';
+global.serverStatus = [];
 
 const WunderlistSDK = require('wunderlist');
 global.WL = new WunderlistSDK({
   'accessToken': process.env.WL_ACCESS_TOKEN,
   'clientID': process.env.WL_CLIENT_ID
+});
+
+WL.http.lists.all().done(function (lists) {
+    // all is good
+    return;
+}).fail(function () {
+    console.error('CRITICAL: Wunderlist connection failed.');
+    global.serverStatus.push('Wunderlist connection failed.');
 });
 
 var express = require('express');
@@ -27,6 +35,8 @@ var rp = require('request-promise');
 var QuickBooks = require('node-quickbooks');
 var qs = require('querystring');
 var parseString = require('xml2js').parseString;
+
+var retry = require('retry');
 
 //var QuickBooks = require('node-quickbooks');
 var QBO, QBO_TOKEN, QBO_SECRET;
@@ -61,17 +71,40 @@ const imap = {
   tlsOptions: { rejectUnauthorized: false }
 };
 
-var n = notifier(imap);
 
-n.on('mail', function(mail) {
-    console.log('received new mail!');
-    wunderlistBot(mail)
-});
-n.on('end', function() {
-    console.log('notifier ended, restarting');
-    n.start();  
-});
-n.start();
+function connectToMailBox() {
+
+    var operation = retry.operation();
+
+    operation.attempt(function(currentAttempt) {
+
+        var n;
+
+        try {
+
+            n = notifier(imap);  
+            
+            n.on('mail', function(mail) {
+                console.log('received new mail!');
+                wunderlistBot(mail)
+            });
+            n.on('end', function() {
+                console.log('notifier ended, restarting');
+                n.start();  
+            });
+            n.start();
+
+        } catch (e) {
+
+            serverStatus.push(e);
+            operation.retry(e);
+
+        }
+
+    });  
+}
+connectToMailBox();
+
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
@@ -210,11 +243,8 @@ function retrieveTokenAndRefresh() {
                 throw { message: 'Error code: ' + responseParsed.ErrorCode[0] + ' Message: ' + responseParsed.ErrorMessage[0] };
             
             }
-
         });
-
     }
-
 }
 
 

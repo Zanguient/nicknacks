@@ -47,7 +47,8 @@ router.get('/panel', function(req, res, next) {
         res.render('panel', { 
             data: {
                 sales: transactions,
-                payouts: payouts
+                payouts: payouts,
+                status: serverStatus
             }   
         });
 
