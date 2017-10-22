@@ -10,8 +10,8 @@ function QBOJournalCOGS(object) {
       "JournalEntryLineDetail": {
         "PostingType": "Credit",
         "AccountRef": {
-          "value": "8",
-          "name": "Inventory"
+          "value": "29",
+          "name": "Inventory Asset"
         }
         // ,
         // "TaxCodeRef": {
@@ -29,7 +29,7 @@ function QBOJournalCOGS(object) {
       "JournalEntryLineDetail": {
         "PostingType": "Debit",
         "AccountRef": {
-          "value": "25",
+          "value": "28",
           "name": "Cost of Sales"
         }
         // ,
