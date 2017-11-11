@@ -54,7 +54,15 @@ router.put('/add', function (req, res, next) {
 
         console.log(error);
 
-        return res.status(500).send({
+        return res.status(400).json({
+            success: false,
+            error: {
+                message: 'Server error: ' + error.message +'. Please check console log.',
+                hideMessage: false,
+                debug: error
+            }
+        });
+        return res.status(500).json({
             success: false,
             error: {
                 message: 'Server error: ' + error.message +'. Please check console log.',
@@ -195,6 +203,17 @@ router.put('/sold', function (req, res, next) {
     }).catch(function(error) {
 
         console.log(error);
+
+        if (error.name = "SequelizeUniqueConstraintError") {
+            return res.status(400).send({
+                success: false,
+                error: {
+                    message: 'Error: You are adding an item that already exist.',
+                    hideMessage: false,
+                    debug: error
+                }
+            });   
+        }
 
         return res.status(500).send({
             success: false,

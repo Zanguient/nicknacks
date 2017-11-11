@@ -264,7 +264,17 @@ app.use(function (err, req, res, next) {
 
     // render the error page
     res.status(err.status || 500);
-    res.render('error');
+
+    res.json({
+        success: false,
+        error: {
+            message: 'Server error: ' + error.message +'. Please check console log.',
+            hideMessage: false,
+            debug: error
+        }
+    });
+    
+    //res.render('error');
 });
 
 module.exports = app;

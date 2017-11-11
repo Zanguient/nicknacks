@@ -5,39 +5,46 @@
     {{/each}}
     </table>
 
+    <style>
+    .soldInventorySKU {
+        font-style: italic;
+    }
+    </style>
 
     <h1>Pending sales receipts</h1>
     <table class="table-striped">
         <tr>
-            <th>No.</th>
-            <th>SO#</th>
             <th>Info</th>
             <th>Sales Amount</th>
-            <th style="width: 250px;">Add Inventory</th>
-            <th>Enter COGS</th>
-            <th>Enter Note</th>
+            <th style="width: 400px;">Add Inventory</th>
+            <th>Enter COGS/Note</th>
             <th>Submit</th>
         </tr>
 
         {{#each data.sales}}
         <tr data-id="{{this.TransactionID}}">
-            <td>{{@index}}</td>
-    	    <td>{{this.salesOrderNumber}}</td>
-            <td>{{this.customerName}}<br>{{this.customerEmail}}<br>{{this.transactionDateTime}}</td>
+    	    <td>
+                {{this.salesOrderNumber}} <br>
+                {{this.customerName}} <br>
+                {{this.customerEmail}} <br>
+                {{this.transactionDateTime}}
+            </td>
             <td>{{this.totalAmount}}</td>
             <td><a data-transaction-id="{{this.TransactionID}}" class="addInventory">+Add inventory</a>
                 {{#each this.Inventories}}
                     <div class="soldInventory" style="border: 1px solid #ccc; padding: 2px; margin: 2px;" data-sold-inventory-id="{{this.SoldInventory.SoldInventoryID}}">
                         <span class="soldInventoryName">{{this.name}}</span> <br> 
                         <span class="soldInventorySKU">{{this.sku}}</span> <br>
-                        Qty: {{this.SoldInventory.quantity}} <br>
-                        COGS: <span class="soldInventoryCOGS"><script>document.write(parseFloat({{this.cogs}}) * parseFloat({{this.SoldInventory.quantity}}));</script></span><br>
-                        <button class="btn btn-danger deleteSoldInventory" data-sold-inventory-id="{{this.SoldInventory.SoldInventoryID}}">Remove</button>
+                        <strong>Qty:</strong> {{this.SoldInventory.quantity}} <strong>COGS:</strong> <span class="soldInventoryCOGS"><script>document.write(parseFloat({{this.cogs}}) * parseFloat({{this.SoldInventory.quantity}}));</script></span>
+                        <button style="display: inline;" class="btn btn-danger deleteSoldInventory" data-sold-inventory-id="{{this.SoldInventory.SoldInventoryID}}">Remove</button>
                     </div>
                 {{/each}}
             </td>
-            <td><input class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
-            <td><input class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
+            <td>
+                COGS: <input style="display: inline; width: 100px;" class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"> <br>
+                
+                Note: <input style="display: inline; width: 100px;" class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}">
+            </td>
             <td><button class="createSalesReceiptButton btn btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
         {{/each}}
@@ -185,15 +192,18 @@
                     
                     html += 'Qty: ' + soldInventory.quantity + '<br>';
                     html += 'COGS: <span class="soldInventoryCOGS">' + parseFloat(inventory.cogs) * parseFloat(soldInventory.quantity) + '</span><br>';
-                    html += '<button class="btn btn-danger deleteSoldInventory" data-sold-inventory-id="' + soldInventory.SoldInventoryID + '">Remove</button>';
 
-                    html += '</div>'
+                    html += '</div>';
 
                     var $html = $(html);
 
-                    $html.find('.deleteSoldInventory').on('click', deleteSoldInventory)
+                    $deleteButton = $('<button class="btn btn-danger deleteSoldInventory" data-sold-inventory-id="' + soldInventory.SoldInventoryID + '">Remove</button>');
 
-                    $inventoryGroup.before(html);
+                    $deleteButton.on('click', deleteSoldInventory);
+
+                    $html.append($deleteButton);
+
+                    $inventoryGroup.before($html);
                     $inventoryGroup.remove();
 
                     return;
@@ -207,9 +217,9 @@
             });
 
             post.fail(function(data) {
-                alert(D.get(data, 'error.message'));
                 console.log(data)
-                console.log(D.get(data, 'error.debug'));
+                alert(D.get(data, 'responseJSON.error.message'));
+                console.log(D.get(data, 'responseJSON.error.debug'));
             });
 
             post.always(function() {
@@ -270,18 +280,16 @@
     <h1>Inventory</h1>
     <table class="table-striped">
         <tr>
-            <th>Name</th>
-            <th>SKU</th>
-            <th>COGS</th>
+            <th>Name/SKU/COGS</th>
             <th>Quantity/Location</th>
             <th>Update</th>
         </tr>
 
         <tr id="inventory-quick-add-tr">
             <form id="inventory-quick-add">
-                <td><input type="text" class="form-control" id="inventory-quick-add-name" name="name" placeholder="name"></td>
-                <td><input type="text" class="form-control" id="inventory-quick-add-sku" name="sku" placeholder="sku"></td>
-                <td><input type="text" class="form-control" id="inventory-quick-add-cogs" name="cogs" placeholder="cogs"></td>
+                <td><input type="text" class="form-control" id="inventory-quick-add-name" name="name" placeholder="name"><br>
+                <input type="text" class="form-control" id="inventory-quick-add-sku" name="sku" placeholder="sku"> <br>
+                <input type="text" class="form-control" id="inventory-quick-add-cogs" name="cogs" value="0" placeholder="cogs"></td>
                 <td>
                     <style>
                     .quantity-table {
@@ -323,9 +331,9 @@
         {{#each data.inventories}}
             <tr>
                 <form class="inventory-items">
-                    <td><span class="inventory-item-display">{{this.name}}</span></td>
-                    <td><span class="inventory-item-display">{{this.sku}}</span></td>
-                    <td><span class="inventory-item-display">{{this.cogs}}</span></td>
+                    <td><span class="inventory-item-display">{{this.name}}</span><br>
+                    <span class="inventory-item-display" style="font-style: italic">{{this.sku}}</span><br>
+                    COGS: <span class="inventory-item-display">{{this.cogs}}</span></td>
                     <td>
                         <style>
                         .quantity-table {
@@ -422,8 +430,9 @@
         });
 
         post.fail(function(data) {
-            alert(D.get(data, 'error.message'));
-            console.log(D.get(data, 'error.debug'));
+            console.log(data)
+            alert(D.get(data, 'responseJSON.error.message'));
+            console.log(D.get(data, 'responseJSON.error.debug'));
         });
 
         post.always(function() {
