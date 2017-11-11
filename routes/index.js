@@ -14,8 +14,21 @@ router.get('/panel', function(req, res, next) {
 
     var optionsForTransaction = {
         where: {},
-        order: [['TransactionID', 'DESC']]
+        order: [['TransactionID', 'DESC']],
+        include: [{
+            model: DB.Inventory,
+            through: {
+                model: DB.SoldInventory,
+                attributes: [ 
+                    'SoldInventoryID',
+                    'Transaction_transactionID',
+                    'Inventory_inventoryID',
+                    'quantity'
+                ]
+            }
+        }]
     };
+
     var optionsForPayoutPaid = {
         where :{},
         limit: 20,
@@ -38,185 +51,107 @@ router.get('/panel', function(req, res, next) {
         return [
 
             DB.Transaction.findAll(optionsForTransaction),
-            DB.PayoutPaid.findAll(optionsForPayoutPaid)
+            DB.PayoutPaid.findAll(optionsForPayoutPaid),
+            DB.StorageLocation.findAll({ order: [ ['StorageLocationID', 'ASC'] ] }),
 
+            DB.Inventory.findAll({ 
+                order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
+                include: [{ 
+                    model: DB.Transaction,
+                    through: {
+                        model: DB.SoldInventory,
+                        attributes: [ 'quantity' ]
+                    }
+                }, {
+                    model: DB.StorageLocation,
+                    through: {
+                        model: DB.Inventory_Storage,
+                        attributes: [ 
+                            'Inventory_StorageID',
+                            'StorageLocation_storageLocationID',
+                            'Inventory_inventoryID',
+                            'quantity'
+                        ]
+                    }
+                }]
+            })
         ];
 
-    }).spread(function(transactions, payouts) {
-        
+    }).spread(function(transactions, payouts, storageLocations, inventories) {
+        console.log('<<<<')
+        console.log(transactions)
+        console.log('>>>>')
+
         res.render('panel', { 
             data: {
                 sales: transactions,
                 payouts: payouts,
-                status: serverStatus
+                status: serverStatus,
+                storageLocations: storageLocations,
+                inventories: inventories,
+                inventoriesString: JSON.stringify(inventories)
             }   
         });
 
     }).catch(function(err) {
-        res.send(JSON.stringify(err));
+        console.log(err)
+        res.render('error', err);
     });
 
     
 });
 
+router.get('/panel/inventory', function(req, res, next) {
 
-router.post('/charge-succeeded', function (req, res) {
 
-    if(D.get(req, 'body.livemode') === false) {
-        console.log(req.body);
-        return res.send({ success: true });
-    }
+    PROMISE.resolve().then(function() {
 
-    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
+        return [
 
-    // get sales order number
-    var salesOrderNumber = D.get(req, 'body.data.object.description');
+            DB.StorageLocation.findAll(),
+            DB.Inventory.findAll({ 
+                order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
+                include: [{ 
+                    model: DB.Transaction,
+                    through: {
+                        model: DB.SoldInventory,
+                        attributes: [ 'quantity' ]
+                    }
+                }, {
+                    model: DB.StorageLocation,
+                    through: {
+                        model: DB.Inventory_Storage,
+                        attributes: [ 
+                            'Inventory_StorageID',
+                            'StorageLocation_storageLocationID',
+                            'Inventory_inventoryID',
+                            'quantity'
+                        ]
+                    }
+                }]
+            })
+        ];
 
-    if(!salesOrderNumber) {
-        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
-    } else {
-        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
-    }
+    }).spread(function(storageLocations, inventories) {
+ 
+        console.log(JSON.stringify(inventories))
+
+        res.render('inventory', { 
+            data: {
+                storageLocations: storageLocations,
+                inventories: inventories
+            }   
+        });
+
+    }).catch(function(err) {
+        console.log(err)
+        res.render('inventory', err);
+    });
     
-
-    // save the data
-    return DB.Transaction.create({
-        data: req.body,
-        status: 'pending',
-        eventType: 'charge-succeeded',
-        salesOrderNumber: salesOrderNumber,
-        eventId: req.body.id
-    })
-    .then(function (transaction) {
-        // send success
-        return res.send({
-            success: true
-        });
-    })
-    .catch(function (err) {
-        // log the error
-        console.log("CRITICAL: Failed to capture stripe charge with error: " + err);
-        res.status(500).send();
-    });
-
 });
 
-router.post('/refunded', function (req, res) {
 
-    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
-
-    if(D.get(req, 'body.livemode') === false) {
-        console.log(req.body);
-        return res.send({ success: true });
-    }
-
-    // get sales order number
-    var salesOrderNumber = D.get(req, 'body.data.object.description');
-
-    if(!salesOrderNumber) {
-        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
-    } else {
-        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
-    }
-
-    var _TRANSACTION;
-
-    // save the data
-    return DB.Transaction.create({
-        data: req.body,
-        status: 'pending',
-        eventType: 'refunded',
-        salesOrderNumber: salesOrderNumber,
-        eventId: req.body.id
-    })
-    .then(function (transaction) {
-
-        _TRANSACTION = transaction;
-
-        var calculateStripeCommissionAmountOnRefund = require('../apps/calculateStripeCommissionAmountOnRefund');
-        var stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(transaction.data);
-
-        // create a journal entry to reduce stripe commission
-        return QBO.createJournalEntryAsync({
-            "DocNumber": transaction.salesOrderNumber + '-R',
-            "TxnDate": transaction.transactionDateQBOFormat,
-            "PrivateNote": "Refund for " + transaction.salesOrderNumber,
-            "Line": [{
-                // credit stripe transit cash for refund
-                "Id": "0",
-                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    // take out from stripe transit account
-                    "PostingType": "Credit",
-                    "AccountRef": {
-                        "value": "46",
-                        "name": "Stripe Transit"
-                    }
-                }
-            }, {
-                // debit sales refund
-                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    "PostingType": "Debit",
-                    "AccountRef": {
-                        "value": "30",
-                        "name": "Sales Refund"
-                    }
-                }
-            }, {
-                // debit stripe transit because stripe will return some money in refund.
-                "Id": "1",
-                "Amount": stripeCommissionReturned,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    "PostingType": "Debit",
-                    "AccountRef": {
-                        "value": "46",
-                        "name": "Stripe Transit"
-                    }
-                }
-            }, {
-                // credit expenses to lower expenses from recovered stripe commission
-                "Amount": stripeCommissionReturned,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    "PostingType": "Credit",
-                    "AccountRef": {
-                        "value": "33",
-                        "name": "Stripe Charges"
-                    }
-                }
-            }]
-        });
-
-    })
-    .then(function(journalEntry) {
-
-        if (!journalEntry || D.get(journalEntry, 'Fault')) throw journalEntry;
-
-        _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
-        _TRANSACTION.status = "completed";
-
-        return _TRANSACTION.save();
-
-    })
-    .then(function(transaction) {
-        // send success
-        return res.send({
-            success: true
-        });
-    })
-    .catch(function (err) {
-        // log the error
-        console.log(err);
-
-        res.status(500).send();
-    });
-
-});
-
+// NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {
 
     // request checking
@@ -559,6 +494,166 @@ router.post('/create-sales-receipt', function(req, res) {
     }
 });
 
+
+// STRIPE WEBHOOK ROUTES
+router.post('/charge-succeeded', function (req, res) {
+
+    if(D.get(req, 'body.livemode') === false) {
+        console.log(req.body);
+        return res.send({ success: true });
+    }
+
+    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
+
+    // get sales order number
+    var salesOrderNumber = D.get(req, 'body.data.object.description');
+
+    if(!salesOrderNumber) {
+        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
+    } else {
+        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
+    }
+    
+
+    // save the data
+    return DB.Transaction.create({
+        data: req.body,
+        status: 'pending',
+        eventType: 'charge-succeeded',
+        salesOrderNumber: salesOrderNumber,
+        eventId: req.body.id
+    })
+    .then(function (transaction) {
+        // send success
+        return res.send({
+            success: true
+        });
+    })
+    .catch(function (err) {
+        // log the error
+        console.log("CRITICAL: Failed to capture stripe charge with error: " + err);
+        res.status(500).send();
+    });
+
+});
+
+router.post('/refunded', function (req, res) {
+
+    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
+
+    if(D.get(req, 'body.livemode') === false) {
+        console.log(req.body);
+        return res.send({ success: true });
+    }
+
+    // get sales order number
+    var salesOrderNumber = D.get(req, 'body.data.object.description');
+
+    if(!salesOrderNumber) {
+        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
+    } else {
+        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
+    }
+
+    var _TRANSACTION;
+
+    // save the data
+    return DB.Transaction.create({
+        data: req.body,
+        status: 'pending',
+        eventType: 'refunded',
+        salesOrderNumber: salesOrderNumber,
+        eventId: req.body.id
+    })
+    .then(function (transaction) {
+
+        _TRANSACTION = transaction;
+
+        var calculateStripeCommissionAmountOnRefund = require('../apps/calculateStripeCommissionAmountOnRefund');
+        var stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(transaction.data);
+
+        // create a journal entry to reduce stripe commission
+        return QBO.createJournalEntryAsync({
+            "DocNumber": transaction.salesOrderNumber + '-R',
+            "TxnDate": transaction.transactionDateQBOFormat,
+            "PrivateNote": "Refund for " + transaction.salesOrderNumber,
+            "Line": [{
+                // credit stripe transit cash for refund
+                "Id": "0",
+                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    // take out from stripe transit account
+                    "PostingType": "Credit",
+                    "AccountRef": {
+                        "value": "46",
+                        "name": "Stripe Transit"
+                    }
+                }
+            }, {
+                // debit sales refund
+                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Debit",
+                    "AccountRef": {
+                        "value": "30",
+                        "name": "Sales Refund"
+                    }
+                }
+            }, {
+                // debit stripe transit because stripe will return some money in refund.
+                "Id": "1",
+                "Amount": stripeCommissionReturned,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Debit",
+                    "AccountRef": {
+                        "value": "46",
+                        "name": "Stripe Transit"
+                    }
+                }
+            }, {
+                // credit expenses to lower expenses from recovered stripe commission
+                "Amount": stripeCommissionReturned,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Credit",
+                    "AccountRef": {
+                        "value": "33",
+                        "name": "Stripe Charges"
+                    }
+                }
+            }]
+        });
+
+    })
+    .then(function(journalEntry) {
+
+        if (!journalEntry || D.get(journalEntry, 'Fault')) throw journalEntry;
+
+        _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
+        _TRANSACTION.status = "completed";
+
+        return _TRANSACTION.save();
+
+    })
+    .then(function(transaction) {
+        // send success
+        return res.send({
+            success: true
+        });
+    })
+    .catch(function (err) {
+        // log the error
+        console.log(err);
+
+        res.status(500).send();
+    });
+
+});
+
+
 router.post('/payout-paid', function (req, res) {
 
     if(D.get(req, 'body.livemode') === false) {
@@ -610,6 +705,5 @@ router.post('/payout-paid', function (req, res) {
     });
 
 });
-
 
 module.exports = router;

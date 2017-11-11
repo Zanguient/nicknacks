@@ -15,6 +15,7 @@ global.WL = new WunderlistSDK({
   'clientID': process.env.WL_CLIENT_ID
 });
 
+
 WL.http.lists.all().done(function (lists) {
     // all is good
     return;
@@ -51,24 +52,25 @@ app.set('view engine', 'hbs');
 //app.use(favicon(path.join(__dirname, 'publicindex.js', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
+app.use('/inventory', require('./routes/inventory'));
 
 const notifier = require('mail-notifier');
 const wunderlistBot = require('./apps/wunderlistBot')
 
 const imap = {
-  user: 'root@greyandsanders.com',
-  password: process.env.ZOHO_EMAIL_PASSWORD,
-  host: 'imappro.zoho.com',
-  port: 993,
-  tls: true,
-  tlsOptions: { rejectUnauthorized: false }
+    user: 'root@greyandsanders.com',
+    password: process.env.ZOHO_EMAIL_PASSWORD,
+    host: 'imappro.zoho.com',
+    port: 993,
+    tls: true,
+    tlsOptions: { rejectUnauthorized: false }
 };
 
 
@@ -103,15 +105,14 @@ function connectToMailBox() {
 
     });  
 }
-connectToMailBox();
 
+connectToMailBox();
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
 
 // attempt refresh every 1 week
 setInterval(retrieveTokenAndRefresh, 6.048e+8);
-
 
 function retrieveTokenAndRefresh() {
     // get the token

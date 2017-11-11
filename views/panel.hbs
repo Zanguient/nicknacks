@@ -13,6 +13,7 @@
             <th>SO#</th>
             <th>Info</th>
             <th>Sales Amount</th>
+            <th style="width: 250px;">Add Inventory</th>
             <th>Enter COGS</th>
             <th>Enter Note</th>
             <th>Submit</th>
@@ -24,12 +25,415 @@
     	    <td>{{this.salesOrderNumber}}</td>
             <td>{{this.customerName}}<br>{{this.customerEmail}}<br>{{this.transactionDateTime}}</td>
             <td>{{this.totalAmount}}</td>
+            <td><a data-transaction-id="{{this.TransactionID}}" class="addInventory">+Add inventory</a>
+                {{#each this.Inventories}}
+                    <div class="soldInventory" style="border: 1px solid #ccc; padding: 2px; margin: 2px;" data-sold-inventory-id="{{this.SoldInventory.SoldInventoryID}}">
+                        <span class="soldInventoryName">{{this.name}}</span> <br> 
+                        <span class="soldInventorySKU">{{this.sku}}</span> <br>
+                        Qty: {{this.SoldInventory.quantity}} <br>
+                        COGS: <span class="soldInventoryCOGS"><script>document.write(parseFloat({{this.cogs}}) * parseFloat({{this.SoldInventory.quantity}}));</script></span><br>
+                        <button class="btn btn-danger deleteSoldInventory" data-sold-inventory-id="{{this.SoldInventory.SoldInventoryID}}">Remove</button>
+                    </div>
+                {{/each}}
+            </td>
             <td><input class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"></td>
             <td><input class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}"></td>
             <td><button class="createSalesReceiptButton btn btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
         {{/each}}
     </table>
+    <style>.caption { font-size: 11px; color: #ccc; }</style>
+    <script>
+
+    // inventories
+    function decodeStr(str) {
+        var parser = new DOMParser;
+        var dom = parser.parseFromString(
+            '<!doctype html><body>' + str,
+            'text/html');
+        return dom.body.textContent;
+    }
+    
+    var inventories = JSON.parse(decodeStr("{{data.inventoriesString}}"));
+
+    var selectizeOptions = {
+        persist: false,
+        maxItems: 1,
+        valueField: 'InventoryID',
+        labelField: 'name',
+        searchField: ['name', 'sku'],
+        options: inventories,
+        render: {
+            item: function(item, escape) {
+                return '<div>' +
+                    (item.name ? '<span class="name">' + escape(item.name) + '</span>' : '') +
+                    (item.sku ? '<span class="sku">' + escape(item.sku) + '</span>' : '') +
+                '</div>';
+            },
+            option: function(item, escape) {
+                var label = item.name || item.sku;
+                var caption = item.name ? item.sku : null;
+                return '<div>' +
+                    '<span>' + escape(label) + '</span>' +
+                    (caption ? '<span class="caption" style="display:block;">' + escape(caption) + '</span>' : '') +
+                '</div>';
+            }
+        }
+    };
+
+    var deleteSoldInventory = function(event) {
+        event.preventDefault();
+
+        var self = this;
+
+        $(this).html('Removing').attr('disabled', 'disabled');
+        var post = $.ajax({
+            type: "DELETE",
+            url: "/inventory/sold/delete",
+            data: { SoldInventoryID: $(self).attr('data-sold-inventory-id') }
+        });
+
+        post.done(function(data) { 
+        
+            if(data.success) {
+                alert('success!');
+                $(self).parent('.soldInventory').remove();
+                //console.log(data.inventory);
+                return;
+            }
+
+            
+            alert(D.get(data, 'error.message'));
+            console.log(data)
+            console.log(D.get(data, 'error.debug'));
+
+        });
+
+        post.fail(function(data) {
+            alert(D.get(data, 'error.message'));
+            console.log(data)
+            console.log(D.get(data, 'error.debug'));
+        });
+
+        post.always(function() {
+
+            $(this).html('Remove').removeAttr('disabled');
+
+        }); 
+    }
+
+    $('.deleteSoldInventory').on('click', deleteSoldInventory);
+
+
+    $('.addInventory').click(function() {
+
+        var uid = (new Date).getTime();
+        var transactionID = $(this).attr('data-transaction-id');
+
+        var $group = $('<div style="border: 1px solid #aaa; padding: 4px;" class="inventoryGroup"></div>');
+
+        var $form = $('<form class="inventoryForm"><input type="hidden" name="Transaction_transactionID" value="' + transactionID + '"></form>')
+
+        var $select = $('<select name="Inventory_inventoryID" class="inventory" id="' + uid + '"></select>');
+
+
+        $select.appendTo($form);
+        //$location.appendTo($group);
+        $select.after('Qty:<input name="quantity" value="1" type="number" placeholder="qty" style="width: 30px;"></span>&nbsp;&nbsp;<button class="btn btn-default" type="submit">Add</button>');
+
+        $form.appendTo($group);
+
+        $(this).after($group);
+
+        $('#' + uid).selectize(selectizeOptions);
+
+        $form.on('submit', function(event) {
+
+            $inventoryGroup = $(this).closest('.inventoryGroup');
+
+            var self = this;
+
+            event.preventDefault();
+
+            var $button = $(this).find('[type="submit"]');
+            $button.attr('disabled', 'disabled');
+            $button.html('Adding..');
+
+            var formData = $form.serializeJSON();
+
+
+            var post = $.ajax({
+                type: "PUT",
+                url: "/inventory/sold",
+                data: formData
+            });
+
+            post.done(function(data) { 
+            
+                if(data.success) {
+                    alert('success!');
+                    console.log(data);
+
+                    var soldInventory = data.soldInventory;
+                    var inventory = data.inventory;
+
+                    var html = '<div style="border: 1px solid #ccc; padding: 2px; margin: 2px;" data-sold-inventory-id="' + soldInventory.SoldInventoryID + '">';
+
+                    html += '<span class="soldInventoryName">' + inventory.name + '</span> <br> ';
+                    
+                    html += '<span class="soldInventorySKU">' + inventory.sku + '</span> <br>';
+                    
+                    html += 'Qty: ' + soldInventory.quantity + '<br>';
+                    html += 'COGS: <span class="soldInventoryCOGS">' + parseFloat(inventory.cogs) * parseFloat(soldInventory.quantity) + '</span><br>';
+                    html += '<button class="btn btn-danger deleteSoldInventory" data-sold-inventory-id="' + soldInventory.SoldInventoryID + '">Remove</button>';
+
+                    html += '</div>'
+
+                    var $html = $(html);
+
+                    $html.find('.deleteSoldInventory').on('click', deleteSoldInventory)
+
+                    $inventoryGroup.before(html);
+                    $inventoryGroup.remove();
+
+                    return;
+                }
+
+                
+                alert(D.get(data, 'error.message'));
+                console.log(data)
+                console.log(D.get(data, 'error.debug'));
+
+            });
+
+            post.fail(function(data) {
+                alert(D.get(data, 'error.message'));
+                console.log(data)
+                console.log(D.get(data, 'error.debug'));
+            });
+
+            post.always(function() {
+
+                $button.html('Add');
+                $button.removeAttr('disabled');
+
+            });    
+
+        })
+
+    });
+
+    
+    $('.createSalesReceiptButton').on('click', function() {
+
+        var self = this;
+        var transactionID = $(this).attr('data-id');
+        var COGSfield = $('input[name="COGS"][data-id="' + transactionID + '"]');
+        var privateNoteField = $('input[name="PrivateNote"][data-id="' + transactionID + '"]');
+        var privateNote = (typeof privateNoteField.val() === "string" && privateNoteField.length > 0) ? privateNoteField.val() : null;
+        var COGS = COGSfield.val();
+        var submittingSpan = $('span[data-id="' + transactionID + '"]').show();
+
+
+        if (COGS.length === 0) return alert('Please enter a valid COGS');
+
+        submittingSpan.show();
+        $(this).hide();
+        
+        var post = $.ajax({
+            type: "POST",
+            url: "create-sales-receipt",
+            data: { transactionID: transactionID, COGS: COGS, privateNote: privateNote }
+        });
+        
+        post.done(function(data) { 
+
+           if(data.success) {
+                    alert('success!');
+                    return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
+               }
+               self.show();
+               alert(JSON.stringify(data));
+        });
+
+        post.fail(function(data) {
+            self.show();
+            submittingSpan.hide();
+            alert(JSON.stringify(data));
+        });
+
+
+
+    });
+    </script>
+
+    <h1>Inventory</h1>
+    <table class="table-striped">
+        <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>COGS</th>
+            <th>Quantity/Location</th>
+            <th>Update</th>
+        </tr>
+
+        <tr id="inventory-quick-add-tr">
+            <form id="inventory-quick-add">
+                <td><input type="text" class="form-control" id="inventory-quick-add-name" name="name" placeholder="name"></td>
+                <td><input type="text" class="form-control" id="inventory-quick-add-sku" name="sku" placeholder="sku"></td>
+                <td><input type="text" class="form-control" id="inventory-quick-add-cogs" name="cogs" placeholder="cogs"></td>
+                <td>
+                    <style>
+                    .quantity-table {
+                        font-size: 10px;
+                    }
+                    .quantity-table td {
+                        padding: 2px;
+                    }
+                    .quantity-table input.inventory-quick-add-qty {
+                        width: 45px;
+                        font-size: 10px;
+                        padding: 2px;
+                        height: 24px;
+                    }
+                    </style>
+                    <table class="table-striped quantity-table">
+                        <tr>
+                            <th>Qty:</th>
+                            <th>Loc:</th>
+                        </tr>
+
+                        {{#each data.storageLocations}}
+                        <tr>
+                            <td><input data-storage-location-id="{{this.StorageLocationID}}" type="number" class="form-control inventory-quick-add-qty" placeholder="qty"></td>
+                            <td>{{this.name}}</td>
+                        </tr>
+                        {{/each}}
+                    </table>
+                </td>
+                <td><button id="inventory-quick-add-submit-button" type="submit" class="btn btn-primary">Add</button><span id="inventory-quick-add-submitting" style="display:none;">Submitting</span></td>
+            </form>
+        </tr>
+
+
+        <style>
+        .inventory-items-quick-edit { display: none;}
+        </style>
+
+        {{#each data.inventories}}
+            <tr>
+                <form class="inventory-items">
+                    <td><span class="inventory-item-display">{{this.name}}</span></td>
+                    <td><span class="inventory-item-display">{{this.sku}}</span></td>
+                    <td><span class="inventory-item-display">{{this.cogs}}</span></td>
+                    <td>
+                        <style>
+                        .quantity-table {
+                            font-size: 10px;
+                        }
+                        .quantity-table td, .quantity-table th {
+                            padding: 2px;
+                        }
+                        .quantity-table input.inventory-quick-add-qty {
+                            width: 45px;
+                            font-size: 10px;
+                            padding: 2px;
+                            height: 24px;
+                        }
+                        </style>
+                        
+                        <table class="table-striped quantity-table">
+                            <tr>
+                                <th>Qty:</th>
+                                <th>Loc:</th>
+                            </tr>
+                            {{#each this.stock}}
+                                <tr>
+                                    <td>{{this.quantity}}</td>
+                                    <td>{{this.name}}</td>
+                                </tr>
+                            {{/each}}
+                        </table>
+                        
+                    </td>
+                    <td></td>
+                </form>
+            </tr>
+        {{/each}}
+
+    </table>
+
+    <script>
+    $('#inventory-quick-add').submit(function(event) {
+
+        event.preventDefault();
+
+        var self = this;
+        var $submittingSpan = $('#inventory-quick-add-submitting');
+        var $submitButton = $('#inventory-quick-add-submit-button');
+        var $formTable = $(this).closest('table');
+
+        var formData = $(this).serializeJSON();
+
+        // get the storage+quantity array
+        // intentionally left out the name to escapte #serialzeJSON
+        // because it won't work on object nesting in arrays.
+        var $quantityTable = $formTable.find('.quantity-table');
+
+        var storageAndQuantities = [];
+
+        $quantityTable.find('input').each(function(element, index) {
+            
+            var obj = {
+                StorageLocationID: $(this).attr('data-storage-location-id')
+            }
+
+            if(parseInt($(this).val()) === NaN) return alert('Invalid quantity');
+            
+            obj.quantity = parseInt($(this).val()) ? parseInt($(this).val()) : 0;
+
+            storageAndQuantities.push(obj);
+        });
+
+        formData.storageAndQuantities = storageAndQuantities;
+
+        $submittingSpan.show();
+        $submitButton.hide();
+    
+        var post = $.ajax({
+            type: "PUT",
+            url: "inventory/add",
+            data: formData
+        });
+        
+        post.done(function(data) { 
+ 
+            if(data.success) {
+                alert('success!');
+                // add the row.
+                console.log(data.inventory);
+                return;
+            }
+
+            
+            alert(D.get(data, 'error.message'));
+            console.log(D.get(data, 'error.debug'));
+
+        });
+
+        post.fail(function(data) {
+            alert(D.get(data, 'error.message'));
+            console.log(D.get(data, 'error.debug'));
+        });
+
+        post.always(function() {
+
+            $submittingSpan.hide();
+            $submitButton.show();
+
+        });
+    });
+    </script>
 
     <h1>Past payouts</h1>
     <table class="table-striped">
@@ -51,48 +455,4 @@
         </tr>
         {{/each}}
     </table>
-
-    <script>
-    $('.createSalesReceiptButton').on('click', function() {
-
-    	var self = this;
-        var transactionID = $(this).attr('data-id');
-        var COGSfield = $('input[name="COGS"][data-id="' + transactionID + '"]');
-        var privateNoteField = $('input[name="PrivateNote"][data-id="' + transactionID + '"]');
-        var privateNote = (typeof privateNoteField.val() === "string" && privateNoteField.length > 0) ? privateNoteField.val() : null;
-    	var COGS = COGSfield.val();
-        var submittingSpan = $('span[data-id="' + transactionID + '"]').show();
-
-
-    	if (COGS.length === 0) return alert('Please enter a valid COGS');
-
-            submittingSpan.show();
-            $(this).hide();
-            
-            var post = $.ajax({
-                type: "POST",
-                url: "create-sales-receipt",
-                data: { transactionID: transactionID, COGS: COGS, privateNote: privateNote }
-            });
-    	
-    	post.done(function(data) { 
-
-    	   if(data.success) {
-                    alert('success!');
-                    return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
-               }
-               self.show();
-               alert(JSON.stringify(data));
-    	});
-
-        post.fail(function(data) {
-            self.show();
-            submittingSpan.hide();
-    	    alert(JSON.stringify(data));
-    	});
-
-
-
-    });
-    </script>
 

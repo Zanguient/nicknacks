@@ -22,7 +22,8 @@ function Transaction(sequelize, DataTypes) {
                 'pending',
                 'processing',
                 'failed',
-                'completed'
+                'completed',
+                'delivered'
             ]
         },
         salesOrderNumber: {
@@ -146,8 +147,27 @@ function Transaction(sequelize, DataTypes) {
             creditCardIsAMEXorIsNotSG: function() {
                 return D.get(this, 'data.data.object.source.country') !== 'SG' || D.get(this, 'data.data.object.source.brand') === 'American Express';
             }
+            // ,
+            // COGS: function() {
+            //     var self = this;
+            //     var soldInventories = D.get(self, 'Inventories');
+
+            //     if (!soldInventories) return null;
+
+            //     soldInventories.
+            // }
         },
-        classMethods: {}
+        classMethods: {
+            associate: function (models) {
+                Transaction.belongsToMany(models.Inventory, {
+                    singular: 'Inventory',
+                    plural: 'Inventories',
+                    foreignKey: 'Transaction_transactionID',
+                    through: 'SoldInventory'
+                });
+            }
+
+        }
     });
     return Transaction;
 };
