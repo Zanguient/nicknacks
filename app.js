@@ -74,7 +74,7 @@ const imap = {
 };
 
 
-function connectToMailBox() {
+function connectToMailBox(notifier, imap) {
 
     var operation = retry.operation();
 
@@ -106,7 +106,7 @@ function connectToMailBox() {
     });  
 }
 
-connectToMailBox();
+//connectToMailBox(notifier, imap);
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
