@@ -106,7 +106,7 @@ function connectToMailBox(notifier, imap) {
     });  
 }
 
-//connectToMailBox(notifier, imap);
+connectToMailBox(notifier, imap);
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
