@@ -1,10 +1,3 @@
-    <h1>Errors</h1>
-    <table class="table-striped">
-    {{#each status}}
-    <tr><td>{{this}}</td></tr>
-    {{/each}}
-    </table>
-
     <style>
     .soldInventory {
         border: 1px solid #ccc; padding: 2px; margin: 2px;
@@ -14,19 +7,18 @@
     }
     </style>
 
-    <h1>Pending sales receipts</h1>
+    <h1>Delivery</h1>
     <table class="table-striped">
         <tr>
             <th>Info</th>
             <th>Sales Amount</th>
             <th style="width: 400px;">Add Inventory</th>
-            <th>Enter COGS/Note</th>
-            <th>Submit</th>
+            <th>Delivered</th>
         </tr>
 
         {{#each data.sales}}
         <tr data-id="{{this.TransactionID}}">
-    	    <td>
+            <td>
                 {{this.salesOrderNumber}} <br>
                 {{this.customerName}} <br>
                 {{this.customerEmail}} <br>
@@ -52,16 +44,11 @@
                     </div>
                 {{/each}}
             </td>
-            <td>
-                COGS: <input style="display: inline; width: 100px;" class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"> <br>
-                
-                Note: <input style="display: inline; width: 100px;" class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}">
-            </td>
-            <td><button class="createSalesReceiptButton btn btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
+            <td><button class="deliveredButton btn btn-default" type="button" data-transaciton-id="{{this.TransactionID}}">Delivered</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
         </tr>
         {{/each}}
     </table>
-    <style>.caption, .sku { font-size: 11px; color: #ccc; }</style>
+    <style>.caption { font-size: 11px; color: #ccc; }</style>
     <script>
 
     // inventories
@@ -230,19 +217,6 @@
         })
 
     });
-
-
-    // // storage locations select:
-
-    // var storageSelect = "<select name='StorageLocation_storageLocationID'>";
-
-    // {{#each data.storageLocations}}
-    // storageSelect += "<option value='{{this.StorageLocationID}}'>";
-    // storageSelect += "{{this.name}}";
-    // {{/each}}
-
-    // storageSelect += "</select>";
-
     var deleteSoldInventory = function(event) {
         event.preventDefault();
 
@@ -285,41 +259,33 @@
     }
 
     $('.deleteSoldInventory').on('click', deleteSoldInventory);
+
     
-    $('.createSalesReceiptButton').on('click', function() {
+    $('.deliveredButton').on('click', function() {
 
         var self = this;
-        var transactionID = $(this).attr('data-id');
-        var COGSfield = $('input[name="COGS"][data-id="' + transactionID + '"]');
-        var privateNoteField = $('input[name="PrivateNote"][data-id="' + transactionID + '"]');
-        var privateNote = (typeof privateNoteField.val() === "string" && privateNoteField.length > 0) ? privateNoteField.val() : null;
-        var COGS = COGSfield.val();
+        var transactionID = $(this).attr('data-transaciton-id');
         var submittingSpan = $('span[data-id="' + transactionID + '"]').show();
-
-
-        if (COGS.length === 0) return alert('Please enter a valid COGS');
-
-        submittingSpan.show();
         $(this).hide();
         
         var post = $.ajax({
             type: "POST",
-            url: "create-sales-receipt",
-            data: { transactionID: transactionID, COGS: COGS, privateNote: privateNote }
+            url: "/inventory/delivered",
+            data: { TransactionID: transactionID }
         });
         
         post.done(function(data) { 
-
+    
            if(data.success) {
-                    alert('success!');
-                    return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
-               }
-               self.show();
-               alert(JSON.stringify(data));
+                alert('success!');
+                return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
+           }
+           $(self).show();
+           alert(JSON.stringify(data));
         });
 
         post.fail(function(data) {
-            self.show();
+            $(self).show();
             submittingSpan.hide();
             alert(JSON.stringify(data));
         });
@@ -495,25 +461,3 @@
         });
     });
     </script>
-
-    <h1>Past payouts</h1>
-    <table class="table-striped">
-        <tr>
-            <th>No.</th>
-            <th>eventId</th>
-            <th>Date/Time of Payout</th>
-            <th>Amount</th>
-            <th>status</th>
-        </tr>
-
-        {{#each data.payouts}}
-        <tr>
-            <td>{{@index}}</td>
-            <td>{{this.data.id}}</td>
-            <td>{{this.payoutPaidDateTime}}</td>
-            <td>{{this.amount}}</td>
-            <td>{{this.status}}</td>
-        </tr>
-        {{/each}}
-    </table>
-

@@ -268,9 +268,9 @@ app.use(function (err, req, res, next) {
     res.json({
         success: false,
         error: {
-            message: 'Server error: ' + error.message +'. Please check console log.',
+            message: 'Server error: ' + err.message +'. Please check console log.',
             hideMessage: false,
-            debug: error
+            debug: err
         }
     });
     

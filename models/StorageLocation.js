@@ -35,6 +35,8 @@ function StorageLocation(sequelize, DataTypes) {
                     foreignKey: 'StorageLocation_storageLocationID',
                     through: 'Inventory_Storage'
                 });
+
+
             }
             
         }

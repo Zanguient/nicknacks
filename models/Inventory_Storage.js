@@ -21,7 +21,31 @@ function Inventory_Storage(sequelize, DataTypes) {
         tableName: 'Inventory_Storage',
         instanceMethods: {},
         getterMethods: {},
-        classMethods: {}
+        classMethods: {
+            associate: function (models) {
+
+                Inventory_Storage.belongsToMany(models.Transaction, {
+                    singular: 'Transaction',
+                    plural: 'Transactions',
+                    foreignKey: 'Inventory_Storage_inventory_StorageID',
+                    through: 'SoldInventory'
+                });
+
+                Inventory_Storage.belongsTo(models.StorageLocation, {
+                    singular: 'StorageLocation',
+                    plural: 'StorageLocations',
+                    foreignKey: 'StorageLocation_storageLocationID'
+                });
+
+                Inventory_Storage.belongsTo(models.Inventory, {
+                    singular: 'Inventory',
+                    plural: 'Inventories',
+                    foreignKey: 'Inventory_inventoryID'
+                });
+
+            }
+
+        }
     });
     return Inventory_Storage;
 };

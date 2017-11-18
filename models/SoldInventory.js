@@ -20,8 +20,23 @@ function SoldInventory(sequelize, DataTypes) {
         timestamps: true,
         tableName: 'SoldInventory',
         instanceMethods: {},
-        getterMethods: {},
-        classMethods: {}
+        getterMethods: {
+            isStoredAt: function() {
+                var self = this;
+
+                return D.get(self, 'Inventory_Storage.StorageLocation');
+            }
+        },
+        classMethods: {
+            associate: function (models) {
+                SoldInventory.belongsTo(models.Inventory_Storage, {
+                    singular: 'Inventory_Storage',
+                    plural: 'Inventory_Storages',
+                    foreignKey: 'Inventory_Storage_inventory_StorageID'
+                });
+
+            }
+        }
     });
     return SoldInventory;
 };

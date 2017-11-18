@@ -51,30 +51,30 @@ function Inventory(sequelize, DataTypes) {
                     }
                 }
 
-                // COUNTING FOR SOLD QUANTITIES
-                var transactions = D.get(self, 'Transactions');
-                var soldQty = null; // null indicates that something is wrong.
+                // // COUNTING FOR SOLD QUANTITIES
+                // var transactions = D.get(self, 'Transactions');
+                // var soldQty = null; // null indicates that something is wrong.
 
-                if (transactions) {
+                // if (transactions) {
 
-                    soldQty = 0; // set quantity to 0 because we found attached model.
+                //     soldQty = 0; // set quantity to 0 because we found attached model.
 
-                    for(let i=0; i<transactions.length; i++) {
-                        var t = transactions[i];
+                //     for(let i=0; i<transactions.length; i++) {
+                //         var t = transactions[i];
 
-                        // if SoldInventory cross table is not included
-                        if (!t.SoldInventory) { 
-                            soldQty = false; // false indicates errors query
-                            break;
-                        }
+                //         // if SoldInventory cross table is not included
+                //         if (!t.SoldInventory) { 
+                //             soldQty = false; // false indicates errors query
+                //             break;
+                //         }
 
-                        soldQty += parseInt(t.SoldInventory.quantity);
-                    }
-                }
-                stockArray.push({
-                    name: 'Sold',
-                    quantity: soldQty
-                });
+                //         soldQty += parseInt(t.SoldInventory.quantity);
+                //     }
+                // }
+                // stockArray.push({
+                //     name: 'Sold',
+                //     quantity: soldQty
+                // });
 
                 return stockArray.length === 0 ? null : stockArray;
 
@@ -82,20 +82,19 @@ function Inventory(sequelize, DataTypes) {
         },
         classMethods: {
             associate: function (models) {
-
-                Inventory.belongsToMany(models.Transaction, {
-                    singular: 'Transaction',
-                    plural: 'Transactions',
-                    foreignKey: 'Inventory_inventoryID',
-                    through: 'SoldInventory'
-                });
-
                 Inventory.belongsToMany(models.StorageLocation, {
                     singular: 'StorageLocation',
                     plural: 'StorageLocations',
                     foreignKey: 'Inventory_inventoryID',
                     through: 'Inventory_Storage'
                 });
+
+                Inventory.hasMany(models.Inventory_Storage, {
+                    singular: 'Inventory_Storage',
+                    plural: 'Inventory_Storages',
+                    foreignKey: 'Inventory_inventoryID'
+                });
+
             }
         }
     });

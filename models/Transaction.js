@@ -146,25 +146,42 @@ function Transaction(sequelize, DataTypes) {
             },
             creditCardIsAMEXorIsNotSG: function() {
                 return D.get(this, 'data.data.object.source.country') !== 'SG' || D.get(this, 'data.data.object.source.brand') === 'American Express';
+            },
+            soldInventories: function() {
+                var array = [];
+
+                if (!this.Inventory_Storages) return array;
+
+                this.Inventory_Storages.forEach(function(element) {
+                    var obj = {};
+
+                    obj.Inventory_StorageID = element.Inventory_StorageID;
+                    obj.InventoryID = element.Inventory_inventoryID;
+                    obj.SoldInventoryID = D.get(element, 'SoldInventory.SoldInventoryID');
+                    obj.quantity = D.get(element, 'SoldInventory.quantity');
+                    obj.StorageLocationID = element.StorageLocation_storageLocationID;
+                    obj.StorageLocationName = D.get(element, 'StorageLocation.name');
+                    obj.name = D.get(element, 'Inventory.name');
+                    obj.sku = D.get(element, 'Inventory.sku');
+                    obj.perItemCOGS = D.get(element, 'Inventory.cogs');
+                    obj.totalCOGS = parseFloat(obj.perItemCOGS) * parseFloat(obj.quantity);
+
+                    array.push(obj);
+                })
+
+                return array;
             }
-            // ,
-            // COGS: function() {
-            //     var self = this;
-            //     var soldInventories = D.get(self, 'Inventories');
-
-            //     if (!soldInventories) return null;
-
-            //     soldInventories.
-            // }
         },
         classMethods: {
             associate: function (models) {
-                Transaction.belongsToMany(models.Inventory, {
-                    singular: 'Inventory',
-                    plural: 'Inventories',
+
+                Transaction.belongsToMany(models.Inventory_Storage, {
+                    singular: 'SoldInventory',
+                    plural: 'SoldInventories',
                     foreignKey: 'Transaction_transactionID',
                     through: 'SoldInventory'
                 });
+
             }
 
         }
