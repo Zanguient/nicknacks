@@ -314,12 +314,12 @@
                     alert('success!');
                     return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
                }
-               self.show();
+               $(self).show();
                alert(JSON.stringify(data));
         });
 
         post.fail(function(data) {
-            self.show();
+            $(self).show();
             submittingSpan.hide();
             alert(JSON.stringify(data));
         });
