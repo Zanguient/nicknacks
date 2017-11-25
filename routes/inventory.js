@@ -26,19 +26,18 @@ router.put('/add', function (req, res, next) {
 
         return DB.Inventory.findById(inventory.InventoryID, {
             include: [{ 
-                model: DB.Transaction,
-                through: {
-                    model: DB.SoldInventory,
-                    attributes: [ 'quantity' ]
-                }
-            }, {
                 model: DB.StorageLocation,
                 through: {
                     model: DB.Inventory_Storage,
-                    attributes: [ 'quantity' ]
+                    attributes: [ 
+                        'Inventory_StorageID',
+                        'StorageLocation_storageLocationID',
+                        'Inventory_inventoryID',
+                        'quantity'
+                    ]
                 }
             }]
-        })
+        });
 
     }).then(function(inventory) {
 
@@ -105,16 +104,15 @@ router.post('/update', function (req, res, next) {
 
         return DB.Inventory.findById(inventory.InventoryID, {
             include: [{ 
-                model: DB.Transaction,
-                through: {
-                    model: DB.SoldInventory,
-                    attributes: [ 'quantity' ]
-                }
-            }, {
                 model: DB.StorageLocation,
                 through: {
                     model: DB.Inventory_Storage,
-                    attributes: [ 'quantity' ]
+                    attributes: [ 
+                        'Inventory_StorageID',
+                        'StorageLocation_storageLocationID',
+                        'Inventory_inventoryID',
+                        'quantity'
+                    ]
                 }
             }]
         })        
