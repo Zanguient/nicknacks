@@ -9,20 +9,20 @@ global.D = require('dottie');
 
 global.serverStatus = [];
 
-const WunderlistSDK = require('wunderlist');
-global.WL = new WunderlistSDK({
-  'accessToken': process.env.WL_ACCESS_TOKEN,
-  'clientID': process.env.WL_CLIENT_ID
-});
+// const WunderlistSDK = require('wunderlist');
+// global.WL = new WunderlistSDK({
+//   'accessToken': process.env.WL_ACCESS_TOKEN,
+//   'clientID': process.env.WL_CLIENT_ID
+// });
 
 
-WL.http.lists.all().done(function (lists) {
-    // all is good
-    return;
-}).fail(function () {
-    console.error('CRITICAL: Wunderlist connection failed.');
-    global.serverStatus.push('Wunderlist connection failed.');
-});
+// WL.http.lists.all().done(function (lists) {
+//     // all is good
+//     return;
+// }).fail(function () {
+//     console.error('CRITICAL: Wunderlist connection failed.');
+//     global.serverStatus.push('Wunderlist connection failed.');
+// });
 
 var express = require('express');
 var path = require('path');
@@ -109,10 +109,10 @@ function connectToMailBox(notifier, imap) {
 connectToMailBox(notifier, imap);
 
 // attempt refresh on server start
-retrieveTokenAndRefresh();
+//retrieveTokenAndRefresh();
 
 // attempt refresh every 1 week
-setInterval(retrieveTokenAndRefresh, 6.048e+8);
+//setInterval(retrieveTokenAndRefresh, 6.048e+8);
 
 function retrieveTokenAndRefresh() {
     // get the token
