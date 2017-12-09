@@ -19,11 +19,11 @@ function Transaction(sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: false,
             values: [
-                'pending',
+                'pending', // pending COGS to be entered
                 'processing',
                 'failed',
-                'completed',
-                'delivered'
+                'completed', // COGSed. Pending inventory to be added and delivered
+                'delivered' // this is the final status
             ]
         },
         salesOrderNumber: {

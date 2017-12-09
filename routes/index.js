@@ -259,7 +259,7 @@ router.get('/panel/delivery', function(req, res, next) {
 
 
     var optionsForTransaction = {
-        where: { status: { $not: 'delivered' } },
+        where: { status: 'completed' },
         order: [['TransactionID', 'DESC']],
         include: [{
             model: DB.Inventory_Storage,
@@ -308,7 +308,7 @@ router.get('/panel/delivery', function(req, res, next) {
             DB.Inventory_Storage.findAll({
                 include: [{
                     model: DB.Transaction,
-                    where: { status: { $not: 'delivered' }  },
+                    where: { status: 'completed'  },
                     through: {
                         model: DB.SoldInventory,
                         attributes: [
