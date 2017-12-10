@@ -8,7 +8,7 @@ function Inventory_Storage(sequelize, DataTypes) {
             autoIncrement: true
         },
         quantity: {
-            type: DataTypes.BIGINT(8),
+            type: DataTypes.BIGINT,
             allowNull: false
         },
         data: {
