@@ -105,7 +105,7 @@ function wunderlistBot(mail) {
 
             // reject criterii
             if(D.get(mail, 'from.0.address') !== 'sayhi@greyandsanders.com') {
-                o.error = 'email address not from designated: ' + D.get(mail, 'from[0].address');
+                o.error = 'email address not from designated: ' + D.get(mail, 'from.0.address');
                 return o;
             }
 
