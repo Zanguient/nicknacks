@@ -18,7 +18,7 @@ function calculateStripeCommissionAmountOnRefund(stripeObject) {
 
 
     // calucate the commission which strip will refund us
-    if (countryOfOrigin !== 'SG' || cardBrand === 'cardBrand') {
+    if (countryOfOrigin !== 'SG' || cardBrand === 'American Express') {
 
         // international charges or AMEX, so 3.4% of the amount refunded
         stripeCommissionAmount = Math.round(amountRefunded * 0.034)/100;
