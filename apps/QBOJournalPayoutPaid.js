@@ -36,8 +36,8 @@ function QBOJournalPayoutPaid(object) {
       "JournalEntryLineDetail": {
         "PostingType": "Debit",
         "AccountRef": {
-          "value": "31",
-          "name": "Current"
+          "value": "64",
+          "name": "DBS Current"
         }
         // ,
         // "TaxCodeRef": {
