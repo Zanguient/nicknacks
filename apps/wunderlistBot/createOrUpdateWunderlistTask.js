@@ -2,6 +2,7 @@
 
 const extractDate = require('./extractDate.js');
 const htmlToText = require('html-to-text');
+const debug = require('debug')('wunderlistBot:createOrUpdateWunderlistTask');
 
 /*
 ID.stub (string): #XXX
@@ -24,6 +25,8 @@ and no longer will create new tasks.
 */
 function createOrUpdateWunderlistTask(ID, name, address, $body, starred, commentToAdd) {
 
+    debug('Initiating process for: ' + ID.withoutHex);
+
     // DATE
     // date can sometimes be missing when orders are created using the backend.
     var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
@@ -39,7 +42,7 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
 
         if (!task) {
 
-            // task don't exist, create it
+            debug(ID.withoutHex + ': Task doesn\'t exist, create it');
 
             var taskObject = {
                 'list_id': parseInt(process.env.WL_LIST_ID_FOR_SALES_DELIVERY),
@@ -49,7 +52,14 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
             if (dateOfDelivery) taskObject.due_date = dateOfDelivery;
 
             // pust taskObject to wunderlist
+            debug(ID.withoutHex + ': Creating a task in wunderlist with taskObject:');
+            debug(JSON.stringify(taskObject));
+
             WL.http.tasks.create(taskObject).done(function(taskData, statusCode) {
+
+                debug(ID.withoutHex + ': Respond from WL in creating task:');
+                debug(JSON.stringify(taskData));
+
                 if(statusCode !== 201) return console.log('CRITICAL: ' + ID.stub + ' errored with statusCode = ' + statusCode);
 
                 // create the note
@@ -63,7 +73,12 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
                 };
 
                 // add the note.
+                debug(ID.withoutHex + ': Adding note...');
                 WL.http.notes.create(noteObject).done(function(noteData, statusCode) {
+
+                    debug(ID.withoutHex + ': Respond from adding note:');
+                    debug(JSON.stringify(noteData));
+
                     if (statusCode !== 201) return console.log('CRITICAL: ' + ID.stub + ' note creation errored with statusCode = ' + statusCode);
 
                 }).fail(function(resp, code) {
@@ -72,9 +87,12 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
 
 
                 // make the DB entry
+                debug(ID.withoutHex + ': Adding entry to own db.');
                 DB.WunderlistTask.create({
                     WunderlistTaskID: taskData.id,
                     salesOrderID: ID.withoutHex
+                }).then(function(listTask) {
+                    debug(ID.withoutHex + ': Entry added successfully. WunderlistTaskID: ' + listTask.WunderlistTaskID + ' SalesOrderID: ' + listTask.salesOrderID);
                 }).catch(function(err) {
                     console.log('CRITICAL: ' + ID.stub + ' adding to db errored! Error is: ' + JSON.stringify(err));
                 });
@@ -87,6 +105,7 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
 
         } else {
 
+            debug(ID.withoutHex + ': Task already exist.');
             // if task already exist, (1) COMMENT on the existing task
             // and update the (2) DUE DATE or (3) STARRED flag according
 
@@ -108,16 +127,23 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
             }
 
             // create the comments
+            debug(ID.withoutHex + ': Creating comment.');
             WL.http.task_comments.create(commentObject).done(function(taskCommentData, statusCode) {
             
+                debug(ID.withoutHex + ': WL comment response:');
+                debug(JSON.stringify(taskCommentData));
+
                 if (statusCode !== 201) return console.log('WARN: ' + ID.stub + ' error in adding comment: ' + statusCode);
 
                 
-                // also get the task and check whether to star or unstar and update delivery date
-                
+                debug(ID.withoutHex + ': Getting task to check whether to star/unstar and update delivery date.');
                 // GOTCHA: Because updating comments will cascade a new revision index to the Task, this updating of 
                 //         task attributes needs to occur sequentially after the task comments have been inserted.
+                
                 WL.http.tasks.getID(task.WunderlistTaskID).done(function (taskData, statusCode) {
+
+                    debug(ID.withoutHex + ': WL Task retrieval response:');
+                    debug(JSON.stringify(taskData));
 
                     if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' error getting task: ' + statusCode);
 
@@ -128,7 +154,14 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
 
                     // only update the task if things are different.
                     if (taskUpdateObject.due_date !== taskData.due_date || taskUpdateObject.starred !== taskData.starred) {
+
+                        debug(ID.withoutHex + ': Updating task because either `due_date` or `starred` is different.');
+
                         WL.http.tasks.update(taskData.id, taskData.revision, taskUpdateObject).done(function(taskData, statusCode) {
+                            
+                            debug(ID.withoutHex + ': WL task update response.');
+                            debug(JSON.stringify(taskData));    
+
                             if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' updating task: ' + statusCode);
                         }).fail(function(resp, code) {
                             console.log('CRITICAL: ' + ID.stub + ' wunderlist update task err! Error response is: ' + JSON.stringify(resp));
