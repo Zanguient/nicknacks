@@ -14,7 +14,7 @@ router.all('*', function (req, res, next) {
     res.header('Expires', 0);
   }
   next();
-}
+});
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
