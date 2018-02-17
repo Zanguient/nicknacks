@@ -11,6 +11,35 @@ function Shipment(sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: false
         },
+        estimatedShipOut: {
+            type: DataTypes.BIGINT,
+            allowNull: false
+        },
+        actualShipOut: {
+            type: DataTypes.BIGINT,
+            allowNull: true
+        },
+        shipOutDetails: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        expectedArrival: {
+            type: DataTypes.BIGINT,
+            allowNull: false
+        },
+        arrivalDetails: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        arrivalDetails: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        hasArrived: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
         remarks: {
             type: DataTypes.STRING,
             allowNull: true
@@ -29,14 +58,15 @@ function Shipment(sequelize, DataTypes) {
 
             associate: function (models) {
 
-                Shipment.hasMany(models.TransitInventory, {
-                    singular: 'TransitInventory',
-                    plural: 'TransitInventories',
-                    foreignKey: 'Shipment_shipmentID'
+                Shipment.belongsToMany(models.Inventory, {
+                    singular: 'Inventory',
+                    plural: 'Inventories',
+                    foreignKey: 'Shipment_shipmentID',
+                    through: 'TransitInventory'
                 });
 
             }
-            
+
         }
     });
     return Shipment;

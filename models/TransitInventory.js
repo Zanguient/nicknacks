@@ -7,6 +7,10 @@ function TransitInventory(sequelize, DataTypes) {
             allowNull: false,
             autoIncrement: true
         },
+        quantity: {
+            type: DataTypes.BIGINT,
+            allowNull: false
+        },
         remarks: {
             type: DataTypes.STRING,
             allowNull: true
@@ -38,7 +42,7 @@ function TransitInventory(sequelize, DataTypes) {
                 });
 
             }
-            
+
         }
     });
     return TransitInventory;

@@ -30,7 +30,7 @@ router.get('/panel', function(req, res, next) {
             model: DB.Inventory_Storage,
             through: {
                 model: DB.SoldInventory,
-                attributes: [ 
+                attributes: [
                     'SoldInventoryID',
                     'Transaction_transactionID',
                     'Inventory_inventoryID',
@@ -71,13 +71,13 @@ router.get('/panel', function(req, res, next) {
             DB.PayoutPaid.findAll(optionsForPayoutPaid),
             DB.StorageLocation.findAll({ order: [ ['StorageLocationID', 'ASC'] ] }),
 
-            DB.Inventory.findAll({ 
+            DB.Inventory.findAll({
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-                include: [{ 
+                include: [{
                     model: DB.StorageLocation,
                     through: {
                         model: DB.Inventory_Storage,
-                        attributes: [ 
+                        attributes: [
                             'Inventory_StorageID',
                             'StorageLocation_storageLocationID',
                             'Inventory_inventoryID',
@@ -106,7 +106,7 @@ router.get('/panel', function(req, res, next) {
 
         ];
 
-    }).spread(function(transactions, payouts, storageLocations, inventories, soldInventories) { 
+    }).spread(function(transactions, payouts, storageLocations, inventories, soldInventories) {
 
         // merge inventories with soldInventories
         inventories = JSON.parse(JSON.stringify(inventories));
@@ -122,7 +122,7 @@ router.get('/panel', function(req, res, next) {
 
             // joining this particular soldInventory line item to the inventory line item
             if (Array.isArray(matchedInventory.soldInventories)) matchedInventory.soldInventories.push(element);
-            matchedInventory.soldInventories = [ element ]; 
+            matchedInventory.soldInventories = [ element ];
 
             // calculating for quantities sold
             var quantitySold = 0;
@@ -147,7 +147,7 @@ router.get('/panel', function(req, res, next) {
 
         });
 
-        res.render('panel', { 
+        res.render('panel', {
             data: {
                 sales: transactions,
                 payouts: payouts,
@@ -155,7 +155,7 @@ router.get('/panel', function(req, res, next) {
                 storageLocations: storageLocations,
                 inventories: inventories,
                 inventoriesString: JSON.stringify(inventories)
-            }   
+            }
         });
 
     }).catch(function(err) {
@@ -163,7 +163,7 @@ router.get('/panel', function(req, res, next) {
         res.render('error', err);
     });
 
-    
+
 });
 
 router.get('/panel/inventory', function(req, res, next) {
@@ -175,13 +175,13 @@ router.get('/panel/inventory', function(req, res, next) {
 
             DB.StorageLocation.findAll(),
 
-            DB.Inventory.findAll({ 
+            DB.Inventory.findAll({
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-                include: [{ 
+                include: [{
                     model: DB.StorageLocation,
                     through: {
                         model: DB.Inventory_Storage,
-                        attributes: [ 
+                        attributes: [
                             'Inventory_StorageID',
                             'StorageLocation_storageLocationID',
                             'Inventory_inventoryID',
@@ -226,7 +226,7 @@ router.get('/panel/inventory', function(req, res, next) {
 
             // joining this particular soldInventory line item to the inventory line item
             if (Array.isArray(matchedInventory.soldInventories)) matchedInventory.soldInventories.push(element);
-            matchedInventory.soldInventories = [ element ]; 
+            matchedInventory.soldInventories = [ element ];
 
             // calculating for quantities sold
             var quantitySold = 0;
@@ -252,18 +252,18 @@ router.get('/panel/inventory', function(req, res, next) {
         });
 
 
-        res.render('inventory', { 
+        res.render('inventory', {
             data: {
                 storageLocations: storageLocations,
                 inventories: inventories
-            }   
+            }
         });
 
     }).catch(function(err) {
         console.log(err)
         res.render('inventory', err);
     });
-    
+
 });
 
 router.get('/panel/delivery', function(req, res, next) {
@@ -276,7 +276,7 @@ router.get('/panel/delivery', function(req, res, next) {
             model: DB.Inventory_Storage,
             through: {
                 model: DB.SoldInventory,
-                attributes: [ 
+                attributes: [
                     'SoldInventoryID',
                     'Transaction_transactionID',
                     'Inventory_inventoryID',
@@ -298,15 +298,15 @@ router.get('/panel/delivery', function(req, res, next) {
 
             DB.Transaction.findAll(optionsForTransaction),
             DB.StorageLocation.findAll({ order: [ ['StorageLocationID', 'ASC'] ] }),
-            
 
-            DB.Inventory.findAll({ 
+
+            DB.Inventory.findAll({
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-                include: [{ 
+                include: [{
                     model: DB.StorageLocation,
                     through: {
                         model: DB.Inventory_Storage,
-                        attributes: [ 
+                        attributes: [
                             'Inventory_StorageID',
                             'StorageLocation_storageLocationID',
                             'Inventory_inventoryID',
@@ -351,7 +351,7 @@ router.get('/panel/delivery', function(req, res, next) {
 
             // joining this particular soldInventory line item to the inventory line item
             if (Array.isArray(matchedInventory.soldInventories)) matchedInventory.soldInventories.push(element);
-            matchedInventory.soldInventories = [ element ]; 
+            matchedInventory.soldInventories = [ element ];
 
             // calculating for quantities sold
             var quantitySold = 0;
@@ -378,14 +378,14 @@ router.get('/panel/delivery', function(req, res, next) {
 
 
 
-        res.render('delivery', { 
+        res.render('delivery', {
             data: {
                 sales: transactions,
                 status: serverStatus,
                 storageLocations: storageLocations,
                 inventories: inventories,
                 inventoriesString: JSON.stringify(inventories)
-            }   
+            }
         });
 
     }).catch(function(err) {
@@ -393,7 +393,7 @@ router.get('/panel/delivery', function(req, res, next) {
         res.render('error', err);
     });
 
-    
+
 });
 
 router.get('/panel/delivery/history', function(req, res, next) {
@@ -406,7 +406,7 @@ router.get('/panel/delivery/history', function(req, res, next) {
             model: DB.Inventory_Storage,
             through: {
                 model: DB.SoldInventory,
-                attributes: [ 
+                attributes: [
                     'SoldInventoryID',
                     'Transaction_transactionID',
                     'Inventory_inventoryID',
@@ -428,13 +428,13 @@ router.get('/panel/delivery/history', function(req, res, next) {
 
             DB.Transaction.findAll(optionsForTransaction),
 
-            DB.Inventory.findAll({ 
+            DB.Inventory.findAll({
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-                include: [{ 
+                include: [{
                     model: DB.StorageLocation,
                     through: {
                         model: DB.Inventory_Storage,
-                        attributes: [ 
+                        attributes: [
                             'Inventory_StorageID',
                             'StorageLocation_storageLocationID',
                             'Inventory_inventoryID',
@@ -479,7 +479,7 @@ router.get('/panel/delivery/history', function(req, res, next) {
 
             // joining this particular soldInventory line item to the inventory line item
             if (Array.isArray(matchedInventory.soldInventories)) matchedInventory.soldInventories.push(element);
-            matchedInventory.soldInventories = [ element ]; 
+            matchedInventory.soldInventories = [ element ];
 
             // calculating for quantities sold
             var quantitySold = 0;
@@ -506,13 +506,13 @@ router.get('/panel/delivery/history', function(req, res, next) {
 
 
 
-        res.render('delivery-history', { 
+        res.render('delivery-history', {
             data: {
                 sales: transactions,
                 status: serverStatus,
                 inventories: inventories,
                 inventoriesString: JSON.stringify(inventories)
-            }   
+            }
         });
 
     }).catch(function(err) {
@@ -520,7 +520,23 @@ router.get('/panel/delivery/history', function(req, res, next) {
         res.render('error', err);
     });
 
-    
+
+});
+
+router.get('/panel/shipment/', function(req, res, next) {
+
+      res.render('shipment.hbs', {
+          data: {}
+      });
+
+});
+
+router.get('/panel/shipment/create', function(req, res, next) {
+
+      res.render('create-shipment.hbs', {
+          data: {}
+      });
+
 });
 
 // NICKNACK POST ROUTES
@@ -529,13 +545,13 @@ router.post('/create-sales-receipt', function(req, res) {
     // request checking
     if ([undefined, null, false].indexOf(req.body.transactionID) > -1 || isNaN(parseInt(req.body.transactionID))) {
         return res.status(400).send({ success: false, error: { message: '`transactionID is missing or invalid.'}});
-    } 
+    }
 
     var decimalPlaces = require('../apps/decimalPlaces');
     var _COGS = parseFloat(req.body.COGS);
     if ([undefined, null, false].indexOf(_COGS) > -1 || isNaN(_COGS)) {
         return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}});
-    } 
+    }
     if (decimalPlaces(_COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
 
 
@@ -555,7 +571,7 @@ router.post('/create-sales-receipt', function(req, res) {
                 }
             });
         }
-        
+
 
         _TRANSACTION = transaction;
 
@@ -572,9 +588,9 @@ router.post('/create-sales-receipt', function(req, res) {
 
     }).then(function(qboCustomer) {
 
-        // if valid, `customer` is an array 
+        // if valid, `customer` is an array
         var customer = D.get(qboCustomer, 'QueryResponse.Customer');
-        
+
         if (customer) {
 
             // if there is an existing customer, update the details
@@ -605,7 +621,7 @@ router.post('/create-sales-receipt', function(req, res) {
             if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1', _TRANSACTION.address);
             if (_TRANSACTION.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
             if (_TRANSACTION.addressCountry) D.set(sparseUpdates, 'BillAddr.Country', _TRANSACTION.addressCountry);
-        
+
             // do the update
             return QBO.updateCustomerAsync(sparseUpdates);
 
@@ -652,7 +668,7 @@ router.post('/create-sales-receipt', function(req, res) {
             _CUSTOMER = {
                 Id: customer.Id,
                 DisplayName: customer.DisplayName
-            };   
+            };
         }
 
         var promises = [];
@@ -782,7 +798,7 @@ router.post('/create-sales-receipt', function(req, res) {
         _CREATED_JOURNAL = journalEntry;
 
         var errors = []
-        
+
 
         // pushing errors
         var elements = [ salesReceipt, expense, journalEntry];
@@ -803,7 +819,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
         return _TRANSACTION.save().catch(function(err) {
             console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
-            
+
             return deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalEntry);
         });
 
@@ -825,7 +841,7 @@ router.post('/create-sales-receipt', function(req, res) {
 
     });
 
-    
+
 
     function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS, res) {
         return PROMISE.resolve().then(function() {
@@ -833,7 +849,7 @@ router.post('/create-sales-receipt', function(req, res) {
             var deleteSalesReceipt, deleteExpense, deleteJournalCOGS;
 
             if (!D.get(salesReceipt, "Fault")) {
-                var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({ 
+                var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({
                     "Id": salesReceipt.Id,
                     "SyncToken": salesReceipt.SyncToken
                 });
@@ -853,10 +869,10 @@ router.post('/create-sales-receipt', function(req, res) {
                 });
             }
 
-            return [ 
-                deleteSalesReceipt, 
-                deleteExpense, 
-                deleteJournalCOGS 
+            return [
+                deleteSalesReceipt,
+                deleteExpense,
+                deleteJournalCOGS
             ];
 
         }).catch(function(err) {
@@ -885,7 +901,7 @@ router.post('/charge-succeeded', function (req, res) {
     } else {
         salesOrderNumber = salesOrderNumber.split(',')[0].trim();
     }
-    
+
 
     // save the data
     return DB.Transaction.create({

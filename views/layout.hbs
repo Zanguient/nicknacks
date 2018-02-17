@@ -3,16 +3,46 @@
   <head>
     <title>{{title}}</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="/assets/jquery-plugins/jquery.serializejson.js"></script>
-    <link rel='stylesheet' href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://maxcdn.biootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
     <script src="/assets/dottie/dottie.js"></script>
     <script>var D = Dottie;</script>
+
+    <!-- VueJS STUFF -->
+
+    <script src="/assets/vuejs/vue.min.js"></script>
+    <script src="/assets/vuejs/vue-select.js"></script>
+    <script>Vue.component('v-select', VueSelect.VueSelect);</script>
+
+    <!-- Element for VueJS -->
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- import JavaScript -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/umd/locale/en.js"></script>
+    <script>ELEMENT.locale(ELEMENT.lang.en);</script>
+
+    <!-- END of VueJS STUFF -->
+
+    <script src="/assets/axiosjs/axios.js"></script>
+    <script src="/assets/moment/moment.min.js"></script>
+
+    <!-- Selectize : still in use by old panels -->
     <script src="/assets/selectize/js/standalone/selectize.js"></script>
     <link rel='stylesheet' href='/assets/selectize/css/selectize.css' />
     <link rel='stylesheet' href='/assets/selectize/css/selectize.bootstrap3.css' />
+
+
+    <script src="/assets/main.js"></script>
+
   </head>
   <body>
     {{{body}}}

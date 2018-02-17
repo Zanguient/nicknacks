@@ -1,0 +1,134 @@
+<style>
+.inventorySKU {
+    font-size: 11px;
+    font-style: italic;
+}
+.form-text {
+    width: 100%; max-width: 220px;
+}
+.form-textarea {
+    width: 100%; max-width: 600px;
+}
+</style>
+
+<table class="table table-striped" id="shipmentsSummary">
+
+    <thead>
+        <tr>
+            <th><h1>Transit shipments</h1></th>
+        </tr>
+
+        <tr v-for="shipment in shipments">
+            <td><table class="table">
+                <thead>
+                    <tr>
+                        <th colspan="3">
+                            Name: \{{ shipment.name }}
+
+                            Estimated ship out: \{{ shipment.estimatedShipOut }}
+                            Expected arrival: \{{ shipment.expectedArrival }}
+                            Other info: \{{ shipment.otherInfo }}
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <th>No.</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+
+
+                </tbody>
+
+                <tfooter>
+                </tfooter>
+
+            </table></td>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    </tbody>
+</table>
+<script>
+
+new Vue({
+  el: '#shipmentsSummary',
+  data: {
+      shipments: {}
+  },
+  created() {
+    var self = this;
+    axios.get('/api/v2/shipment/all').then(response => {
+        if (!response.data.success) Prompt.it(response.data.error);
+        console.log(response.data)
+        self.shipments = response.data.shipments;
+
+        console.log(self);
+    }).catch(error => {
+        Prompt.it(error);
+    })
+  },
+  methods: {
+    addProduct() {
+        // this.shipment.products.push({
+        //     quantity: 1
+        // });
+    },
+    addTransitShipment() {
+        // const payload = Object.assign({}, this.shipment);
+        //
+        // console.log(this.shipment);
+        // if (this.shipment.products.length === 0) return Prompt.it('You have not specified any product for the shipment.');
+        //
+        //
+        // const productIDArray = []
+        // const products = this.shipment.products.reduce(function(filtered, product) {
+        //     if (!product.data.InventoryID) return filtered;
+        //     if (product.quantity === 0 || product.quantity === "0") {
+        //         let msg = 'You have specified a quantity of ' + product.data.name + ' to be ZERO. Please rectify.';
+        //         Prompt.it(msg); throw new Error(msg);
+        //     }
+        //
+        //     if (productIDArray.indexOf(product.data.InventoryID) === -1) {
+        //             productIDArray.push(product.data.InventoryID);
+        //     } else {
+        //         let msg = 'You have included the product "' + product.data.name + '" more than once. Duplication is not allowed.';
+        //         Prompt.it(msg); throw new Error(msg);
+        //     }
+        //     filtered.push({ ID: product.data.InventoryID, quantity: product.quantity });
+        //     return filtered;
+        // }, []);
+        //
+        // // re-assign products with the simplified products array.
+        // payload.products = products;
+        //
+        // // verify dates and also format to unix.
+        // if (!payload.estimatedShipOut || !payload.estimatedShipOut || payload.estimatedShipOut.length === 0 || payload.expectedArrival.length === 0) {
+        //     let msg = 'Dates are not completely filled.';
+        //     Prompt.it(msg); throw new Error(msg);
+        // }
+        // payload.estimatedShipOut = moment.utc(moment(payload.estimatedShipOut).startOf('day').format('LL')).valueOf();
+        // payload.expectedArrival = moment.utc(moment(payload.expectedArrival).startOf('day').format('LL')).valueOf();
+        //
+        // console.log(payload);
+        //
+        // axios.post('/api/v2/shipment/create', payload).then(response => {
+        //     if (!response.data.success) Prompt.it(response.data.error);
+        //
+        //     Prompt.it('Shipment added!');
+        //
+        // }).catch(error => {
+        //     Prompt.it(error);
+        // })
+
+    }
+  }
+});
+</script>

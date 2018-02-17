@@ -59,6 +59,8 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
 app.use('/inventory', require('./routes/inventory'));
+app.use('/api/v2', require('./routes/api/v2'));
+app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 
 const notifier = require('mail-notifier');
 const wunderlistBot = require('./apps/wunderlistBot')
@@ -83,15 +85,15 @@ function connectToMailBox(notifier, imap) {
 
         try {
 
-            n = notifier(imap);  
-            
+            n = notifier(imap);
+
             n.on('mail', function(mail) {
                 console.log('received new mail!');
                 wunderlistBot(mail)
             });
             n.on('end', function() {
                 console.log('notifier ended, restarting');
-                n.start();  
+                n.start();
             });
             n.start();
 
@@ -102,7 +104,7 @@ function connectToMailBox(notifier, imap) {
 
         }
 
-    });  
+    });
 }
 
 connectToMailBox(notifier, imap);
@@ -132,7 +134,7 @@ function retrieveTokenAndRefresh() {
         // send request to attempt to refresh token
 
         // NOTE: Oauth Access tokens expire 180 days from the date they were created.
-        //       Oauth token Reconnect API can be called between 151 days and 179 days 
+        //       Oauth token Reconnect API can be called between 151 days and 179 days
         //       (after 5 months and before expiry).
 
         var ageOfToken = MOMENT() - MOMENT(token.updatedAt);
@@ -142,7 +144,7 @@ function retrieveTokenAndRefresh() {
             return refreshQBOToken();
         } else {
             return false;
-        } 
+        }
 
     }).then(function() {
 
@@ -173,7 +175,7 @@ function retrieveTokenAndRefresh() {
         if (!global.QBO_ACCESS_TOKEN || !global.QBO_ACCESS_TOKEN_SECRET) throw new Error('CRITICAL: Failed to initalise tokens to the global namespace.');
 
         // send the request to quickbooks
-        // this promise is returned to #retrieveTokenAndRefresh 
+        // this promise is returned to #retrieveTokenAndRefresh
         return rp({
 
             method: 'GET',
@@ -209,7 +211,7 @@ function retrieveTokenAndRefresh() {
 
                 // token is not refreshed, return nothing, life goes on...
                 console.log('CRITICAL: Token refresh is attempted and failed due to current token still valid. Token invalidated, please re-auth to get new token.');
-                
+
                 // SEND EMAIL!!!!
                 return false;
 
@@ -229,7 +231,7 @@ function retrieveTokenAndRefresh() {
                 // refreshed token is updated to DB
                 return DB.Token.update({
                     data: token
-                }, { 
+                }, {
                     where: {
                         TokenID: 1
                     }
@@ -238,10 +240,10 @@ function retrieveTokenAndRefresh() {
             } else {
 
                 // SEND EMAIL!!!!
-                
+
                 // any other errorCode, print out the error.
                 throw { message: 'Error code: ' + responseParsed.ErrorCode[0] + ' Message: ' + responseParsed.ErrorMessage[0] };
-            
+
             }
         });
     }
@@ -272,7 +274,7 @@ app.use(function (err, req, res, next) {
             debug: err
         }
     });
-    
+
     //res.render('error');
 });
 

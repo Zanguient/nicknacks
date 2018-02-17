@@ -33,6 +33,9 @@ function Inventory(sequelize, DataTypes) {
         tableName: 'Inventory',
         instanceMethods: {},
         getterMethods: {
+            searchString: function() {
+                if (this.name && this.sku) return this.name + ' ' + this.sku;
+            },
             stock: function() {
                 var self = this;
 
@@ -43,11 +46,11 @@ function Inventory(sequelize, DataTypes) {
                 if (storedLocations) {
                     for(let i=0; i<storedLocations.length; i++) {
                         var s = storedLocations[i];
-                        stockArray.push({ 
+                        stockArray.push({
                             StorageLocationID: s.StorageLocationID,
                             name: s.name,
                             quantity: D.get(s, 'Inventory_Storage.quantity', false)  // false indicates errors query
-                        }); 
+                        });
                     }
                 }
 
@@ -63,7 +66,7 @@ function Inventory(sequelize, DataTypes) {
                 //         var t = transactions[i];
 
                 //         // if SoldInventory cross table is not included
-                //         if (!t.SoldInventory) { 
+                //         if (!t.SoldInventory) {
                 //             soldQty = false; // false indicates errors query
                 //             break;
                 //         }
@@ -95,10 +98,11 @@ function Inventory(sequelize, DataTypes) {
                     foreignKey: 'Inventory_inventoryID'
                 });
 
-                Inventory.hasMany(models.TransitInventory, {
-                    singular: 'TransitInventory',
-                    plural: 'TransitInventories',
-                    foreignKey: 'Inventory_inventoryID'
+                Inventory.belongsToMany(models.Shipment, {
+                    singular: 'Shipment',
+                    plural: 'Shipments',
+                    foreignKey: 'Inventory_inventoryID',
+                    through: 'TransitInventory'
                 });
 
             }
