@@ -85,7 +85,7 @@
                     </tr>
 
                     <tr>
-                        <td colspan="3" style="text-align: center;"><button type="submit" class="addShipmentButton btn btn-success">Add Shipment</button>
+                        <td colspan="3" style="text-align: center;"><button type="submit" class="addShipmentButton btn btn-success" v-bind:disable="submitIsDisabled">Add Shipment</button>
                         </td>
                     </tr>
                 </tfooter>
@@ -112,7 +112,8 @@ new Vue({
             remarks: '',
             products: []
         },
-        inventories: [{}]
+        inventories: [{}],
+        submitIsDisabled: false
     },
     created() {
         axios.get('/api/v2/inventory/all').then(response => {
@@ -129,10 +130,14 @@ new Vue({
             });
         },
         addTransitShipment() {
-            const payload = Object.assign({}, this.shipment);
 
-            console.log(this.shipment);
-            if (this.shipment.products.length === 0) return Prompt.it('You have not specified any product for the shipment.');
+            this.submitIsDisabled = true;
+
+            const payload = Object.assign({}, this.shipment);
+            if (this.shipment.products.length === 0) {
+                this.submitIsDisabled = false;
+                return Prompt.it('You have not specified any product for the shipment.');
+            }
 
 
             const productIDArray = []
@@ -140,6 +145,7 @@ new Vue({
                 if (!product.data.InventoryID) return filtered;
                 if (product.quantity === 0 || product.quantity === "0") {
                     let msg = 'You have specified a quantity of ' + product.data.name + ' to be ZERO. Please rectify.';
+                    this.submitIsDisabled = false;
                     Prompt.it(msg);
                     throw new Error(msg);
                 }
@@ -148,6 +154,7 @@ new Vue({
                     productIDArray.push(product.data.InventoryID);
                 } else {
                     let msg = 'You have included the product "' + product.data.name + '" more than once. Duplication is not allowed.';
+                    this.submitIsDisabled = false;
                     Prompt.it(msg);
                     throw new Error(msg);
                 }
@@ -164,18 +171,22 @@ new Vue({
             // verify dates and also format to unix.
             if (!payload.estimatedShipOut || !payload.estimatedShipOut || payload.estimatedShipOut.length === 0 || payload.expectedArrival.length === 0) {
                 let msg = 'Dates are not completely filled.';
+                this.submitIsDisabled = false;
                 Prompt.it(msg);
                 throw new Error(msg);
             }
             payload.estimatedShipOut = moment.utc(moment(payload.estimatedShipOut).startOf('day').format('LL')).valueOf();
             payload.expectedArrival = moment.utc(moment(payload.expectedArrival).startOf('day').format('LL')).valueOf();
 
-            console.log(payload);
-
             axios.post('/api/v2/shipment/create', payload).then(response => {
-                if (!response.data.success) Prompt.it(response.data.error);
+                if (!response.data.success) {
+                    Prompt.it(response.data.error);
+                    this.submitIsDisabled = false;
+                }
 
                 Prompt.it('Shipment added!');
+
+                window.location.replace('/panel/shipment');
 
             }).catch(error => {
                 Prompt.it(error);
