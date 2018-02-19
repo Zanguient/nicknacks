@@ -162,7 +162,7 @@
 
             $formRow.find('input.inventory-item-editable').each(function(index, element) {
 
-                if ($(element).attr('data-storage-location-name') === "Sold") return;
+                if (['Transit', 'Sold'].indexOf( $(element).attr('data-storage-location-name') ) !== -1) return;
                 $(element).removeAttr('disabled').removeClass('edit-inactive').addClass('form form-control');
             });
 
@@ -179,7 +179,7 @@
 
                 $quantityTable.find('input').each(function(element, index) {
 
-                    if($(this).attr('data-storage-location-name') === "Sold") return;
+                    if(['Transit', 'Sold'].indexOf($(this).attr('data-storage-location-name')) !== -1) return;
 
                     var obj = {}
 
