@@ -1,12 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var qs = require('querystring');
-//var QuickBooks = require('node-quickbooks');
-var request = require('request');
-var rp = require('request-promise');
 
-/* GET home page. */
-router.put('/add', function (req, res, next) {
+router.put('/inventory/add', function (req, res, next) {
 
     DB.Inventory.create(req.body).then(function(inventory) {
 
@@ -25,11 +20,11 @@ router.put('/add', function (req, res, next) {
     }).spread(function(inventory) {
 
         return DB.Inventory.findById(inventory.InventoryID, {
-            include: [{ 
+            include: [{
                 model: DB.StorageLocation,
                 through: {
                     model: DB.Inventory_Storage,
-                    attributes: [ 
+                    attributes: [
                         'Inventory_StorageID',
                         'StorageLocation_storageLocationID',
                         'Inventory_inventoryID',
@@ -72,7 +67,7 @@ router.put('/add', function (req, res, next) {
 
 });
 
-router.post('/update', function (req, res, next) {
+router.post('/inventory/update', function (req, res, next) {
 
     var where = { InventoryID: req.body.InventoryID };
 
@@ -80,7 +75,7 @@ router.post('/update', function (req, res, next) {
 
         var promises = [];
 
-        promises.push(DB.Inventory.update(req.body, { 
+        promises.push(DB.Inventory.update(req.body, {
             where: where
         }));
 
@@ -91,7 +86,7 @@ router.post('/update', function (req, res, next) {
 
                 where: {
                     StorageLocation_storageLocationID: el.StorageLocation_storageLocationID,
-                    Inventory_inventoryID: req.body.InventoryID   
+                    Inventory_inventoryID: req.body.InventoryID
                 },
                 limit: 1
             });
@@ -103,11 +98,11 @@ router.post('/update', function (req, res, next) {
     }).spread(function(inventory) {
 
         return DB.Inventory.findById(inventory.InventoryID, {
-            include: [{ 
+            include: [{
                 model: DB.StorageLocation,
                 through: {
                     model: DB.Inventory_Storage,
-                    attributes: [ 
+                    attributes: [
                         'Inventory_StorageID',
                         'StorageLocation_storageLocationID',
                         'Inventory_inventoryID',
@@ -115,7 +110,7 @@ router.post('/update', function (req, res, next) {
                     ]
                 }
             }]
-        })        
+        })
 
     }).then(function(inventory) {
 
@@ -142,12 +137,11 @@ router.post('/update', function (req, res, next) {
 
 });
 
-
-router.delete('/delete', function (req, res, next) {
+router.delete('/inventory/delete', function (req, res, next) {
 
     var where = { InventoryID: req.body.InventoryID };
 
-    DB.Inventory.destroy({ 
+    DB.Inventory.destroy({
         where: where,
         limit: 1
     }).then(function() {
@@ -174,8 +168,7 @@ router.delete('/delete', function (req, res, next) {
 
 });
 
-
-router.put('/sold', function (req, res, next) {
+router.put('/inventory/sold', function (req, res, next) {
 
     PROMISE.resolve().then(function() {
         return [
@@ -219,7 +212,7 @@ router.put('/sold', function (req, res, next) {
                     hideMessage: false,
                     debug: error
                 }
-            });   
+            });
         }
 
         return res.status(500).send({
@@ -235,11 +228,11 @@ router.put('/sold', function (req, res, next) {
 
 });
 
-router.delete('/sold/delete', function (req, res, next) {
+router.delete('/inventory/sold/delete', function (req, res, next) {
 
-    DB.SoldInventory.destroy({ 
+    DB.SoldInventory.destroy({
         where: {
-            SoldInventoryID: req.body.SoldInventoryID 
+            SoldInventoryID: req.body.SoldInventoryID
         }
     }).then(function() {
 
@@ -264,15 +257,15 @@ router.delete('/sold/delete', function (req, res, next) {
 
 });
 
-router.post('/delivered', function (req, res, next) {
+router.post('/inventory/delivered', function (req, res, next) {
 
-    DB.Transaction.findOne({ 
+    DB.Transaction.findOne({
         where: { TransactionID: req.body.TransactionID },
         include: [{
             model: DB.Inventory_Storage,
             through: {
                 model: DB.SoldInventory,
-                attributes: [ 
+                attributes: [
                     'SoldInventoryID',
                     'Transaction_transactionID',
                     'Inventory_inventoryID',
@@ -306,7 +299,7 @@ router.post('/delivered', function (req, res, next) {
 
                     promises.push(DB.Inventory_Storage.update({
                         quantity: DB.sequelize.literal( 'quantity - ' + parseInt(quantityDelivered) )
-                    }, { 
+                    }, {
                         where: { Inventory_StorageID: phyiscalInventoryID }
                     }));
 
@@ -332,7 +325,7 @@ router.post('/delivered', function (req, res, next) {
         if (error === 'unable to find') {
             return res.send({ success: false, error: {
                 message: 'Unable to find the related transaction. Please refresh browser and try again.',
-                hideMessage: false    
+                hideMessage: false
             }});
         }
 

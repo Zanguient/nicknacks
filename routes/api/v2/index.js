@@ -124,4 +124,28 @@ router.get('/inventory/all', function(req, res, next) {
 
 });
 
+router.get('/storage-location/all', function(req, res, next) {
+    DB.StorageLocation.findAll({
+        order: [ ['name', 'ASC'] ]
+    }).then(function(storageLocations) {
+        res.send({
+            success: true,
+            storageLocations: storageLocations
+        });
+    }).catch(function(err) {
+        console.log(err)
+        res.status(500).send({
+            success: false,
+            error: {
+                message: 'An error has occurred, please try again.',
+                hideMessage: false,
+                debug: {
+                    message: 'Catch handler',
+                    errorObject: err
+                }
+            }
+        });
+    });
+})
+
 module.exports = router;

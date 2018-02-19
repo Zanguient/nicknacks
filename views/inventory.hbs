@@ -1,4 +1,4 @@
-   
+
     <h1>Inventory</h1>
     <table class="table-striped">
         <tr>
@@ -78,7 +78,7 @@
                         COGS: <input style="display: inline; width: 90px;" type="text" disabled class="inventory-item-editable edit-inactive" name="cogs" value="{{this.cogs}}">
                     </td>
                     <td>
-                        
+
                         <table class="table-striped quantity-table">
                             <tr>
                                 <th>Qty:</th>
@@ -94,7 +94,7 @@
                                 </tr>
                             {{/each}}
                         </table>
-                        
+
                     </td>
                     <td>
                         <button class="btn btn-primary inventory-item-edit">Edit</button>
@@ -178,7 +178,7 @@
                 var quantityArray = [];
 
                 $quantityTable.find('input').each(function(element, index) {
-                    
+
                     if($(this).attr('data-storage-location-name') === "Sold") return;
 
                     var obj = {}
@@ -197,15 +197,15 @@
 
                 $submittingSpan.show();
                 $editButtons.hide();
-                
+
                 var post = $.ajax({
                     type: "POST",
-                    url: "/inventory/update",
+                    url: "/api/v1/inventory/update",
                     data: formData
                 });
-                
-                post.done(function(data) { 
-                
+
+                post.done(function(data) {
+
                     if(data.success) {
                         alert('success!');
                         // add the row.
@@ -213,7 +213,7 @@
                         return;
                     }
 
-                    
+
                     alert(D.get(data, 'error.message'));
                     console.log(D.get(data, 'error.debug'));
 
@@ -254,19 +254,19 @@
 
             var post = $.ajax({
                 type: "DELETE",
-                url: "/inventory/delete",
+                url: "/api/v1/inventory/delete",
                 data: { InventoryID: $(self).attr('data-inventory-id') }
             });
 
             $editButtons.hide();
             $submittingSpan.show();
-            
-            post.done(function(data) { 
-            
+
+            post.done(function(data) {
+
                 if(data.success) {
                     alert('success!');
                     // delete the row.
-                    
+
                     $formRow.slideUp('fast', function() {
                         $formRow.remove();
                     });
@@ -274,9 +274,9 @@
                     return;
                 }
 
-                
+
                 alert(D.get(data, 'error.message'));
-                console.log(D.get(data, 'error.debug'));           
+                console.log(D.get(data, 'error.debug'));
 
             });
 
@@ -336,13 +336,13 @@
         var storageAndQuantities = [];
 
         $quantityTable.find('input').each(function(element, index) {
-            
+
             var obj = {
                 StorageLocationID: $(this).attr('data-storage-location-id')
             }
 
             if(parseInt($(this).val()) === NaN) return alert('Invalid quantity');
-            
+
             obj.quantity = parseInt($(this).val()) ? parseInt($(this).val()) : 0;
 
             storageAndQuantities.push(obj);
@@ -353,15 +353,15 @@
 
         $submittingSpan.show();
         $submitButton.hide();
-    
+
         var post = $.ajax({
             type: "PUT",
-            url: "/inventory/add",
+            url: "/api/v1/inventory/add",
             data: formData
         });
-        
-        post.done(function(data) { 
-    
+
+        post.done(function(data) {
+
             if(data.success) {
                 alert('success!');
                 // add the row.
@@ -369,7 +369,7 @@
                 return;
             }
 
-            
+
             alert(D.get(data, 'error.message'));
             console.log(D.get(data, 'error.debug'));
 
@@ -390,4 +390,3 @@
         });
     });
     </script>
-

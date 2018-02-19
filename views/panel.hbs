@@ -1,11 +1,7 @@
-<a href="/panel/inventory">inventory</a> | <a href="/panel/delivery">delivery</a>
 
-    <h1>Errors</h1>
-    <table class="table-striped">
-    {{#each status}}
-    <tr><td>{{this}}</td></tr>
+    {{#each data.status}}
+        <div class="alert alert-danger" role="alert">{{this}}</div>
     {{/each}}
-    </table>
 
     <style>
     .soldInventory {
@@ -38,11 +34,11 @@
             <td><a data-transaction-id="{{this.TransactionID}}" class="addInventory">+Add inventory</a>
                 {{#each this.soldInventories}}
                     <div class="soldInventory" data-sold-inventory-id="{{this.SoldInventoryID}}">
-                        <span class="soldInventoryName">{{this.name}}</span> <br> 
+                        <span class="soldInventoryName">{{this.name}}</span> <br>
                         <span class="soldInventorySKU">{{this.sku}}</span> <br>
                         <span class="soldInventoryLocation">{{this.StorageLocationName}}</span>
 
-                        <strong>Qty:</strong> {{this.quantity}} 
+                        <strong>Qty:</strong> {{this.quantity}}
 
                         <strong>Per Item COGS:</strong> <span class="soldInventoryPerItemCOGS">{{this.perItemCOGS}}</span>
 
@@ -56,7 +52,7 @@
             </td>
             <td>
                 COGS: <input style="display: inline; width: 100px;" class="form-control" type="field" name="COGS" data-id="{{this.TransactionID}}"> <br>
-                
+
                 Note: <input style="display: inline; width: 100px;" class="form-control" type="field" name="PrivateNote" data-id="{{this.TransactionID}}">
             </td>
             <td><button class="createSalesReceiptButton btn btn-default" type="button" data-id="{{this.TransactionID}}">Submit</button><span style="display:none;" data-id="{{this.TransactionID}}">Submitting..</span></td>
@@ -74,7 +70,7 @@
             'text/html');
         return dom.body.textContent;
     }
-    
+
     var inventories = JSON.parse(decodeStr("{{data.inventoriesString}}"));
 
 
@@ -126,11 +122,11 @@
             onChange: function(value) {
 
                 $selectPhysicalInventory.html('');
-                
+
                 if (!value.length) return alert('Error occured. Value passed from inventory dropdown does not consist of value for physical.');
 
                 var inventory = inventorySelectizeOptions.options.find(function(item) {
-                    
+
                     if (item.InventoryID === value) return item;
 
                 });
@@ -169,12 +165,12 @@
 
             var post = $.ajax({
                 type: "PUT",
-                url: "/inventory/sold",
+                url: "/api/v1/inventory/sold",
                 data: formData
             });
 
-            post.done(function(data) { 
-            
+            post.done(function(data) {
+
                 if(data.success) {
                     alert('success!');
                     console.log(data);
@@ -185,11 +181,11 @@
                     var html = '<div class="soldInventory" data-sold-inventory-id="' + soldInventory.SoldInventoryID + '">';
 
                     html += '<span class="soldInventoryName">' + inventory.name + '</span> <br> ';
-                    
+
                     html += '<span class="soldInventorySKU">' + inventory.sku + '</span> <br>';
 
                     html += '<span class="soldInventoryLocation">' + soldInventory.isStoredAt.name + '</span> <br>';
-                    
+
                     html += 'Qty: ' + soldInventory.quantity + '<br>';
                     html += 'COGS: <span class="soldInventoryCOGS">' + parseFloat(inventory.cogs) * parseFloat(soldInventory.quantity) + '</span><br>';
 
@@ -209,7 +205,7 @@
                     return;
                 }
 
-                
+
                 alert(D.get(data, 'error.message'));
                 console.log(data)
                 console.log(D.get(data, 'error.debug'));
@@ -227,7 +223,7 @@
                 $button.html('Add');
                 $button.removeAttr('disabled');
 
-            });    
+            });
 
         })
 
@@ -253,12 +249,12 @@
         $(this).html('Removing').attr('disabled', 'disabled');
         var post = $.ajax({
             type: "DELETE",
-            url: "/inventory/sold/delete",
+            url: "/api/v1/inventory/sold/delete",
             data: { SoldInventoryID: $(self).attr('data-sold-inventory-id') }
         });
 
-        post.done(function(data) { 
-        
+        post.done(function(data) {
+
             if(data.success) {
                 alert('success!');
                 $(self).parent('.soldInventory').remove();
@@ -266,7 +262,7 @@
                 return;
             }
 
-            
+
             alert(D.get(data, 'error.message'));
             console.log(data)
             console.log(D.get(data, 'error.debug'));
@@ -283,11 +279,11 @@
 
             $(this).html('Remove').removeAttr('disabled');
 
-        }); 
+        });
     }
 
     $('.deleteSoldInventory').on('click', deleteSoldInventory);
-    
+
     $('.createSalesReceiptButton').on('click', function() {
 
         var self = this;
@@ -303,18 +299,18 @@
 
         submittingSpan.show();
         $(this).hide();
-        
+
         var post = $.ajax({
             type: "POST",
             url: "/create-sales-receipt",
             data: { transactionID: transactionID, COGS: COGS, privateNote: privateNote }
         });
-        
-        post.done(function(data) { 
+
+        post.done(function(data) {
 
            if(data.success) {
                     alert('success!');
-                    return $('tr[data-id="' + transactionID + '"]').fadeOut(); 
+                    return $('tr[data-id="' + transactionID + '"]').fadeOut();
                }
                $(self).show();
                alert(JSON.stringify(data));
@@ -403,7 +399,7 @@
                             height: 24px;
                         }
                         </style>
-                        
+
                         <table class="table-striped quantity-table">
                             <tr>
                                 <th>Qty:</th>
@@ -416,7 +412,7 @@
                                 </tr>
                             {{/each}}
                         </table>
-                        
+
                     </td>
                     <td></td>
                 </form>
@@ -445,13 +441,13 @@
         var storageAndQuantities = [];
 
         $quantityTable.find('input').each(function(element, index) {
-            
+
             var obj = {
                 StorageLocationID: $(this).attr('data-storage-location-id')
             }
 
             if(parseInt($(this).val()) === NaN) return alert('Invalid quantity');
-            
+
             obj.quantity = parseInt($(this).val()) ? parseInt($(this).val()) : 0;
 
             storageAndQuantities.push(obj);
@@ -461,15 +457,15 @@
 
         $submittingSpan.show();
         $submitButton.hide();
-    
+
         var post = $.ajax({
             type: "PUT",
-            url: "inventory/add",
+            url: "/api/v1/inventory/add",
             data: formData
         });
-        
-        post.done(function(data) { 
- 
+
+        post.done(function(data) {
+
             if(data.success) {
                 alert('success!');
                 // add the row.
@@ -477,7 +473,7 @@
                 return;
             }
 
-            
+
             alert(D.get(data, 'error.message'));
             console.log(D.get(data, 'error.debug'));
 
@@ -518,4 +514,3 @@
         </tr>
         {{/each}}
     </table>
-

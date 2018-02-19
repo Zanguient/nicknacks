@@ -58,9 +58,30 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
-app.use('/inventory', require('./routes/inventory'));
+app.use('/panel', require('./routes/panel'));
+app.use('/panel/inventory', require('./routes/panel/inventory'));
+app.use('/panel/shipment', require('./routes/panel/shipment'));
+app.use('/panel/inventory', require('./routes/panel/inventory'));
+
+// api V1
+app.use('/api/v1', require('./routes/api/v1'));
+
+// api V2
 app.use('/api/v2', require('./routes/api/v2'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
+
+
+/* SAFARI/IOS Bug */
+app.all('*', function (req, res, next) {
+  agent = req.headers['user-agent'];
+  if (agent.indexOf('Safari') > -1 && agent.indexOf('Chrome') === -1 && agent.indexOf('OPR') === -1) {
+    res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', 0);
+  }
+  next();
+});
+
 
 const notifier = require('mail-notifier');
 const wunderlistBot = require('./apps/wunderlistBot')

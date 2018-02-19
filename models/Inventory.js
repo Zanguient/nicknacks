@@ -105,6 +105,12 @@ function Inventory(sequelize, DataTypes) {
                     through: 'TransitInventory'
                 });
 
+                Inventory.hasMany(models.TransitInventory, {
+                    singular: 'TransitInventory',
+                    plural: 'TransitInventories',
+                    foreignKey: 'Inventory_inventoryID'
+                });
+
             }
         }
     });

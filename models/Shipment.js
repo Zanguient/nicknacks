@@ -27,8 +27,8 @@ function Shipment(sequelize, DataTypes) {
             type: DataTypes.BIGINT,
             allowNull: false
         },
-        arrivalDetails: {
-            type: DataTypes.STRING,
+        actualArrival: {
+            type: DataTypes.BIGINT,
             allowNull: true
         },
         arrivalDetails: {
@@ -63,6 +63,12 @@ function Shipment(sequelize, DataTypes) {
                     plural: 'Inventories',
                     foreignKey: 'Shipment_shipmentID',
                     through: 'TransitInventory'
+                });
+
+                Shipment.hasMany(models.TransitInventory, {
+                    singular: 'TransitInventory',
+                    plural: 'TransitInventories',
+                    foreignKey: 'Shipment_shipmentID'
                 });
 
             }
