@@ -345,7 +345,6 @@ router.delete('/delete/:ShipmentID', function(req, res, next) {
     });
 });
 
-
 router.post('/arrive', function(req, res, next) {
 
     debug(req.body);
@@ -361,7 +360,8 @@ router.post('/arrive', function(req, res, next) {
                         'TransitInventoryID',
                         'Shipment_shipmentID',
                         'Inventory_inventoryID',
-                        'quantity'
+                        'quantity',
+                        'isInventorised'
                     ]
 
             }]
@@ -410,8 +410,13 @@ router.post('/arrive', function(req, res, next) {
             // create a transit dictionary for use later
             let transitObj = {};
 
+
             shipment.TransitInventories.forEach(transit => {
                 transitObj[transit.Inventory_inventoryID] = transit;
+
+                // also set all isInventorised bool to true
+                transit.isInventorised = true;
+                promise.push(transit.save());
             });
 
             // for each product, find its inventory status

@@ -33,6 +33,15 @@ router.get('/inventory/all', function(req, res, next) {
                             'quantity'
                         ]
                     }
+                }, {
+                    model: DB.TransitInventory,
+                    where: { isInventorised: false },
+                    required: false,
+                    attributes: [
+                        'TransitInventoryID',
+                        'Inventory_inventoryID',
+                        'quantity'
+                    ]
                 }]
             }),
 
@@ -97,10 +106,22 @@ router.get('/inventory/all', function(req, res, next) {
 
         });
 
-        // delete away useless stuff
-        inventories.forEach(function(element) {
-            delete element.StorageLocations;
-        });
+        // Loop through the transit inventories to generate the Transit object.
+        inventories.forEach(inventory => {
+
+            let transitStock = { name: 'Transit', quantity: 0 };
+
+            inventory.TransitInventories.forEach(transit => {
+                transitStock.quantity += parseInt(transit.quantity)
+            });
+
+            inventory.stock.push(transitStock);
+
+
+            // delete away useless stuff
+            delete inventory.TransitInventories;
+            delete inventory.StorageLocations;
+        })
 
         res.send({
             success: true,

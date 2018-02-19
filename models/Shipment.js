@@ -68,7 +68,8 @@ function Shipment(sequelize, DataTypes) {
                 Shipment.hasMany(models.TransitInventory, {
                     singular: 'TransitInventory',
                     plural: 'TransitInventories',
-                    foreignKey: 'Shipment_shipmentID'
+                    foreignKey: 'Shipment_shipmentID',
+                    onDelete: 'cascade'
                 });
 
             }

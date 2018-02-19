@@ -26,6 +26,8 @@ router.get('/', function(req, res, next) {
                     }
                 }, {
                     model: DB.TransitInventory,
+                    where: { isInventorised: false },
+                    required: false,
                     attributes: [
                         'TransitInventoryID',
                         'Inventory_inventoryID',

@@ -15,6 +15,11 @@ function TransitInventory(sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         },
+        isInventorised: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            default: false
+        },
         data: {
             type: DataTypes.JSON,
             allowNull: false,
