@@ -315,10 +315,10 @@ router.post('/edit', function(req, res, next) {
 
 router.delete('/delete/:ShipmentID', function(req, res, next) {
 
-    debug(req.query);
+    debug(req.params);
 
     DB.Shipment.destroy({
-        where: { ShipmentID: req.query.ShipmentID },
+        where: { ShipmentID: req.params.ShipmentID },
         limit: 1
     }).then(function() {
 
