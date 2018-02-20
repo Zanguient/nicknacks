@@ -154,7 +154,7 @@
 
             var post = $.ajax({
                 type: "PUT",
-                url: "/inventory/sold",
+                url: "/api/v1/inventory/sold",
                 data: formData
             });
 
@@ -225,7 +225,7 @@
         $(this).html('Removing').attr('disabled', 'disabled');
         var post = $.ajax({
             type: "DELETE",
-            url: "/inventory/sold/delete",
+            url: "/api/v1/inventory/sold/delete",
             data: { SoldInventoryID: $(self).attr('data-sold-inventory-id') }
         });
 
@@ -270,7 +270,7 @@
 
         var post = $.ajax({
             type: "POST",
-            url: "/inventory/delivered",
+            url: "/api/v1/inventory/delivered",
             data: { TransactionID: transactionID }
         });
 
@@ -428,7 +428,7 @@
 
         var post = $.ajax({
             type: "PUT",
-            url: "inventory/add",
+            url: "/api/v1/inventory/add",
             data: formData
         });
 
