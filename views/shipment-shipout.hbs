@@ -34,7 +34,7 @@
                 <p>
                     <el-date-picker required type="date" name="actualShipOut" v-model="shipment.actualShipOut" placeholder="Select date"></el-date-picker><br>
                     <textarea required class="form-control form-textarea" placeholder="Enter ship out info here" v-model="shipment.shipOutDetails"></textarea>
-                    <button v-show="!shipment.actualShipOut" type="button" class="btn btn-success" v-on:click="submitShipOut" v-bind:disabled="submitIsDisabled">Ship!</button>
+                    <button type="button" class="btn btn-success" v-on:click="submitShipOut" v-bind:disabled="submitIsDisabled">Ship!</button>
                 </p>
             </th>
         </tr>
