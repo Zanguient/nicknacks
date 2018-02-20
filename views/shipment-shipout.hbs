@@ -144,8 +144,9 @@ new Vue({
             payload.actualShipOut = this.shipment.actualShipOut = moment.utc(moment(payload.actualShipOut).startOf('day').format('LL')).valueOf();
 
             axios.post('/api/v2/shipment/shipout', payload).then(response => {
-                if (!response.data.success) Prompt.it(response.data.error);
+                if (!response.data.success) return Prompt.it(response.data.error);
                 console.log(response.data);
+                this.shipment.hasShippedOut = true;
                 Prompt.it('Shipment is shipped!');
 
             }).catch(error => {
