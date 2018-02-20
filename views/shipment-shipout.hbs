@@ -22,7 +22,7 @@
         </tr>
 
         <tr>
-            <th v-if="shipment.actualShipOut">
+            <th v-if="shipment.hasShippedOut">
                 <div class="alert alert-warning" role="alert">
                     This shipment is already shipped out! No actions can be taken here.
                 </div>
