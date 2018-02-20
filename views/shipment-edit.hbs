@@ -212,6 +212,7 @@ var v = new Vue({
             }
             payload.estimatedShipOut = moment.utc(moment(payload.estimatedShipOut).startOf('day').format('LL')).valueOf();
             payload.expectedArrival = moment.utc(moment(payload.expectedArrival).startOf('day').format('LL')).valueOf();
+            if (payload.actualShipOut) payload.actualShipOut = moment.utc(moment(payload.actualShipOut).startOf('day').format('LL')).valueOf();
 
             axios.post('/api/v2/shipment/edit', payload).then(response => {
                 if (!response.data.success) return Prompt.it(response.data.error);
