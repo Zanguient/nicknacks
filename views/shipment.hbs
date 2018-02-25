@@ -46,7 +46,7 @@
                             <span class="headerInfo" v-if="shipment.hasArrived">\{{ shipment.actualArrival | moment }}</span>
                             <span class="headerInfo" v-else>N.A.</span><br>
 
-                            Other info: <span class="headerInfo headerInfoRemarks">\{{ shipment.otherInfo }}</span><br>
+                            Other info: <span class="headerInfo headerInfoRemarks">\{{ shipment.remarks }}</span><br>
 
                             <span v-if="shipment.hasArrived">
                                 Arrival details: <span class="headerInfo headerInfoRemarks">\{{ shipment.arrivalDetails }}</span><br>
