@@ -255,7 +255,7 @@ router.post('/edit', function(req, res, next) {
                 'expectedArrival',
                 'name',
                 'remarks',
-                'shippedOutDetails'
+                'shipOutDetails'
             ];
 
             updateKeys.forEach(key => {
