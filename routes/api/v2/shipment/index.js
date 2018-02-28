@@ -416,7 +416,7 @@ router.post('/arrive', function(req, res, next) {
 
                 // also set all isInventorised bool to true
                 transit.isInventorised = true;
-                promise.push(transit.save());
+                promises.push(transit.save());
             });
 
             // for each product, find its inventory status
