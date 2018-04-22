@@ -51,7 +51,12 @@ router.get('/', function(req, res, next) {
             DB.PayoutPaid.findAll(optionsForPayoutPaid),
             DB.StorageLocation.findAll({ order: [ ['StorageLocationID', 'ASC'] ] }),
 
+            // find all inventory, including its storage location
+            // and those in transit that is not inventorise (has not arrived)
             DB.Inventory.findAll({
+                where: {
+                        notActive: { $not: true}
+                },
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
                 include: [{
                     model: DB.StorageLocation,
@@ -66,6 +71,8 @@ router.get('/', function(req, res, next) {
                     }
                 }, {
                     model: DB.TransitInventory,
+                    where: { isInventorised: false },
+                    required: false,
                     attributes: [
                         'TransitInventoryID',
                         'Inventory_inventoryID',

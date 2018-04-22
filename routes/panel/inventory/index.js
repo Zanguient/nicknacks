@@ -12,6 +12,9 @@ router.get('/', function(req, res, next) {
             DB.StorageLocation.findAll(),
 
             DB.Inventory.findAll({
+                where: {
+                        notActive: { $not: true}
+                },
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
                 include: [{
                     model: DB.StorageLocation,

@@ -168,6 +168,39 @@ router.delete('/inventory/delete', function (req, res, next) {
 
 });
 
+router.post('/inventory/deactivate', function (req, res, next) {
+
+    var where = { InventoryID: req.body.InventoryID };
+
+    DB.Inventory.update({
+        notActive: true
+    }, {
+        where: where
+    }).then(function(inventory) {
+
+        return res.send({
+            success: true,
+            inventory: inventory
+        });
+
+    }).catch(function(error) {
+
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            error: {
+                message: 'Server error: ' + error.message +'. Please check console log.',
+                hideMessage: false,
+                debug: error
+            }
+        });
+
+    })
+
+
+});
+
 router.put('/inventory/sold', function (req, res, next) {
 
     PROMISE.resolve().then(function() {

@@ -105,6 +105,7 @@
                             <button type="submit" class="btn btn-primary inventory-item-submit">Update</button>
 
                             <button data-sku="{{this.sku}}" data-inventory-id="{{this.InventoryID}}" class="btn btn-danger inventory-item-del">Del</button>
+                            <button data-sku="{{this.sku}}" data-inventory-id="{{this.InventoryID}}" class="btn btn-warning inventory-item-deactivate">Deactivate</button>
                         </span>
 
 
@@ -298,7 +299,66 @@
                 });
 
             });
+        },
+        _deactivate: function(event) {
+            event.preventDefault();
+
+            var self = this;
+            var $formRow = $(this).closest('.inventory-items');
+            var $editButtons = $formRow.find('.inventory-edit-buttons');
+            var $submittingSpan = $formRow.find('.inventory-item-submitting')
+
+            var p = prompt("You are deactivating a product inventory. Please type the sku \"" + $(this).attr('data-sku') + "\" to confirm:");
+            if (p !== $(this).attr('data-sku')) return alert('You have enterred the wrong input or cancelled. Please try again.');
+
+            var post = $.ajax({
+                type: "POST",
+                url: "/api/v1/inventory/deactivate",
+                data: { InventoryID: $(self).attr('data-inventory-id') }
+            });
+
+            $editButtons.hide();
+            $submittingSpan.show();
+
+            post.done(function(data) {
+
+                if(data.success) {
+                    alert('success!');
+                    // delete the row.
+
+                    $formRow.slideUp('fast', function() {
+                        $formRow.remove();
+                    });
+
+                    return;
+                }
+
+
+                alert(D.get(data, 'error.message'));
+                console.log(D.get(data, 'error.debug'));
+
+            });
+
+            post.fail(function(data) {
+                console.log(data)
+                alert(D.get(data, 'responseJSON.error.message'));
+                console.log(D.get(data, 'responseJSON.error.debug'));
+            });
+
+
+            post.always(function() {
+
+                $submittingSpan.hide();
+                $editButtons.hide();
+                $(self).show();
+
+                $formRow.find('input.inventory-item-editable').each(function(index, element) {
+                    $(element).attr('disabled', 'disabled').addClass('edit-inactive').removeClass('form form-control');
+                });
+
+            });
         }
+
 
     }
 
@@ -312,6 +372,9 @@
         }, {
             dom: $('.inventory-item-del'),
             action: 'delete'
+        }, {
+            dom: $('.inventory-item-deactivate'),
+            action: 'deactivate'
         }
     ]);
     </script>
