@@ -70,6 +70,11 @@ router.get('/', function(req, res, next) {
             var matchedInventory = inventories.find(function(item) {
                 if (item.InventoryID === element.Inventory_inventoryID) return item;
             });
+            
+            // past sold inventories could have gone obsolete (deleted or deactivated)
+            // can stop the operations here.
+            // matchedInventory is undefined when nothing is found:
+            if (!matchedInventory) return;
 
             // joining this particular soldInventory line item to the inventory line item
             if (Array.isArray(matchedInventory.soldInventories)) {
@@ -77,6 +82,7 @@ router.get('/', function(req, res, next) {
             } else {
                 matchedInventory.soldInventories = [ element ];
             }
+            
 
             // calculating for quantities sold
             var quantitySold = 0;
