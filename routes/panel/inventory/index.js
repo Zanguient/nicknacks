@@ -72,8 +72,11 @@ router.get('/', function(req, res, next) {
             });
 
             // joining this particular soldInventory line item to the inventory line item
-            if (Array.isArray(matchedInventory.soldInventories)) matchedInventory.soldInventories.push(element);
-            matchedInventory.soldInventories = [ element ];
+            if (Array.isArray(matchedInventory.soldInventories)) {
+                matchedInventory.soldInventories.push(element);
+            } else {
+                matchedInventory.soldInventories = [ element ];
+            }
 
             // calculating for quantities sold
             var quantitySold = 0;
