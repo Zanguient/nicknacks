@@ -481,46 +481,26 @@ return res.status(400).send({
 */
 
 
-// router.get('/tblseed', function(req, res, next) {
-//     DB.Inventory.findAll({
-//         order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-//         include: [{
-//             model: DB.StorageLocation,
-//             through: {
-//                 model: DB.Inventory_Storage,
-//                 attributes: [
-//                     'Inventory_StorageID',
-//                     'StorageLocation_storageLocationID',
-//                     'Inventory_inventoryID',
-//                     'quantity'
-//                 ]
-//             }
-//         }]
-//     }).then(function(inventories) {
-//         for(let i=0; i<inventories.length; i++) {
-//             var inventory = inventories[i]
-//             let storages = inventory.StorageLocations
-//             let hasTBLStore = false
-//
-//             for(let i=0; i<storages.length; i++) {
-//                 let storage = storages[i]
-//                 if (storage.StorageLocationID === '6') {
-//                     hasTBLStore = true
-//                     break;
-//                 }
-//             }
-//             if (!hasTBLStore) {
-//                 DB.Inventory_Storage.create({
-//                     quantity: 0,
-//                     Inventory_inventoryID: inventory.InventoryID,
-//                     StorageLocation_storageLocationID: 6
-//                 });
-//             }
-//         }
-//
-//         res.send(inventories)
-//
-//     })
-// })
+ router.get('/tblseed', function(req, res, next) {
+     DB.Inventory.findAll({
+         order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
+         include: [{
+             model: DB.StorageLocation,
+             through: {
+                 model: DB.Inventory_Storage,
+                 attributes: [
+                     'Inventory_StorageID',
+                     'StorageLocation_storageLocationID',
+                     'Inventory_inventoryID',
+                     'quantity'
+                 ]
+             }
+         }]
+     }).then(function(inventories) {
+
+         res.send(inventories)
+
+     })
+ })
 
 module.exports = router;
