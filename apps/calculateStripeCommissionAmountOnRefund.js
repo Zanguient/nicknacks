@@ -32,7 +32,7 @@ function calculateStripeCommissionAmountOnRefund(stripeObject) {
 
 
     // if it is a total refund, additional 0.50 refund of stripe fixed charges
-    if (total === amountRefunded) stripeCommissionAmount + 50;
+    if (total === amountRefunded) stripeCommissionAmount += 0.50;
 
     // calculate the new stripe commission.
     return stripeCommissionAmount
