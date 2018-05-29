@@ -11,6 +11,7 @@ function Transaction(sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true,
             values: [
+                'checkout',
                 'charge-succeeded',
                 'refunded'
             ]
@@ -29,6 +30,10 @@ function Transaction(sequelize, DataTypes) {
         salesOrderNumber: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        paymentMethod: {
+            type: DataTypes.STRING,
+            allowNull: false
         },
         data: {
             type: DataTypes.JSON,
@@ -89,7 +94,7 @@ function Transaction(sequelize, DataTypes) {
             },
             generalDescription: function() {
                 var self = this;
-                return D.get(self, 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';   
+                return D.get(self, 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';
             },
             salesOrderNumber: function() {
                 try {
@@ -125,7 +130,7 @@ function Transaction(sequelize, DataTypes) {
             },
             totalAmount: function() {
                 if (typeof this.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe transaction missing `amount`.');
-                
+
                 // stripe amount is in cents. need to divide by 100;
                 return parseInt(this.data.data.object.amount)/100;
             },

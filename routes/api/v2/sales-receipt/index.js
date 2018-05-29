@@ -1,10 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
-router.get('/', function (req, res, next) {
-    res.render('index', {title: 'Express'});
-});
+
 
 // NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {
@@ -46,7 +43,7 @@ router.post('/create-sales-receipt', function(req, res) {
         // we will fail the server
         if (!transaction.customerEmail) {
             // SEND EMAIL !!!
-            throw 'CRITICAL: There is no email given in the stripe transaction.';
+            throw 'CRITICAL: There is no email given in the transaction.';
         }
 
         return QBO.findCustomersAsync([{
@@ -145,6 +142,8 @@ router.post('/create-sales-receipt', function(req, res) {
 
         // once customer is created/updated, create the sales receipt
         var salesReceipt = require('../apps/QBOSalesReceipt');
+
+        // NEED TO MODIFY THE OBJECT DEPENDING ON THE METHOD.
 
 
         // customer
@@ -349,215 +348,5 @@ router.post('/create-sales-receipt', function(req, res) {
     }
 });
 
-// STRIPE WEBHOOK ROUTES
-router.post('/charge-succeeded', function (req, res) {
-
-    if(D.get(req, 'body.livemode') === false) {
-        console.log(req.body);
-        return res.send({ success: true });
-    }
-
-    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
-
-    // get sales order number
-    var salesOrderNumber = D.get(req, 'body.data.object.description');
-
-    if(!salesOrderNumber) {
-        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
-    } else {
-        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
-    }
-
-
-    // save the data
-    return DB.Transaction.create({
-        data: req.body,
-        status: 'pending',
-        paymentMethod: 'stripe',
-        eventType: 'charge-succeeded',
-        salesOrderNumber: salesOrderNumber,
-        eventId: req.body.id
-    })
-    .then(function (transaction) {
-        // send success
-        return res.send({
-            success: true
-        });
-    })
-    .catch(function (err) {
-        // log the error
-        console.log("CRITICAL: Failed to capture stripe charge with error: " + err);
-        res.status(500).send();
-    });
-
-});
-
-router.post('/refunded', function (req, res) {
-
-    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
-
-    if(D.get(req, 'body.livemode') === false) {
-        console.log(req.body);
-        return res.send({ success: true });
-    }
-
-    // get sales order number
-    var salesOrderNumber = D.get(req, 'body.data.object.description');
-
-    if(!salesOrderNumber) {
-        return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
-    } else {
-        salesOrderNumber = salesOrderNumber.split(',')[0].trim();
-    }
-
-    var _TRANSACTION;
-
-    // save the data
-    return DB.Transaction.create({
-        data: req.body,
-        status: 'pending',
-        eventType: 'refunded',
-        salesOrderNumber: salesOrderNumber,
-        eventId: req.body.id
-    })
-    .then(function (transaction) {
-
-        _TRANSACTION = transaction;
-
-        var calculateStripeCommissionAmountOnRefund = require('../apps/calculateStripeCommissionAmountOnRefund');
-        var stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(transaction.data);
-
-        // create a journal entry to reduce stripe commission
-        return QBO.createJournalEntryAsync({
-            "DocNumber": transaction.salesOrderNumber + '-R',
-            "TxnDate": transaction.transactionDateQBOFormat,
-            "PrivateNote": "Refund for " + transaction.salesOrderNumber,
-            "Line": [{
-                // credit stripe transit cash for refund
-                "Id": "0",
-                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    // take out from stripe transit account
-                    "PostingType": "Credit",
-                    "AccountRef": {
-                        "value": "46",
-                        "name": "Stripe Transit"
-                    }
-                }
-            }, {
-                // debit sales refund
-                "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    "PostingType": "Debit",
-                    "AccountRef": {
-                        "value": "30",
-                        "name": "Sales Refund"
-                    }
-                }
-            }, {
-                // debit stripe transit because stripe will return some money in refund.
-                "Id": "1",
-                "Amount": stripeCommissionReturned,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    "PostingType": "Debit",
-                    "AccountRef": {
-                        "value": "46",
-                        "name": "Stripe Transit"
-                    }
-                }
-            }, {
-                // credit expenses to lower expenses from recovered stripe commission
-                "Amount": stripeCommissionReturned,
-                "DetailType": "JournalEntryLineDetail",
-                "JournalEntryLineDetail": {
-                    "PostingType": "Credit",
-                    "AccountRef": {
-                        "value": "33",
-                        "name": "Stripe Charges"
-                    }
-                }
-            }]
-        });
-
-    })
-    .then(function(journalEntry) {
-
-        if (!journalEntry || D.get(journalEntry, 'Fault')) throw journalEntry;
-
-        _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
-        _TRANSACTION.status = "completed";
-
-        return _TRANSACTION.save();
-
-    })
-    .then(function(transaction) {
-        // send success
-        return res.send({
-            success: true
-        });
-    })
-    .catch(function (err) {
-        // log the error
-        console.log(err);
-
-        res.status(500).send();
-    });
-
-});
-
-router.post('/payout-paid', function (req, res) {
-
-    if(D.get(req, 'body.livemode') === false) {
-        console.log(req.body);
-        return res.send({ success: true });
-    }
-
-    if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send();
-
-
-    // save the data
-    var _PAYOUTPAID;
-    return DB.PayoutPaid.create({
-        data: req.body,
-        status: 'pending',
-        eventId: req.body.id
-    })
-    .then(function (payoutPaid) {
-
-       _PAYOUTPAID = payoutPaid;
-
-        var Entry = require('../apps/QBOJournalPayoutPaid');
-        var entry = Entry(payoutPaid.data);
-
-        return QBO.createJournalEntryAsync(entry);
-
-    })
-    .then(function(response) {
-
-        if (D.get(response, 'Fault')) throw response;
-
-        _PAYOUTPAID.status = 'completed';
-        return _PAYOUTPAID.save();
-    })
-    .then(function() {
-        // send success
-        return res.send({
-            success: true
-        });
-    })
-    .catch(function (err) {
-        // log the error
-        console.log("CRITICAL: Failed to capture stripe payoutpaid with error: " + err);
-        if (_PAYOUTPAID) {
-            _PAYOUTPAID.status = 'failed';
-            _PAYOUTPAID.save().catch(function(err) { console.log("CRITICAL: Failed to set payout to `failed`"); });
-        }
-        res.status(500).send();
-    });
-
-});
 
 module.exports = router;
