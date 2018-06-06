@@ -418,7 +418,8 @@ router.post('/refunded', function (req, res) {
         status: 'pending',
         eventType: 'refunded',
         salesOrderNumber: salesOrderNumber,
-        eventId: req.body.id
+        eventId: req.body.id,
+        paymentMethod: 'stripe'
     })
     .then(function (transaction) {
 
