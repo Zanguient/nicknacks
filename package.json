@@ -6,7 +6,6 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "@coreui/coreui": "github:coreui/coreui",
     "bluebird": "^3.5.0",
     "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.2",
