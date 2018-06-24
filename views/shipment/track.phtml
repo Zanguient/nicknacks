@@ -1,0 +1,41 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+?>
+<?php $_shipment = $block->getShipment() ?>
+<?php $_order = $block->getOrder() ?>
+<?php if ($_shipment && $_order && $_shipment->getAllTracks()): ?>
+<br />
+
+<h3>Courier service provider and tracking number</h3>
+
+    <?php foreach ($_shipment->getAllTracks() as $_item): ?>
+
+        <?php if ( str_replace( ' ','', strtolower($block->escapeHtml($_item->getTitle())) ) == "ninjavan" ): ?>
+
+            <p>Shipped by: <strong>Ninja Van</strong></p>
+            <p>Tracking number: <a href="https://www.ninjavan.co/en-sg/?tracking_id=<?= $block->escapeHtml($_item->getNumber()) ?>" target="_blank"><strong><?= $block->escapeHtml($_item->getNumber()) ?></strong></a></p>
+
+            <p>You will receive an SMS within 2 weeks of your delivery.</p>
+
+            <p>To track or adjust your delivery, please visit <a href="https://www.ninjavan.co/en-sg/?tracking_id=<?= $block->escapeHtml($_item->getNumber()) ?>" target="_blank">https://www.ninjavan.co/en-sg/?tracking_id=<?= $block->escapeHtml($_item->getNumber()) ?></a>.<br>
+                You can also contact Ninjavan at <a href="tel: +65 6602 8271">+65 6602 8271</a></p>
+
+        <?php else: ?>
+
+            <p>Shipped by: <strong><?= $block->escapeHtml($_item->getTitle()) ?></strong></p>
+            <p>Tracking number: <strong><?= $block->escapeHtml($_item->getNumber()) ?></strong></p>
+            <p>&nbsp;</p>
+
+        <?php endif; ?>
+
+
+
+    <?php endforeach ?>
+
+<?php endif; ?>

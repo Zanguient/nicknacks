@@ -1,56 +1,28 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>{{title}}</title>
-    <!-- slim version for VueJS, using the normal one until we fully dismantle the old jQuery panel
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    -->
-    <script src="/assets/jquery/jquery-3.2.1.min.js"></script>
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <title>{title}</title>
 
-
-    <link rel="stylesheet" href="/assets/bootstrap/bootstrap.min.css">
-    <script src="/assets/bootstrap/bootstrap.min.js"></script>
-
-    <script src="/assets/jquery-plugins/jquery.serializejson.js"></script>
-
-    <script src="/assets/dottie/dottie.js"></script>
-    <script>var D = Dottie;</script>
-
-    <!-- VueJS STUFF -->
-
-    <script src="/assets/vuejs/vue.min.js"></script>
-    <script src="/assets/vuejs/vue-select.js"></script>
-    <script>Vue.component('v-select', VueSelect.VueSelect);</script>
-
-    <!-- Element for VueJS -->
-    <!-- import CSS -->
-    <link rel="stylesheet" href="/assets/element-ui/lib/theme-chalk/index.css">
-    <!-- import JavaScript -->
-    <script src="/assets/element-ui/lib/index.js"></script>
-    <script src="/assets/element-ui/lib/umd/locale/en.js"></script>
-    <script>ELEMENT.locale(ELEMENT.lang.en);</script>
-
-    <!-- END of VueJS STUFF -->
-
-    <script src="/assets/axiosjs/axios.js"></script>
-    <script src="/assets/moment/moment.min.js"></script>
-
-    <!-- Selectize : still in use by old panels -->
-    <script src="/assets/selectize/js/standalone/selectize.js"></script>
-    <link rel='stylesheet' href='/assets/selectize/css/selectize.css' />
-    <link rel='stylesheet' href='/assets/selectize/css/selectize.bootstrap3.css' />
-
-
-    <script src="/assets/main.js"></script>
-
-  </head>
-  <body>
-      <a href="/panel">Home</a> |
-      <a href="/panel/inventory">Inventory</a> |
-      <a href="/panel/delivery">Delivery</a> |
-      <a href="/panel/shipment">Shipment</a> |
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.1.0/css/flag-icon.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/react-select@1.2.1/dist/react-select.css">
+    <link rel="stylesheet" type="text/css" href="/css/react-datepicker.min.css" />
+    <link rel="stylesheet" type="text/css" href="/css/coreui.css" />
+    <link rel="stylesheet" type="text/css" href="/css/v3-style.css" />
+</head>
+<body>
     {{{body}}}
-  </body>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/js/client.app.js"></script></body>
 </html>
