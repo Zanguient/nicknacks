@@ -6,6 +6,9 @@ var router = express.Router();
 // NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {
 
+    const stripeChargesAMEX = 0.032;
+    const stripeChargesMasterOrVisa = 0.027;
+
     // request checking
     if ([undefined, null, false].indexOf(req.body.transactionID) > -1 || isNaN(parseInt(req.body.transactionID))) {
         return res.status(400).send({ success: false, error: { message: '`transactionID is missing or invalid.'}});
@@ -209,9 +212,9 @@ router.post('/create-sales-receipt', function(req, res) {
         var stripeCommission;
 
         if (_TRANSACTION.creditCardIsAMEXorIsNotSG) {
-            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * 0.034)/100;
+            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * stripeChargesAMEX)/100;
         } else {
-            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * 0.029)/100;
+            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * stripeChargesMasterOrVisa)/100;
         }
 
         // add the 50 cent

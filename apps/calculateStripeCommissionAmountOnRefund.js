@@ -1,5 +1,8 @@
 function calculateStripeCommissionAmountOnRefund(stripeObject) {
 
+    const stripeChargesAMEX = 0.032;
+    const stripeChargesMasterOrVisa = 0.027;
+
     var total = parseInt(D.get(stripeObject, 'data.object.amount'));
     var amountRefunded = parseInt(D.get(stripeObject, 'data.object.amount_refunded'));
 
@@ -21,12 +24,12 @@ function calculateStripeCommissionAmountOnRefund(stripeObject) {
     if (countryOfOrigin !== 'SG' || cardBrand === 'American Express') {
 
         // international charges or AMEX, so 3.4% of the amount refunded
-        stripeCommissionAmount = Math.round(amountRefunded * 0.034)/100;
+        stripeCommissionAmount = Math.round(amountRefunded * stripeChargesAMEX)/100;
 
     } else {
 
         // 2.9% of the amount refunded
-        stripeCommissionAmount = Math.round(amountRefunded * 0.029)/100;
+        stripeCommissionAmount = Math.round(amountRefunded * stripeChargesMasterOrVisa)/100;
 
     }
 
