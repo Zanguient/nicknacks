@@ -18,6 +18,7 @@ global.WL = new WunderlistSDK({
 
 WL.http.lists.all().done(function (lists) {
     // all is good
+    console.log('Wunderlist connection good.');
     return;
 }).fail(function () {
     console.error('CRITICAL: Wunderlist connection failed.');
