@@ -67,7 +67,8 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "dist")));
 app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
 app.use('/', require('./routes/index'));
@@ -143,7 +144,7 @@ function connectToMailBox(notifier, imap) {
     });
 }
 
-connectToMailBox(notifier, imap);
+//connectToMailBox(notifier, imap);
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();
