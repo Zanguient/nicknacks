@@ -13,6 +13,9 @@ function extractDate($body, format) {
     // of 15th February 2018, Thursday
     function checkIsCustomFormat(dateString) {
 
+        // if dateString is null or false, just return and let there be no dates.
+        if(!dateString) return false;
+
         // if dateString doesn't have a comma, assume it is not the custom format
         if (dateString.indexOf(',') === -1) return false;
 

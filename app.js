@@ -16,14 +16,18 @@ global.WL = new WunderlistSDK({
 });
 
 
-WL.http.lists.all().done(function (lists) {
-    // all is good
-    console.log('Wunderlist connection good.');
-    return;
-}).fail(function () {
-    console.error('CRITICAL: Wunderlist connection failed.');
-    global.serverStatus.push('Wunderlist connection failed.');
-});
+function WLConnection() {
+    WL.http.lists.all().done(function (lists) {
+        // all is good
+        console.log('Wunderlist connection good.');
+        setTimeout(WLConnection, 30000);
+        return;
+    }).fail(function () {
+        console.error('CRITICAL: Wunderlist connection failed.');
+        throw new Error('CRITICAL: Wunderlist connection failed.');
+    });
+}
+WLConnection();
 
 var express = require('express');
 var path = require('path');
