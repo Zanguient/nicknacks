@@ -31,6 +31,8 @@ public/uploads_temp
 public/profilepictures
 public/js/env.js
 public/js/stash.js
+public/fonts/*
+public/images/*
 .env
 .idea
 

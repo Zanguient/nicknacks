@@ -17,7 +17,7 @@ import {
   AppSidebarMinimizer,
   AppSidebarNav,
   AppSidebarToggler,
-} from '../../../../src';
+} from '@coreui/react';
 // sidebar nav config
 import navigation from '../../_nav.js';
 // routes config

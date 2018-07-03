@@ -3,10 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "webpack": "webpack --mode development --watch"
   },
   "dependencies": {
     "@coreui/coreui": "github:coreui/coreui",
+    "@coreui/react": "^2.0.4",
     "ajv": "^6.5.1",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
@@ -50,10 +52,24 @@
     "serve-favicon": "^2.5.0",
     "string": "^3.3.3",
     "style-loader": "^0.21.0",
+    "svg-inline-loader": "^0.8.0",
     "wunderlist": "^0.1.3",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "bootstrap": "^4.1.0",
+    "classnames": "^2.2.5",
+    "prop-types": "^15.6.1",
+    "react-router-dom": "^4.2.2",
+    "reactstrap": "^5.0.0",
+    "chart.js": "^2.7.2",
+    "flag-icon-css": "^3.0.0",
+    "font-awesome": "^4.7.0",
+    "react-chartjs-2": "^2.7.0",
+    "react-router-config": "^1.0.0-beta.4",
+    "simple-line-icons": "^2.4.1"
   },
   "devDependencies": {
+    "file-loader": "^1.1.11",
+    "image-webpack-loader": "^4.3.1",
     "webpack": "^4.12.1",
     "webpack-cli": "^2.1.5"
   }
