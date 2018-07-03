@@ -7,7 +7,7 @@ module.exports = {
     entry: [path.resolve(__dirname, 'coreui-react-src/index.js')],
     output: {
         path: path.resolve(__dirname, 'public'),
-        filename: 'js/client.app.js'
+        filename: 'js/client-admin.app.js'
     },
     module: {
         rules: [

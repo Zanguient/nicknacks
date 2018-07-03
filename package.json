@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "webpack": "webpack --mode development --watch"
+    "webpack:dev": "webpack --mode development --watch",
+    "webpack:build":"webpack --mode production"
   },
   "dependencies": {
     "@coreui/coreui": "github:coreui/coreui",

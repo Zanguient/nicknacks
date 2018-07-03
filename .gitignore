@@ -33,6 +33,7 @@ public/js/env.js
 public/js/stash.js
 public/fonts/*
 public/images/*
+public/js/client-admin.app.js
 .env
 .idea
 
