@@ -59,6 +59,7 @@ app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
 app.use('/panel', require('./routes/panel'));
+app.use('/admin', require('./routes/admin'));
 app.use('/panel/inventory', require('./routes/panel/inventory'));
 app.use('/panel/shipment', require('./routes/panel/shipment'));
 app.use('/panel/inventory', require('./routes/panel/inventory'));
