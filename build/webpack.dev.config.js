@@ -45,7 +45,6 @@ module.exports = merge(webpackBaseConfig, {
             ignore: [
                 'text-editor.vue'
             ]
-        }),
-        new webpack.HotModuleReplacementPlugin()
+        })
     ]
 });
