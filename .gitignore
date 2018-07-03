@@ -35,3 +35,7 @@ public/js/stash.js
 .idea
 
 .DS_Store
+
+#webpack builds
+dist/
+build/env.js
