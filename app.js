@@ -58,23 +58,22 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
-//app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, "dist")));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
-// app.use('/', require('./routes/index'));
-// app.use('/qbo', require('./routes/qbo'));
-// app.use('/panel', require('./routes/panel'));
-// app.use('/panel/inventory', require('./routes/panel/inventory'));
-// app.use('/panel/shipment', require('./routes/panel/shipment'));
-// app.use('/panel/inventory', require('./routes/panel/inventory'));
-//
-// // api V1
-// app.use('/api/v1', require('./routes/api/v1'));
-//
-// // api V2
-// app.use('/api/v2', require('./routes/api/v2'));
-// app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
+app.use('/', require('./routes/index'));
+app.use('/qbo', require('./routes/qbo'));
+app.use('/panel', require('./routes/panel'));
+app.use('/panel/inventory', require('./routes/panel/inventory'));
+app.use('/panel/shipment', require('./routes/panel/shipment'));
+app.use('/panel/inventory', require('./routes/panel/inventory'));
+
+// api V1
+app.use('/api/v1', require('./routes/api/v1'));
+
+// api V2
+app.use('/api/v2', require('./routes/api/v2'));
+app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 
 
 /* SAFARI/IOS Bug */
