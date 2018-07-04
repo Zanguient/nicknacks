@@ -4,20 +4,18 @@
 <template>
     <div class="main" :class="{'main-hide-text': shrink}">
         <div class="sidebar-menu-con" :style="{width: shrink?'60px':'200px', overflow: shrink ? 'visible' : 'auto'}">
-            <scroll-bar ref="scrollBar">
-                <shrinkable-menu 
-                    :shrink="shrink"
-                    @on-change="handleSubmenuChange"
-                    :theme="menuTheme" 
-                    :before-push="beforePush"
-                    :open-names="openedSubmenuArr"
-                    :menu-list="menuList">
-                    <div slot="top" class="logo-con">
-                        <img v-show="!shrink"  src="../images/logo.jpg" key="max-logo" />
-                        <img v-show="shrink" src="../images/logo-min.jpg" key="min-logo" />
-                    </div>
-                </shrinkable-menu>
-            </scroll-bar>
+            <shrinkable-menu 
+                :shrink="shrink"
+                @on-change="handleSubmenuChange"
+                :theme="menuTheme" 
+                :before-push="beforePush"
+                :open-names="openedSubmenuArr"
+                :menu-list="menuList">
+                <div slot="top" class="logo-con">
+                    <img v-show="!shrink"  src="../images/logo.jpg" key="max-logo" />
+                    <img v-show="shrink" src="../images/logo-min.jpg" key="min-logo" />
+                </div>
+            </shrinkable-menu>
         </div>
         <div class="main-header-con" :style="{paddingLeft: shrink?'60px':'200px'}">
             <div class="main-header">
@@ -77,7 +75,6 @@
     import themeSwitch from './main-components/theme-switch/theme-switch.vue';
     import Cookies from 'js-cookie';
     import util from '@/libs/util.js';
-    import scrollBar from '@/views/my-components/scroll-bar/vue-scroller-bars';
     
     export default {
         components: {
@@ -87,8 +84,7 @@
             fullScreen,
             lockScreen,
             messageTip,
-            themeSwitch,
-            scrollBar
+            themeSwitch
         },
         data () {
             return {
@@ -178,9 +174,6 @@
             },
             fullscreenChange (isFullScreen) {
                 // console.log(isFullScreen);
-            },
-            scrollBarResize () {
-                this.$refs.scrollBar.resize();
             }
         },
         watch: {
@@ -195,23 +188,14 @@
             },
             lang () {
                 util.setCurrentPath(this, this.$route.name); // 在切换语言时用于刷新面包屑
-            },
-            openedSubmenuArr () {
-                setTimeout(() => {
-                    this.scrollBarResize();
-                }, 300);
             }
         },
         mounted () {
             this.init();
-            window.addEventListener('resize', this.scrollBarResize);
         },
         created () {
             // 显示打开的页面的列表
             this.$store.commit('setOpenedList');
-        },
-        dispatch () {
-            window.removeEventListener('resize', this.scrollBarResize);
         }
     };
 </script>
