@@ -71,87 +71,78 @@ function Transaction(sequelize, DataTypes) {
         instanceMethods: {},
         getterMethods: {
 
-            transactionDateUnixTS: function() {
+            oldJSON_v1: function() {
                 var self = this;
-                return D.get(self, 'data.data.object.created');
+
+                // since the old version (v1) is nested in data.data, if we can find it, we assume it is v1
+                if ( !D.get(self, 'data.data') ) return null;
+
+                var object = {};
+
+                object.transactionDateUnixTS = D.get(self, 'data.data.object.created');
+                object.transactionDateQBOFormat = MOMENT.unix(D.get(self, 'data.data.object.created')).format('YYYY-MM-DD');
+                object.transactionDateTime = MOMENT.unix(D.get(self, 'data.data.object.created')).format('Do MMM YY, HH:mm');
+                object.transactedCurrency = D.get(self, 'data.data.object.currency');
+                object.transactionReferenceCode = D.get(self, 'data.data.object.id');
+                object.generalDescription = D.get(self, 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';
+
+                object.salesOrderNumber = (function(transaction) {
+                    try {
+                        var orderNumber = (transaction.data.data.object.description.split(','))[0].trim();
+                    } catch(err) {
+                        console.log('CRITICAL: Transaction model unable to parse Sales Order Number.');
+                        console.log(err);
+                    }
+                    return orderNumber
+                })(this);
+
+                object.salesOrderNumber = (function(transaction) {
+                    try {
+                        var orderNumber = (transaction.data.data.object.description.split(','))[0].trim();
+                    } catch(err) {
+                        console.log('CRITICAL: Transaction model unable to parse Sales Order Number.');
+                        console.log(err);
+                    }
+                    return orderNumber
+                })(this);
+
+                object.customerEmail = (function(transaction) {
+
+                    try {
+                        var email = (transaction.data.data.object.description.split(','))[1].trim();
+                    } catch(err) {
+                        console.log('CRITICAL: Transaction model unable to parse Customer Email.');
+                        console.log(err);
+                    }
+                    return email;
+                })(this);
+
+                object.customerName = D.get(self, 'data.data.object.source.name') || 'Anonymous';
+
+                object.totalAmount = (function(transaction) {
+                    if (typeof transaction.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe transaction missing `amount`.');
+
+                    // stripe amount is in cents. need to divide by 100;
+                    return parseInt(transaction.data.data.object.amount)/100;
+                })(this);
+
+                object.address = D.get(this, 'data.data.object.source.address_line1');
+                object.addressZip = D.get(this, 'data.data.object.source.address_zip');
+                object.addressCountry = D.get(this, 'data.data.object.source.address_country');
+                object.creditCardOriginCountry = D.get(this, 'data.data.object.source.country');
+
+                object.creditCardOriginCountryIsSG = (function(transaction) {
+                    return D.get(transaction, 'data.data.object.source.country') === 'SG';
+                })(this);
+
+                object.creditCardIsAMEXorIsNotSG = (function(transaction) {
+                    return D.get(transaction, 'data.data.object.source.country') !== 'SG' || D.get(transaction, 'data.data.object.source.brand') === 'American Express';
+                })(this);
+
+                return object;
 
             },
-            transactionDateQBOFormat: function() {
-                var self = this;
-                return MOMENT.unix(D.get(self, 'data.data.object.created')).format('YYYY-MM-DD');
-            },
-            transactionDateTime: function() {
-                var self = this;
-                return MOMENT.unix(D.get(self, 'data.data.object.created')).format('Do MMM YY, HH:mm');
-            },
-            transactedCurrency: function() {
-                var self = this;
-                return D.get(self, 'data.data.object.currency');
-            },
-            transactionReferenceCode: function() {
-                var self = this;
-                return D.get(self, 'data.data.object.id');
-            },
-            generalDescription: function() {
-                var self = this;
-                return D.get(self, 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';
-            },
-            salesOrderNumber: function() {
-                try {
-                    var orderNumber = (this.data.data.object.description.split(','))[0].trim();
-                } catch(err) {
-                    console.log('CRITICAL: Transaction model unable to parse Sales Order Number.');
-                    console.log(err);
-                }
-                return orderNumber
-            },
-            salesOrderNumber: function() {
-                try {
-                    var orderNumber = (this.data.data.object.description.split(','))[0].trim();
-                } catch(err) {
-                    console.log('CRITICAL: Transaction model unable to parse Sales Order Number.');
-                    console.log(err);
-                }
-                return orderNumber
-            },
-            customerEmail: function() {
 
-                try {
-                    var email = (this.data.data.object.description.split(','))[1].trim();
-                } catch(err) {
-                    console.log('CRITICAL: Transaction model unable to parse Customer Email.');
-                    console.log(err);
-                }
-                return email;
-            },
-            customerName: function() {
-                var self = this;
-                return D.get(self, 'data.data.object.source.name') || 'Anonymous';
-            },
-            totalAmount: function() {
-                if (typeof this.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe transaction missing `amount`.');
-
-                // stripe amount is in cents. need to divide by 100;
-                return parseInt(this.data.data.object.amount)/100;
-            },
-            address: function() {
-                return D.get(this, 'data.data.object.source.address_line1');
-            },
-            addressZip: function() {
-                return D.get(this, 'data.data.object.source.address_zip');
-            },
-            addressCountry: function() {
-                return D.get(this, 'data.data.object.source.address_country');
-            },
-            creditCardOriginCountry: function() {
-                return D.get(this, 'data.data.object.source.country');
-            },
-            creditCardOriginCountryIsSG: function() {
-                return D.get(this, 'data.data.object.source.country') === 'SG';
-            },
-            creditCardIsAMEXorIsNotSG: function() {
-                return D.get(this, 'data.data.object.source.country') !== 'SG' || D.get(this, 'data.data.object.source.brand') === 'American Express';
-            },
             soldInventories: function() {
                 var array = [];
 

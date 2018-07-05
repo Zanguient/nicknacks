@@ -102,6 +102,20 @@ router.get('/', function(req, res, next) {
 
     }).spread(function(transactions, payouts, storageLocations, inventories, soldInventories) {
 
+        //oldJSON_v1 hack to make old panel work.
+        transactions = JSON.parse(JSON.stringify(transactions));
+
+        var tempTransactionsObject = [];
+        for(let i=0; i<transactions.length; i++) {
+            let tempTransactionObject = {};
+            let transaction = transactions[i];
+            tempTransactionObject = transaction.oldJSON_v1;
+            tempTransactionObject.soldInventories = transaction.soldInventories;
+            tempTransactionsObject.push(tempTransactionObject);
+        }
+        transactions = tempTransactionsObject;
+
+
         // merge inventories with soldInventories
         inventories = JSON.parse(JSON.stringify(inventories));
         soldInventories = JSON.parse(JSON.stringify(soldInventories));
@@ -252,6 +266,19 @@ router.get('/delivery', function(req, res, next) {
 
     }).spread(function(transactions, storageLocations, inventories, soldInventories) {
 
+        //oldJSON_v1 hack to make old panel work.
+        transactions = JSON.parse(JSON.stringify(transactions));
+
+        var tempTransactionsObject = [];
+        for(let i=0; i<transactions.length; i++) {
+            let tempTransactionObject = {};
+            let transaction = transactions[i];
+            tempTransactionObject = transaction.oldJSON_v1;
+            tempTransactionObject.soldInventories = transaction.soldInventories;
+            tempTransactionsObject.push(tempTransactionObject);
+        }
+        transactions = tempTransactionsObject;
+
 
         // merge inventories with soldInventories
         inventories = JSON.parse(JSON.stringify(inventories));
@@ -379,6 +406,19 @@ router.get('/delivery/history', function(req, res, next) {
         ];
 
     }).spread(function(transactions, inventories, soldInventories) {
+
+        //oldJSON_v1 hack to make old panel work.
+        transactions = JSON.parse(JSON.stringify(transactions));
+
+        var tempTransactionsObject = [];
+        for(let i=0; i<transactions.length; i++) {
+            let tempTransactionObject = {};
+            let transaction = transactions[i];
+            tempTransactionObject = transaction.oldJSON_v1;
+            tempTransactionObject.soldInventories = transaction.soldInventories;
+            tempTransactionsObject.push(tempTransactionObject);
+        }
+        transactions = tempTransactionsObject;
 
 
         // merge inventories with soldInventories
