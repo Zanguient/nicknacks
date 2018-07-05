@@ -5,10 +5,10 @@
     <div class="main" :class="{'main-hide-text': shrink}">
         <div class="sidebar-menu-con" :style="{width: shrink?'60px':'200px', overflow: shrink ? 'visible' : 'auto'}">
             <scroll-bar ref="scrollBar">
-                <shrinkable-menu 
+                <shrinkable-menu
                     :shrink="shrink"
                     @on-change="handleSubmenuChange"
-                    :theme="menuTheme" 
+                    :theme="menuTheme"
                     :before-push="beforePush"
                     :open-names="openedSubmenuArr"
                     :menu-list="menuList">
@@ -36,7 +36,7 @@
                     <lock-screen></lock-screen>
                     <message-tip v-model="mesCount"></message-tip>
                     <theme-switch></theme-switch>
-                    
+
                     <div class="user-dropdown-menu-con">
                         <Row type="flex" justify="end" align="middle" class="user-dropdown-innercon">
                             <Dropdown transfer trigger="click" @on-click="handleClickUserDropdown">
@@ -45,8 +45,8 @@
                                     <Icon type="arrow-down-b"></Icon>
                                 </a>
                                 <DropdownMenu slot="list">
-                                    <DropdownItem name="ownSpace">个人中心</DropdownItem>
-                                    <DropdownItem name="loginout" divided>退出登录</DropdownItem>
+                                    <DropdownItem name="ownSpace">My account</DropdownItem>
+                                    <DropdownItem name="loginout" divided>Logout</DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
                             <Avatar :src="avatorPath" style="background: #619fe7;margin-left: 10px;"></Avatar>
@@ -78,7 +78,7 @@
     import Cookies from 'js-cookie';
     import util from '@/libs/util.js';
     import scrollBar from '@/views/my-components/scroll-bar/vue-scroller-bars';
-    
+
     export default {
         components: {
             shrinkableMenu,

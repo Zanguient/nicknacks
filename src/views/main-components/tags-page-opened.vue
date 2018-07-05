@@ -7,23 +7,23 @@
         <div class="close-all-tag-con">
             <Dropdown transfer @on-click="handleTagsOption">
                 <Button size="small" type="primary">
-                    标签选项
+                    Tabs options
                     <Icon type="arrow-down-b"></Icon>
                 </Button>
                 <DropdownMenu slot="list">
-                    <DropdownItem name="clearAll">关闭所有</DropdownItem>
-                    <DropdownItem name="clearOthers">关闭其他</DropdownItem>
+                    <DropdownItem name="clearAll">Close all</DropdownItem>
+                    <DropdownItem name="clearOthers">Close others</DropdownItem>
                 </DropdownMenu>
             </Dropdown>
         </div>
         <div ref="scrollBody" class="tags-inner-scroll-body" :style="{left: tagBodyLeft + 'px'}">
             <transition-group name="taglist-moving-animation">
-                <Tag 
+                <Tag
                     type="dot"
-                    v-for="(item, index) in pageTagsList" 
+                    v-for="(item, index) in pageTagsList"
                     ref="tagsPageOpened"
-                    :key="item.name" 
-                    :name="item.name" 
+                    :key="item.name"
+                    :name="item.name"
                     @on-close="closePage"
                     @click.native="linkTo(item)"
                     :closable="item.name==='home_index'?false:true"

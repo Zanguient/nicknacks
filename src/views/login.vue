@@ -13,24 +13,23 @@
                 <div class="form-con">
                     <Form ref="loginForm" :model="form" :rules="rules">
                         <FormItem prop="userName">
-                            <Input v-model="form.userName" placeholder="请输入用户名">
+                            <Input v-model="form.userName" placeholder="username">
                                 <span slot="prepend">
                                     <Icon :size="16" type="person"></Icon>
                                 </span>
                             </Input>
                         </FormItem>
                         <FormItem prop="password">
-                            <Input type="password" v-model="form.password" placeholder="请输入密码">
+                            <Input type="password" v-model="form.password" placeholder="password">
                                 <span slot="prepend">
                                     <Icon :size="14" type="locked"></Icon>
                                 </span>
                             </Input>
                         </FormItem>
                         <FormItem>
-                            <Button @click="handleSubmit" type="primary" long>登录</Button>
+                            <Button @click="handleSubmit" type="primary" long>Login</Button>
                         </FormItem>
                     </Form>
-                    <p class="login-tip">输入任意用户名和密码即可</p>
                 </div>
             </Card>
         </div>
@@ -48,10 +47,10 @@ export default {
             },
             rules: {
                 userName: [
-                    { required: true, message: '账号不能为空', trigger: 'blur' }
+                    { required: true, message: 'Username cannot be left empty.', trigger: 'blur' }
                 ],
                 password: [
-                    { required: true, message: '密码不能为空', trigger: 'blur' }
+                    { required: true, message: 'Password cannot be left empty.', trigger: 'blur' }
                 ]
             }
         };
