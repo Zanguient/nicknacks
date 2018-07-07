@@ -4,14 +4,13 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "init": "webpack --progress --config build/webpack.dev.config.js",
-    "dev_bak": "webpack-dev-server --content-base ./ --open --inline --hot --compress --config build/webpack.dev.config.js",
-    "build": "webpack --progress --hide-modules --config build/webpack.prod.config.js",
-    "lint": "eslint --fix --ext .js,.vue src",
-    "test": "npm run lint",
-    "start": "node ./bin/www",
-    "dev": "webpack-dev-server --content-base ./ --open --inline --hot --compress --config build/webpack.dev.config.js && npm start",
-    "prod": "webpack --config build/webpack.prod.config.js && npm start"
+    "start-api": "node ./bin/www",
+    "webpack-init": "webpack --progress --config build/webpack.dev.config.js",
+    "webpack-build": "webpack --progress --hide-modules --config build/webpack.prod.config.js",
+    "webpack-lint": "eslint --fix --ext .js,.vue src",
+    "webpack-test": "npm run lint",
+    "webpack-dev": "webpack-dev-server --content-base ./ --open --inline --hot --compress --config build/webpack.dev.config.js",
+    "webpack-prod": "webpack --config build/webpack.prod.config.js"
   },
   "dependencies": {
     "ajv": "^5.5.2",
