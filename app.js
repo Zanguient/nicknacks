@@ -83,6 +83,7 @@ app.use('/api/v1', require('./routes/api/v1'));
 // api V2
 app.use('/api/v2', require('./routes/api/v2'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
+app.use('/api/v2/magento-webhooks', require('./routes/api/v2/magento-webhooks'));
 
 
 /* SAFARI/IOS Bug */
