@@ -4,7 +4,9 @@ var router = express.Router();
 router.get('/', function(req, res, next) {
 
     var optionsForTransaction = {
-        where: {},
+        where: {
+            TransactionID: { lt : 617 }
+        },
         order: [['TransactionID', 'DESC']],
         include: [{
             model: DB.Inventory_Storage,
@@ -115,7 +117,6 @@ router.get('/', function(req, res, next) {
         }
         transactions = tempTransactionsObject;
 
-
         // merge inventories with soldInventories
         inventories = JSON.parse(JSON.stringify(inventories));
         soldInventories = JSON.parse(JSON.stringify(soldInventories));
@@ -200,7 +201,10 @@ router.get('/delivery', function(req, res, next) {
 
 
     var optionsForTransaction = {
-        where: { status: 'completed' },
+        where: {
+            TransactionID: { lt : 617 },
+            status: 'completed',
+        },
         order: [['TransactionID', 'DESC']],
         include: [{
             model: DB.Inventory_Storage,
@@ -343,7 +347,10 @@ router.get('/delivery/history', function(req, res, next) {
 
 
     var optionsForTransaction = {
-        where: { status: 'delivered' },
+        where: {
+            TransactionID: { lt : 617 },
+            status: 'delivered'
+        },
         order: [['updatedAt', 'DESC']],
         include: [{
             model: DB.Inventory_Storage,

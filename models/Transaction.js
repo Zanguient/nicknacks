@@ -74,8 +74,8 @@ function Transaction(sequelize, DataTypes) {
             oldJSON_v1: function() {
                 var self = this;
 
-                // since the old version (v1) is nested in data.data, if we can find it, we assume it is v1
-                if ( !D.get(self, 'data.data') ) return null;
+                // new version has attribute `increment_id`, if we can find it, we assume it is v1
+                if ( D.get(self, 'data.increment_id') ) return null;
 
                 var object = {};
 
