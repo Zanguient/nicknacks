@@ -7,6 +7,9 @@ var happyThreadPool = HappyPack.ThreadPool({ size: os.cpus().length });
 function resolve (dir) {
     return path.join(__dirname, dir);
 }
+
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 module.exports = {
     entry: {
         main: '@/main',
@@ -77,7 +80,11 @@ module.exports = {
             loaders: ['babel-loader'],
             threadPool: happyThreadPool,
             verbose: true
-        })
+        }),
+        //copy the old public folder to webpack dist folder
+        new CopyWebpackPlugin([
+            { from: 'public' }
+        ])
     ],
     resolve: {
         extensions: ['.js', '.vue'],
