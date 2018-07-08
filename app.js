@@ -52,6 +52,7 @@ var qs = require('querystring');
 var parseString = require('xml2js').parseString;
 
 var retry = require('retry');
+var cors = require('cors');
 
 var QBO, QBO_TOKEN, QBO_SECRET;
 
@@ -71,6 +72,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
+// enable cors
+app.use(cors());
+
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
 app.use('/panel', require('./routes/panel'));
@@ -85,6 +89,7 @@ app.use('/api/v1', require('./routes/api/v1'));
 app.use('/api/v2', require('./routes/api/v2'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 app.use('/api/v2/magento-webhooks', require('./routes/api/v2/magento-webhooks'));
+app.use('/api/v2/sales-receipt', require('./routes/api/v2/sales-receipt'));
 
 
 /* SAFARI/IOS Bug */
@@ -99,52 +104,7 @@ app.all('*', function (req, res, next) {
 });
 
 
-const notifier = require('mail-notifier');
 const wunderlistBot = require('./apps/wunderlistBot')
-
-const imap = {
-    user: 'root@greyandsanders.com',
-    password: process.env.ZOHO_EMAIL_PASSWORD,
-    host: 'imappro.zoho.com',
-    port: 993,
-    tls: true,
-    tlsOptions: { rejectUnauthorized: false }
-};
-
-
-function connectToMailBox(notifier, imap) {
-
-    var operation = retry.operation();
-
-    operation.attempt(function(currentAttempt) {
-
-        var n;
-
-        try {
-
-            n = notifier(imap);
-
-            n.on('mail', function(mail) {
-                console.log('received new mail!');
-                wunderlistBot(mail)
-            });
-            n.on('end', function() {
-                console.log('notifier ended, restarting');
-                n.start();
-            });
-            n.start();
-
-        } catch (e) {
-
-            serverStatus.push(e);
-            operation.retry(e);
-
-        }
-
-    });
-}
-
-//connectToMailBox(notifier, imap);
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();

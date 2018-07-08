@@ -1,7 +1,65 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
+router.get('/pending-sales-receipt/all', function(req, res) {
 
+    DB.Transaction.findAll({
+        where: {
+            TransactionID: 617
+        },
+        order: [ ['TransactionID', 'DESC'] ],
+        include: [{
+            model: DB.Inventory_Storage,
+            through: {
+                mode: DB.SoldInventory,
+                attributes: [
+                    'SoldInventoryID',
+                    'Transaction_transactionID',
+                    'Inventory_inventoryID',
+                    'StorageLocation_storageLocationID',
+                    'quantity'
+                ]
+            },
+            include: [{
+                model: DB.StorageLocation
+                // ,
+                // attributes: [
+                //     'Inventory_StorageID',
+                //     'StorageLocation_storageLocationID',
+                //     'Inventory_inventoryID',
+                //     'quantity'
+                // ]
+            }, {
+                model: DB.Inventory
+                // ,
+                // attributes: [
+                //     'InventoryID',
+                //     'name',
+                //     'cogs',
+                //     'sku'
+                // ]
+            }]
+        }]
+    }).then(function(transactions) {
+
+        res.send({
+            success: true,
+            data: transactions
+        })
+
+    }).catch(function(err) {
+        console.log(err)
+        res.status(500).send({
+            success: false,
+            message: 'Server error in retrieving sale receipts.',
+            debug: {
+                message: 'Server error',
+                error: err
+            }
+        })
+    })
+
+})
 
 // NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {

@@ -9,6 +9,7 @@ function resolve (dir) {
 }
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
     entry: {
@@ -84,7 +85,8 @@ module.exports = {
         //copy the old public folder to webpack dist folder
         new CopyWebpackPlugin([
             { from: 'public' }
-        ])
+        ]),
+        new Dotenv()
     ],
     resolve: {
         extensions: ['.js', '.vue'],

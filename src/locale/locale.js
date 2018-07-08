@@ -45,6 +45,7 @@ export default {
         btnText: 'Click to show modal',
         modalText: 'Here you can see the iview modal box by default to the OK and Cancel buttons that will switch the language',
         poptip: 'international poptip',
-        showPoptipText: 'Click to show poptip'
+        showPoptipText: 'Click to show poptip',
+        submit: 'sumbit'
     }
 };

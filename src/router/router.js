@@ -67,6 +67,16 @@ export const otherRouter = {
 // 作为Main组件的子页面展示并且在左侧菜单显示的路由写在appRouter里
 export const appRouter = [
     {
+        path: '/sales-receipts',
+        icon: 'ios-cart',
+        name: 'sales-receipts',
+        title: 'Sales Receipts',
+        component: Main,
+        children: [
+            { path: 'index', title: 'Sale Receipts', name: 'sales-receipt', component: () => import('@/views/sales-receipts/sales-receipts.vue') }
+        ]
+    },
+    {
         path: '/access',
         icon: 'key',
         name: 'access',
