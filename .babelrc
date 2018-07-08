@@ -1,5 +1,9 @@
 {
-    "presets": ["stage-3", "env"],
-    "plugins": ["transform-runtime", "syntax-dynamic-import"],
-    "comments": false
+  "presets": [
+    ["es2015", { "modules": false }]
+  ],
+  "plugins": [["import", {
+    "libraryName": "iview",
+    "libraryDirectory": "src/components"
+  }]]
 }

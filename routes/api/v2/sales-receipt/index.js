@@ -21,30 +21,61 @@ router.get('/pending-sales-receipt/all', function(req, res) {
                 ]
             },
             include: [{
-                model: DB.StorageLocation
-                // ,
-                // attributes: [
-                //     'Inventory_StorageID',
-                //     'StorageLocation_storageLocationID',
-                //     'Inventory_inventoryID',
-                //     'quantity'
-                // ]
+                model: DB.StorageLocation,
+                attributes: [
+                    'StorageLocationID',
+                    'name'
+                ]
             }, {
-                model: DB.Inventory
-                // ,
-                // attributes: [
-                //     'InventoryID',
-                //     'name',
-                //     'cogs',
-                //     'sku'
-                // ]
+                model: DB.Inventory,
+                attributes: [
+                    'InventoryID',
+                    'name',
+                    'cogs',
+                    'sku'
+                ]
             }]
         }]
     }).then(function(transactions) {
 
+        var preparedData = []
+
+        for(let i=0; i<transactions.length; i++) {
+            let data = {}
+            let txn = transactions[i];
+            data.salesOrderNumber = txn.salesOrderNumber
+
+            data.customer = {}
+            data.customer.name = (function(txn) {
+                let firstName = D.get(txn, 'data.data.customer_firstname')
+                let lastName = D.get(txn, 'data.data.customer_lastname')
+
+                var name = ''
+
+                if (firstName) name += firstName
+                if (lastName) name += ' ' + lastName
+
+                return name
+            })(txn)
+
+            data.customer.email = D.get(txn, 'data.data.customer_email')
+            data.customer.phone = D.get(txn, 'data.data.phone')
+            data.paymentMethod = D.get(txn, 'data.data.payment_method')
+
+            data.transactionDate = 'Missing!'
+            data.salesAmount = 'Missing!'
+
+            // need to re-arrange soldInventories
+            data.soldInventories = txn.soldInventories
+
+            preparedData.push(data)
+
+        }
+
+
         res.send({
             success: true,
-            data: transactions
+            data: preparedData
         })
 
     }).catch(function(err) {

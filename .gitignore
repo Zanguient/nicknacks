@@ -39,9 +39,7 @@ public/js/stash.js
 #webpack builds
 dist/
 build/env.js
-
-build/env.js
-
-build/env.js
-
-build/env.js
+src/config/*.tmp
+src/config/env.js
+/index.html
+/index_prod.html
