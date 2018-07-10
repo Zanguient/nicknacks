@@ -90,6 +90,7 @@ app.use('/api/v2', require('./routes/api/v2'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 app.use('/api/v2/magento-webhooks', require('./routes/api/v2/magento-webhooks'));
 app.use('/api/v2/sales-receipt', require('./routes/api/v2/sales-receipt'));
+app.use('/api/v2/inventory', require('./routes/api/v2/inventory'));
 
 
 /* SAFARI/IOS Bug */

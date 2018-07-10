@@ -11,7 +11,7 @@ router.get('/pending-sales-receipt/all', function(req, res) {
         include: [{
             model: DB.Inventory_Storage,
             through: {
-                mode: DB.SoldInventory,
+                model: DB.SoldInventory,
                 attributes: [
                     'SoldInventoryID',
                     'Transaction_transactionID',
@@ -43,6 +43,8 @@ router.get('/pending-sales-receipt/all', function(req, res) {
         for(let i=0; i<transactions.length; i++) {
             let data = {}
             let txn = transactions[i];
+
+            data.transactionID = txn.TransactionID
             data.salesOrderNumber = txn.salesOrderNumber
 
             data.customer = {}
@@ -59,7 +61,7 @@ router.get('/pending-sales-receipt/all', function(req, res) {
             })(txn)
 
             data.customer.email = D.get(txn, 'data.data.customer_email')
-            data.customer.phone = D.get(txn, 'data.data.phone')
+            data.customer.phone = D.get(txn, 'data.data.customer_telephone')
             data.paymentMethod = D.get(txn, 'data.data.payment_method')
 
             data.transactionDate = 'Missing!'

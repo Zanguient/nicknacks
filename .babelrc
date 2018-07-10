@@ -5,5 +5,5 @@
   "plugins": [["import", {
     "libraryName": "iview",
     "libraryDirectory": "src/components"
-  }]]
+  }], "transform-vue-jsx"]
 }
