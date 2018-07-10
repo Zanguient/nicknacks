@@ -19,12 +19,12 @@
         {{#each data.sales}}
         <tr data-id="{{this.TransactionID}}">
             <td>
-                {{this.salesOrderNumber}} <br>
-                {{this.customerName}} <br>
-                {{this.customerEmail}} <br>
-                {{this.transactionDateTime}}
+                {{this.details.salesOrderNumber}} <br>
+                {{this.details.customerName}} <br>
+                {{this.details.customerEmail}} <br>
+                {{this.details.transactionDateTime}}
             </td>
-            <td>{{this.totalAmount}}</td>
+            <td>{{this.details.totalAmount}}</td>
             <td><a data-transaction-id="{{this.TransactionID}}" class="addInventory">+Add inventory</a>
                 {{#each this.soldInventories}}
                     <div class="soldInventory" data-sold-inventory-id="{{this.SoldInventoryID}}">
