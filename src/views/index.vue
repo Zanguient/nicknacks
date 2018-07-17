@@ -158,9 +158,11 @@ export default {
     },
     methods: {
         asyncOK () {
-            setTimeout(() => {
-                this.modal6 = false
-            }, 2000)
+            let self = this;
+            console.log(self.inventorySelectTemp)
+            // setTimeout(() => {
+            //     this.addInventoryModal = false
+            // }, 2000)
         },
         addInventory(salesReceipt) {
             this.addInventoryModal = true
@@ -238,7 +240,7 @@ export default {
     created () {
         //let domain = process.env.API_DOMAIN
         //alert(process.env.API_DOMAIN)
-        let domain = 'http://192.168.86.25:3000'
+        let domain = 'http://localhost:3000'
 
         axios.get(domain + '/api/v2/sales-receipt/pending-sales-receipt/all').then(response => {
             if (!response.data.success) alert(response.data.message)
