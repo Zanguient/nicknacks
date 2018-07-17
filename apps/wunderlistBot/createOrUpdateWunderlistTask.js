@@ -23,7 +23,7 @@ But once a task pertaining to a Sales Order ID is created, it can only be update
 and no longer will create new tasks.
 
 */
-function createOrUpdateWunderlistTask(ID, name, address, $body, starred, commentToAdd) {
+function createOrUpdateWunderlistTask(ID, name, to, address, $body, starred, commentToAdd) {
 
     debug('Initiating process for: ' + ID.withoutHex);
 
@@ -32,6 +32,8 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
     var dateOfDelivery = extractDate($body, 'YYYY-MM-DD');
 
     var title = ID.stub + ', ';
+
+    title += (to) ? to + ', ': '';
     // if the address is valid, add the address (which has name)
     // else just add name
     title += (address) ? address : name;
@@ -63,7 +65,7 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
                 if(statusCode !== 201) return console.log('CRITICAL: ' + ID.stub + ' errored with statusCode = ' + statusCode);
 
                 // create the note
-                var noteObject = { 
+                var noteObject = {
                     "task_id": taskData.id,
                     "content": htmlToText.fromString($body('body').html(), {
                         wordwrap: 130,
@@ -129,17 +131,17 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
             // create the comments
             debug(ID.withoutHex + ': Creating comment.');
             WL.http.task_comments.create(commentObject).done(function(taskCommentData, statusCode) {
-            
+
                 debug(ID.withoutHex + ': WL comment response:');
                 debug(JSON.stringify(taskCommentData));
 
                 if (statusCode !== 201) return console.log('WARN: ' + ID.stub + ' error in adding comment: ' + statusCode);
 
-                
+
                 debug(ID.withoutHex + ': Getting task to check whether to star/unstar and update delivery date.');
-                // GOTCHA: Because updating comments will cascade a new revision index to the Task, this updating of 
+                // GOTCHA: Because updating comments will cascade a new revision index to the Task, this updating of
                 //         task attributes needs to occur sequentially after the task comments have been inserted.
-                
+
                 WL.http.tasks.getID(task.WunderlistTaskID).done(function (taskData, statusCode) {
 
                     debug(ID.withoutHex + ': WL Task retrieval response:');
@@ -148,7 +150,7 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
                     if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' error getting task: ' + statusCode);
 
                     var taskUpdateObject = {
-                        'due_date': dateOfDelivery, 
+                        'due_date': dateOfDelivery,
                         'starred': starred
                     };
 
@@ -158,9 +160,9 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
                         debug(ID.withoutHex + ': Updating task because either `due_date` or `starred` is different.');
 
                         WL.http.tasks.update(taskData.id, taskData.revision, taskUpdateObject).done(function(taskData, statusCode) {
-                            
+
                             debug(ID.withoutHex + ': WL task update response.');
-                            debug(JSON.stringify(taskData));    
+                            debug(JSON.stringify(taskData));
 
                             if (statusCode !== 200) return console.log('WARN: ' + ID.stub + ' updating task: ' + statusCode);
                         }).fail(function(resp, code) {
@@ -171,7 +173,7 @@ function createOrUpdateWunderlistTask(ID, name, address, $body, starred, comment
                 }).fail(function (resp, code) {
                     console.log('CRITICAL: ' + ID.stub + ' wunderlist get task err! Error response is: ' + JSON.stringify(resp));
                 });
-                
+
             }).fail(function(resp, code) {
                 console.log('CRITICAL: ' + ID.stub + ' wunderlist add comment err! Error response is: ' + JSON.stringify(resp));
                 console.log('commentObject is ' + JSON.stringify(commentObject));

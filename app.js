@@ -52,6 +52,7 @@ var qs = require('querystring');
 var parseString = require('xml2js').parseString;
 
 var retry = require('retry');
+var debug = require('debug')('app.js');
 
 var QBO, QBO_TOKEN, QBO_SECRET;
 
@@ -110,40 +111,31 @@ const imap = {
     tlsOptions: { rejectUnauthorized: false }
 };
 
+const n = notifier(imap);
+const debugMailNotifier = require('debug')('mailnotifier');
 
-function connectToMailBox(notifier, imap) {
+n.on('connected', function(mail) {
+    debugMailNotifier('Established connection with mailbox.');
+});
 
-    var operation = retry.operation();
+n.on('mail', function(mail) {
+    debugMailNotifier('received new mail!');
+    debugMailNotifier(JSON.stringify(mail));
+    wunderlistBot(mail)
+});
+n.on('end', function() {
+    debugMailNotifier('notifier ended, restarting');
+    throw new Error('CRITICAL: Mailbox connection failed.');
+});
 
-    operation.attempt(function(currentAttempt) {
-
-        var n;
-
-        try {
-
-            n = notifier(imap);
-
-            n.on('mail', function(mail) {
-                console.log('received new mail!');
-                wunderlistBot(mail)
-            });
-            n.on('end', function() {
-                console.log('notifier ended, restarting');
-                n.start();
-            });
-            n.start();
-
-        } catch (e) {
-
-            serverStatus.push(e);
-            operation.retry(e);
-
-        }
-
-    });
-}
-
-connectToMailBox(notifier, imap);
+n.on('error', function() {
+    debugMailNotifier('notifier errored, restarting');
+    throw new Error('CRITICAL: Mailbox connection failed.');
+});
+n.start();
+setInterval(function() {
+    n.start()
+}, 10000);
 
 // attempt refresh on server start
 retrieveTokenAndRefresh();

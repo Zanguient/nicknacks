@@ -5,7 +5,7 @@ router.get('/', function(req, res, next) {
 
     var optionsForTransaction = {
         where: {
-            TransactionID: { lt : 617 }
+            TransactionID: { not: 617 }
         },
         order: [['TransactionID', 'DESC']],
         include: [{
@@ -189,7 +189,7 @@ router.get('/delivery', function(req, res, next) {
 
     var optionsForTransaction = {
         where: {
-            TransactionID: { lt : 617 },
+            TransactionID: { not: 617 },
             status: 'completed',
         },
         order: [['TransactionID', 'DESC']],
@@ -321,7 +321,7 @@ router.get('/delivery/history', function(req, res, next) {
 
     var optionsForTransaction = {
         where: {
-            TransactionID: { lt : 617 },
+            TransactionID: { not: 617 },
             status: 'delivered'
         },
         order: [['updatedAt', 'DESC']],
