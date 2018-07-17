@@ -48,13 +48,13 @@ router.post('/create-sales-receipt', function(req, res) {
 
         // if somehow there is not customerEmail, which is our minimum requirement,
         // we will fail the server
-        if (!transaction.customerEmail) {
+        if (!transaction.details.customerEmail) {
             // SEND EMAIL !!!
             throw 'CRITICAL: There is no email given in the stripe transaction.';
         }
 
         return QBO.findCustomersAsync([{
-            field: 'PrimaryEmailAddr', value: transaction.customerEmail
+            field: 'PrimaryEmailAddr', value: transaction.details.customerEmail
         }]);
 
     }).then(function(qboCustomer) {
@@ -89,9 +89,9 @@ router.post('/create-sales-receipt', function(req, res) {
                 sparse: true
             };
 
-            if (_TRANSACTION.address) D.set(sparseUpdates, 'BillAddr.Line1', _TRANSACTION.address);
-            if (_TRANSACTION.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
-            if (_TRANSACTION.addressCountry) D.set(sparseUpdates, 'BillAddr.Country', _TRANSACTION.addressCountry);
+            if (_TRANSACTION.details.address) D.set(sparseUpdates, 'BillAddr.Line1', _TRANSACTION.details.address);
+            if (_TRANSACTION.details.addressZip) D.set(sparseUpdates, 'BillAddr.PostalCode', _TRANSACTION.details.addressZip);
+            if (_TRANSACTION.details.addressCountry) D.set(sparseUpdates, 'BillAddr.Country', _TRANSACTION.details.addressCountry);
 
             // do the update
             return QBO.updateCustomerAsync(sparseUpdates);
@@ -102,15 +102,15 @@ router.post('/create-sales-receipt', function(req, res) {
             var newCustomer = {};
 
             // the minimum
-            D.set(newCustomer, 'PrimaryEmailAddr.Address', _TRANSACTION.customerEmail);
-            D.set(newCustomer, 'DisplayName', _TRANSACTION.customerName);
+            D.set(newCustomer, 'PrimaryEmailAddr.Address', _TRANSACTION.details.customerEmail);
+            D.set(newCustomer, 'DisplayName', _TRANSACTION.details.customerName);
 
             // other information
 
             // address
-            if (_TRANSACTION.address) D.set(newCustomer, 'BillAddr.Line1', _TRANSACTION.address);
-            if (_TRANSACTION.addressZip) D.set(newCustomer, 'BillAddr.PostalCode', _TRANSACTION.addressZip);
-            if (_TRANSACTION.addressCountry) D.set(newCustomer, 'BillAddr.Country', _TRANSACTION.addressCountry);
+            if (_TRANSACTION.details.address) D.set(newCustomer, 'BillAddr.Line1', _TRANSACTION.details.address);
+            if (_TRANSACTION.details.addressZip) D.set(newCustomer, 'BillAddr.PostalCode', _TRANSACTION.details.addressZip);
+            if (_TRANSACTION.details.addressCountry) D.set(newCustomer, 'BillAddr.Country', _TRANSACTION.details.addressCountry);
 
             // create the customer
             return QBO.createCustomerAsync(newCustomer);
@@ -160,12 +160,12 @@ router.post('/create-sales-receipt', function(req, res) {
         });
 
         // transaction date
-        TxnDate = salesReceipt.TxnDate = _TRANSACTION.transactionDateQBOFormat;
-        salesReceipt.PaymentRefNum = _TRANSACTION.transactionReferenceCode;
+        TxnDate = salesReceipt.TxnDate = _TRANSACTION.details.transactionDateQBOFormat;
+        salesReceipt.PaymentRefNum = _TRANSACTION.details.transactionReferenceCode;
         //salesReceipt.TxnSource = 'stripe'; //invalid enumeration
 
         // reference number
-        DocNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.salesOrderNumber;
+        DocNumber = salesReceipt.DocNumber = salesReceipt.PrivateNote = _TRANSACTION.details.salesOrderNumber;
 
         // create single product line
         // to upgrade this portion when magento can send meta data
@@ -173,8 +173,8 @@ router.post('/create-sales-receipt', function(req, res) {
           {
             //"Id": "1",
             "LineNum": 1,
-            "Description": _TRANSACTION.generalDescription,
-            "Amount": _TRANSACTION.totalAmount,
+            "Description": _TRANSACTION.details.generalDescription,
+            "Amount": _TRANSACTION.details.totalAmount,
             "DetailType": "SalesItemLineDetail",
             "SalesItemLineDetail": {
 
@@ -183,7 +183,7 @@ router.post('/create-sales-receipt', function(req, res) {
                 "value": "42",
                 "name": "Custom item"
               },
-              "UnitPrice": _TRANSACTION.totalAmount,
+              "UnitPrice": _TRANSACTION.details.totalAmount,
               "Qty": 1,
               "TaxCodeRef": {
                 "value": "15"
@@ -191,13 +191,13 @@ router.post('/create-sales-receipt', function(req, res) {
             }
           },
           {
-            "Amount": _TRANSACTION.totalAmount,
+            "Amount": _TRANSACTION.details.totalAmount,
             "DetailType": "SubTotalLineDetail",
             "SubTotalLineDetail": {}
           }
         ];
 
-        salesReceipt.TotalAmt = _TRANSACTION.totalAmount;
+        salesReceipt.TotalAmt = _TRANSACTION.details.totalAmount;
         if (req.body.privateNote) salesReceipt.PrivateNote = req.body.privateNote;
 
         var createSalesReceipt = QBO.createSalesReceiptAsync(salesReceipt);
@@ -214,9 +214,9 @@ router.post('/create-sales-receipt', function(req, res) {
         var stripeCommission;
 
         if (_TRANSACTION.creditCardIsAMEXorIsNotSG) {
-            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * stripeChargesAMEX)/100;
+            stripeCommission = Math.round(_TRANSACTION.details.totalAmount * 100 * stripeChargesAMEX)/100;
         } else {
-            stripeCommission = Math.round(_TRANSACTION.totalAmount * 100 * stripeChargesMasterOrVisa)/100;
+            stripeCommission = Math.round(_TRANSACTION.details.totalAmount * 100 * stripeChargesMasterOrVisa)/100;
         }
 
         // add the 50 cent
@@ -253,7 +253,7 @@ router.post('/create-sales-receipt', function(req, res) {
             var entry = Entry({
                 "DocNumber": DocNumber,
                 "TxnDate": TxnDate,
-                "PrivateNote": "COGS: " + _TRANSACTION.generalDescription + "($" + _COGS + ")",
+                "PrivateNote": "COGS: " + _TRANSACTION.details.generalDescription + "($" + _COGS + ")",
                 "TotalAmt": _COGS
             });
 
@@ -289,7 +289,7 @@ router.post('/create-sales-receipt', function(req, res) {
         if (_CREATED_EXPENSE && D.get(_CREATED_JOURNAL, "Id")) _TRANSACTION.qboCOGSJournalId = D.get(_CREATED_JOURNAL, "Id");
 
         return _TRANSACTION.save().catch(function(err) {
-            console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
+            console.log('CRITICAL: Transaction for sales order ' + _TRANSACTION.details.salesOrderNumber + ' cannot be saved as completed. Reversing all entries.');
 
             return deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalEntry);
         });
@@ -435,8 +435,8 @@ router.post('/refunded', function (req, res) {
         // create a journal entry to reduce stripe commission
         return QBO.createJournalEntryAsync({
             "DocNumber": transaction.salesOrderNumber + '-R',
-            "TxnDate": transaction.transactionDateQBOFormat,
-            "PrivateNote": "Refund for " + transaction.salesOrderNumber,
+            "TxnDate": transaction.details.transactionDateQBOFormat,
+            "PrivateNote": "Refund for " + transaction.details.salesOrderNumber,
             "Line": [{
                 // credit stripe transit cash for refund
                 "Id": "0",

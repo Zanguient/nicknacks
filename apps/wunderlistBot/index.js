@@ -28,8 +28,16 @@ function wunderlistBot(mail) {
         // get subject
         var subject = D.get(mail, 'subject');
         if (!subject) {
-            o.error = 'subject is empty'; 
+            o.error = 'subject is empty';
             return o;
+        }
+        // get subject
+        var to = D.get(mail, 'to');
+        if (!to) {
+            o.error = '`to`is empty';
+            return o;
+        } else {
+            to = to[0]['address'];
         }
 
         // get ID
@@ -67,27 +75,27 @@ function wunderlistBot(mail) {
 
 
         if (subject.indexOf('Your Grey and Sanders order confirmation') === 0) {
-            
-            // 1.  SALES ORDER  
-            createOrUpdateWunderlistTask(ID, name, address, $body, true);
+
+            // 1.  SALES ORDER
+            createOrUpdateWunderlistTask(ID, name, to, address, $body, true);
 
         } else if (subject.indexOf('Update to your Grey and Sanders order') === 0) {
 
             // 2. UPDATE TO SALES ORDER
             var comments = prepareComments("UPDATE TO SALES ORDER", $body);
-            createOrUpdateWunderlistTask(ID, name, address, $body, true, comments);
+            createOrUpdateWunderlistTask(ID, name, to, address, $body, true, comments);
 
         } else if (subject.indexOf('Your Grey and Sanders order (') === 0 && subject.indexOf('is scheduled for delivery') !== -1) {
 
             // 3. DELIVERY ORDER
-            var comments = prepareComments("DELIVERY ARRANGED", $body); 
-            createOrUpdateWunderlistTask(ID, name, address, $body, false, comments);
+            var comments = prepareComments("DELIVERY ARRANGED", $body);
+            createOrUpdateWunderlistTask(ID, name, to, address, $body, false, comments);
 
         } else if (subject.indexOf('Update to your Grey and Sanders delivery') === 0) {
 
             // 4. UPDATES TO DELIVERY ORDER
-            var comments = prepareComments("DELIVERY UPDATES", $body); 
-            createOrUpdateWunderlistTask(ID, name, address, $body, false, comments);
+            var comments = prepareComments("DELIVERY UPDATES", $body);
+            createOrUpdateWunderlistTask(ID, name, to, address, $body, false, comments);
 
         }
 
@@ -113,7 +121,7 @@ function wunderlistBot(mail) {
             var authenticationResults = D.get(mail, 'headers.authentication-results');
 
             if (!authenticationResults) {
-                o.error = 'missing authentication headers.'; 
+                o.error = 'missing authentication headers.';
                 return o;
             }
 
@@ -122,7 +130,7 @@ function wunderlistBot(mail) {
             })
 
             if (!authenticationResults.includes('dkim=pass')) {
-                o.error = 'failed dkim check'; 
+                o.error = 'failed dkim check';
                 return o;
             }
 
@@ -131,7 +139,7 @@ function wunderlistBot(mail) {
         }
 
     }
-        
+
 };
 
 module.exports = wunderlistBot;
