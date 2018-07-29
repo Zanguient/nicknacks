@@ -2,45 +2,132 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/all', function (req, res, next) {
-    DB.Inventory.findAll({
-        where: {
-            notActive: { $not: true}
-        },
-        order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-        include: [{
 
-            // include all the places which the inventories are stored.
-            model: DB.StorageLocation,
-            through: {
-                // and the quantites of how many inventories stored is in the cross table
-                model: DB.Inventory_Storage,
-                attributes: [
-                    'Inventory_StorageID',
-                    'StorageLocation_storageLocationID',
-                    'Inventory_inventoryID',
-                    'quantity'
-                ]
+    PROMISE.resolve().then(() => {
+
+        return [
+            DB.Inventory.findAll({
+                where: {
+                    notActive: { $not: true}
+                },
+                order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
+                include: [{
+
+                    // include all the places which the inventories are stored.
+                    model: DB.StorageLocation,
+                    through: {
+                        // and the quantites of how many inventories stored is in the cross table
+                        model: DB.Inventory_Storage,
+                        attributes: [
+                            'Inventory_StorageID',
+                            'StorageLocation_storageLocationID',
+                            'Inventory_inventoryID',
+                            'quantity'
+                        ]
+                    }
+                }, {
+
+                    // also need to include its transit inventory
+                    model: DB.TransitInventory,
+                    where: { isInventorised: false },
+                    required: false,
+                    attributes: [
+                        'TransitInventoryID',
+                        'Inventory_inventoryID',
+                        'quantity'
+                    ]
+                }]
+            }),
+
+            DB.Inventory_Storage.findAll({
+                include: [{
+                    model: DB.Transaction,
+                    where: { status: { $not: 'delivered' } },
+                    through: {
+                        model: DB.SoldInventory,
+                        attributes: [
+                            'SoldInventoryID',
+                            'quantity',
+                            'Inventory_Storage_inventory_StorageID',
+                            'Transaction_transactionID'
+                        ]
+                    },
+                    required: true
+                }]
+            })
+        ]
+
+    }).spread( (inventories, soldInventories) => {
+
+
+        // merge inventories with soldInventories
+        inventories = JSON.parse(JSON.stringify(inventories));
+        soldInventories = JSON.parse(JSON.stringify(soldInventories));
+
+        // for each of the soldInventories record
+        soldInventories.forEach(element => {
+
+            // find the matching inventory from the inventory list
+            var matchedInventory = inventories.find(item => {
+                if (item.InventoryID === element.Inventory_inventoryID) return item;
+            });
+
+            // past sold inventories could have gone obsolete (deleted or deactivated)
+            // can stop the operations here.
+            // matchedInventory is undefined when nothing is found:
+            if (!matchedInventory) return;
+
+            // joining this particular soldInventory line item to the inventory line item
+            if (Array.isArray(matchedInventory.soldInventories)) {
+                matchedInventory.soldInventories.push(element);
+            } else {
+                matchedInventory.soldInventories = [ element ];
             }
-        }, {
 
-            // also need to include its transit inventory
-            model: DB.TransitInventory,
-            where: { isInventorised: false },
-            required: false,
-            attributes: [
-                'TransitInventoryID',
-                'Inventory_inventoryID',
-                'quantity'
-            ]
-        }]
-    }).then(function(inventories) {
+
+            // calculating for quantities sold
+            var quantitySold = 0;
+
+            // for each of the transactions within this soldInventory
+            // NOTE: a single line of soldInventory is a pair between Transaction and
+            //       a particular physical inventory stored at a place (Inventory_Storage)
+            element.Transactions.forEach( element => {
+                quantitySold += parseInt(element.SoldInventory.quantity)
+            });
+
+            var soldStockObject = matchedInventory.stock.find( item => {
+                if (item.name === "Sold") return item;
+                return false;
+            })
+
+            if (soldStockObject) {
+                soldStockObject.quantity += quantitySold;
+            } else {
+                matchedInventory.stock.push({name: "Sold", quantity: quantitySold })
+            }
+
+        });
+
+        // Loop through the transit inventories to generate the Transit object.
+        inventories.forEach(inventory => {
+
+            let transitStock = { name: 'Transit', quantity: 0 };
+
+            inventory.TransitInventories.forEach(transit => {
+                transitStock.quantity += parseInt(transit.quantity)
+            });
+
+            inventory.stock.push(transitStock);
+
+            delete inventory.TransitInventories;
+        })
 
         res.send({
             success: true,
             data: inventories
         })
 
-    }).catch(function(err) {
+    }).catch(err => {
         console.log(err)
         res.status(500).send({
             success: false,
@@ -51,15 +138,16 @@ router.get('/all', function (req, res, next) {
             }
         })
     })
+
 })
 
-router.put('/inventory/add', function (req, res, next) {
+router.put('/add', function (req, res, next) {
 
-    DB.Inventory.create(req.body).then(function(inventory) {
+    DB.Inventory.create(req.body).then( inventory => {
 
         var promises = [ inventory ]; //push inventory back to the next bubble.
 
-        req.body.storageAndQuantities.forEach(function(el) {
+        req.body.storageAndQuantities.forEach( el => {
             promises.push(  DB.Inventory_Storage.create({
                 Inventory_inventoryID: inventory.InventoryID,
                 StorageLocation_storageLocationID: el.StorageLocationID,
@@ -69,7 +157,7 @@ router.put('/inventory/add', function (req, res, next) {
 
         return promises;
 
-    }).spread(function(inventory) {
+    }).spread(inventory => {
 
         return DB.Inventory.findById(inventory.InventoryID, {
             include: [{
@@ -86,7 +174,7 @@ router.put('/inventory/add', function (req, res, next) {
             }]
         });
 
-    }).then(function(inventory) {
+    }).then(inventory => {
 
         return res.send({
             success: true,
@@ -119,11 +207,11 @@ router.put('/inventory/add', function (req, res, next) {
 
 });
 
-router.post('/inventory/update', function (req, res, next) {
+router.post('/update', (req, res, next) => {
 
     var where = { InventoryID: req.body.InventoryID };
 
-    PROMISE.resolve().then(function() {
+    PROMISE.resolve().then( () => {
 
         var promises = [];
 
@@ -131,7 +219,7 @@ router.post('/inventory/update', function (req, res, next) {
             where: where
         }));
 
-        req.body.storageAndQuantities.forEach(function(el) {
+        req.body.storageAndQuantities.forEach(el => {
             var quantityUpdate = DB.Inventory_Storage.update({
                 quantity: el.quantity
             }, {
@@ -147,7 +235,7 @@ router.post('/inventory/update', function (req, res, next) {
 
         return promises;
 
-    }).spread(function(inventory) {
+    }).spread(inventory => {
 
         return DB.Inventory.findById(inventory.InventoryID, {
             include: [{
@@ -164,14 +252,14 @@ router.post('/inventory/update', function (req, res, next) {
             }]
         })
 
-    }).then(function(inventory) {
+    }).then(inventory => {
 
         return res.send({
             success: true,
             inventory: inventory
         });
 
-    }).catch(function(error) {
+    }).catch( error => {
 
         console.log(error);
 
@@ -189,20 +277,20 @@ router.post('/inventory/update', function (req, res, next) {
 
 });
 
-router.delete('/inventory/delete', function (req, res, next) {
+router.delete('/delete', (req, res, next) => {
 
     var where = { InventoryID: req.body.InventoryID };
 
     DB.Inventory.destroy({
         where: where,
         limit: 1
-    }).then(function() {
+    }).then(() => {
 
         return res.send({
             success: true
         });
 
-    }).catch(function(error) {
+    }).catch(error => {
 
         console.log(error);
 
@@ -220,7 +308,7 @@ router.delete('/inventory/delete', function (req, res, next) {
 
 });
 
-router.post('/inventory/deactivate', function (req, res, next) {
+router.post('/deactivate', function (req, res, next) {
 
     var where = { InventoryID: req.body.InventoryID };
 
@@ -253,41 +341,79 @@ router.post('/inventory/deactivate', function (req, res, next) {
 
 });
 
-router.put('/inventory/sold', function (req, res, next) {
+router.put('/sold', function (req, res, next) {
 
-    PROMISE.resolve().then(function() {
-        return [
-            DB.SoldInventory.create(req.body),
-            DB.Inventory.findById(req.body.Inventory_inventoryID)
-        ];
-    }).spread(function(soldInventory, inventory) {
+    // find the Inventory_Storage
+    DB.Inventory_Storage.find({
+        where: {
+            Inventory_inventoryID: req.body.inventoryID,
+            StorageLocation_storageLocationID: req.body.storageLocationID
+        }
+    }).then(inventory_Storage => {
+        if (!inventory_Storage) {
+            return res.status(400).send({
+                success: false,
+                message: 'Unable to find `Inventory_Storage`',
+                debug: {
+                    message: 'Unable to find `Inventory_Storage`',
+                    error: ''
+                }
+            })
+        }
 
-        return [
-            DB.SoldInventory.findOne({
-                where: {
-                    SoldInventoryID: soldInventory.SoldInventoryID
-                },
-                include: [{
-                    model: DB.Inventory_Storage,
+        return PROMISE.resolve().then(() => {
+            return [
+                DB.SoldInventory.create({
+                    Inventory_Storage_inventory_StorageID: inventory_Storage.Inventory_StorageID,
+                    Transaction_transactionID: req.body.transactionID,
+                    quantity: req.body.quantity
+                }),
+                DB.Inventory.findById(req.body.inventoryID)
+            ];
+        }).spread((soldInventory, inventory) => {
+
+            return [
+
+                DB.SoldInventory.findOne({
+                    where: {
+                        SoldInventoryID: soldInventory.SoldInventoryID
+                    },
                     include: [{
-                        model: DB.StorageLocation
+                        model: DB.Inventory_Storage,
+                        include: [{
+                            model: DB.StorageLocation
+                        }]
                     }]
-                }]
-            }),
-            inventory
-        ];
+                }),
 
-    }).spread(function(soldInventory, inventory) {
+                inventory
+            ]
 
-        return res.send({
-            success: true,
-            inventory: inventory,
-            soldInventory: soldInventory
-        });
+        }).spread((soldInventory, inventory) => {
 
-    }).catch(function(error) {
+            var obj = {};
 
-        console.log(error);
+            obj.Inventory_StorageID = soldInventory.Inventory_StorageID
+            obj.InventoryID = inventory.InventoryID
+            obj.SoldInventoryID = soldInventory.SoldInventoryID
+            obj.quantity = soldInventory.quantity
+            obj.StorageLocationID = soldInventory.isStoredAt.StorageLocationID
+            obj.StorageLocationName = soldInventory.isStoredAt.name
+            obj.name = inventory.name
+            obj.sku = inventory.sku
+            obj.perItemCOGS = inventory.cogs
+            obj.totalCOGS = (parseFloat(obj.perItemCOGS) * parseFloat(obj.quantity)).toFixed(2)
+
+            return res.send({
+                success: true,
+                data: obj
+            });
+
+        })
+
+    }).catch(error => {
+
+        console.log(error)
 
         if (error.name = "SequelizeUniqueConstraintError") {
             return res.status(400).send({
@@ -297,7 +423,7 @@ router.put('/inventory/sold', function (req, res, next) {
                     hideMessage: false,
                     debug: error
                 }
-            });
+            })
         }
 
         return res.status(500).send({
@@ -307,27 +433,39 @@ router.put('/inventory/sold', function (req, res, next) {
                 hideMessage: false,
                 debug: error
             }
-        });
+        })
 
     })
 
-});
+})
 
-router.delete('/inventory/sold/delete', function (req, res, next) {
+router.delete('/sold/delete', (req, res, next) => {
+
+    if(!req.body.SoldInventoryID || isNaN(parseInt(req.body.SoldInventoryID))) {
+        return res.status(400).send({
+            success: false,
+            message: 'You did not provide `SoldInventoryID`',
+            error: {
+                message: '`SoldInventoryID not provided.`',
+                hideMessage: false,
+                debug: null
+            }
+        })
+    }
 
     DB.SoldInventory.destroy({
         where: {
             SoldInventoryID: req.body.SoldInventoryID
         }
-    }).then(function() {
+    }).then(() => {
 
         return res.send({
             success: true
-        });
+        })
 
-    }).catch(function(error) {
+    }).catch(error => {
 
-        console.log(error);
+        console.log(error)
 
         return res.status(500).send({
             success: false,
@@ -336,11 +474,11 @@ router.delete('/inventory/sold/delete', function (req, res, next) {
                 hideMessage: false,
                 debug: error
             }
-        });
+        })
 
     })
 
-});
+})
 
 router.post('/inventory/delivered', function (req, res, next) {
 

@@ -97,22 +97,26 @@ router.get('/pending-sales-receipt/all', function(req, res) {
 // NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {
 
-    const stripeChargesAMEX = 0.032;
-    const stripeChargesMasterOrVisa = 0.027;
+    const stripeChargesAMEX = process.env.STRIPE_CHARGES_AMEX;
+    const stripeChargesMasterOrVisa = process.env.STRIPE_CHARGES_AMEX_MASTER_VISA;
 
-    // request checking
+    // check if the transactionID is valid
     if ([undefined, null, false].indexOf(req.body.transactionID) > -1 || isNaN(parseInt(req.body.transactionID))) {
-        return res.status(400).send({ success: false, error: { message: '`transactionID is missing or invalid.'}});
+        return res.status(400).send({ success: false, error: { message: '`transactionID is missing or invalid.'}})
     }
 
+    // check that COGS is a valid number
     var decimalPlaces = require('../apps/decimalPlaces');
     var _COGS = parseFloat(req.body.COGS);
     if ([undefined, null, false].indexOf(_COGS) > -1 || isNaN(_COGS)) {
-        return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}});
+        return res.status(400).send({ success: false, error: { message: '`COGS is missing or invalid.'}})
     }
-    if (decimalPlaces(_COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}});
+    if (decimalPlaces(_COGS) > 2) return res.status(400).send({ success: false, error: { message: '`COGS has more than 2 decimal places.'}})
 
-
+    // check method of payment
+    if ([undefined, null, false].indexOf(req.body.methodOfPayment) > -1) {
+        return res.status(400).send({ success: false, error: { message: '`methodOfPayment` is missing or invalid.'}})
+    }
 
     var _TRANSACTION, _CUSTOMER, _SALESRECEIPT;
     var _CREATED_SALES_RECEIPT, _CREATED_EXPENSE, _CREATED_JOURNAL;

@@ -62,49 +62,74 @@
                             <p style="margin-bottom: 5px;"><Icon type="card"></Icon> {{ salesReceipt.paymentMethod }}</p>
                         </Col>
                         <Col :xs="24" :sm="12">
-                            <Card style="max-width: 100%;">
-                                <p slot="title">
+                            <Collapse style="max-width: 100%;">
+                                <Panel name="productsSold">
                                     <Icon type="cube"></Icon>
-                                    Product(s) sold
-                                </p>
+                                    Product(s) sold (<b>{{ salesReceipt.soldInventories.length }}</b>)
+                                    <p slot="content">
 
-                                <a href="#" slot="extra" type="primary" @click="addInventory(salesReceipt)">
-                                    <Icon type="plus"></Icon>
-                                    Add
-                                </a>
+                                        <Button icon="plus "type="primary" @click="addInventory(salesReceipt)">Add</Button>
 
-                                <Modal
-                                    v-model="addInventoryModal"
-                                    title="Add Inventory"
-                                    :loading="addInventoryModalLoading"
-                                    @on-ok="asyncOK">
-                                    <Select v-model="inventorySelectTemp.selectedIndex" filterable @on-change="triggerStorageSelection()">
-                                        <Option v-for="(inventory, index) in inventories" :value="index" :key="index">{{ inventory.name }} <br> <i>{{ inventory.sku }}</i></Option>
-                                    </Select>
+                                        <Modal
+                                            v-model="addInventoryModal"
+                                            title="Add Inventory"
+                                            :loading="addInventoryModalLoading"
+                                            @on-ok="addInventoryOK('addInventoryForm', salesReceipt)">
 
-                                    <Select v-model="inventorySelectTemp.storageLocationID" filterable>
-                                        <Option v-for="(stockItem, index) in inventorySelectTemp.stock" :value="stockItem.StorageLocationID || -1" :key="index" :disabled="!stockItem.StorageLocationID">{{ stockItem.name }} (Qty: {{ stockItem.quantity }})</Option>
-                                    </Select>
+                                            <Form ref="addInventoryForm" :model="addInventoryForm" :rules="addInventoryFormRules">
+                                                <FormItem prop="inventoryIndex">
+                                                    <Select placeholder="Select product" v-model="addInventoryForm.inventoryIndex" filterable @on-change="triggerStorageSelection()">
+                                                        <Option v-for="(inventory, index) in inventories" :value="index" :key="index">{{ inventory.name }} <br> <i>{{ inventory.sku }}</i></Option>
+                                                    </Select>
+                                                </FormItem>
+                                                <FormItem prop="storageLocationID">
+                                                    <Select placeholder="Select location" v-model="addInventoryForm.storageLocationID" filterable>
+                                                        <Option v-for="(stockItem, index) in selectedInventory.stock" :value="stockItem.StorageLocationID || -1" :key="index" :disabled="!stockItem.StorageLocationID">{{ stockItem.name }} (Qty: {{ stockItem.quantity }})</Option>
+                                                    </Select>
+                                                </FormItem>
+                                                <FormItem label="Quantity" prop="quantity">
+                                                    <InputNumber :max="999" :min="1" v-model="addInventoryForm.quantity"></InputNumber>
+                                                </FormItem>
+                                            </Form>
 
-                                </Modal>
+                                            <p>transactionID: {{ addInventoryForm.transactionID }}</p>
 
-                            </Card>
+                                        </Modal>
+
+
+
+                                        <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
+                                            <p slot="title">{{ soldInventory.name }} <br></p>
+                                            <a href="javascript: return false" slot="extra" type="primary" @click="removeSoldInventory(soldInventory, salesReceipt)">
+                                                <Icon type="trash-b"></Icon>
+                                            </a>
+                                            <p><b>SKU:</b> {{ soldInventory.sku }}</p>
+                                            <p><b>Qty:</b> {{ soldInventory.quantity }} (from <b>{{ soldInventory.StorageLocationName }}</b>)</p>
+                                            <p><b>COGS/item:</b> {{ soldInventory.perItemCOGS }} </p>
+                                            <p><b>Total COGS: {{ soldInventory.totalCOGS }}</b></p>
+                                        </Card>
+                                    </p>
+                                </Panel>
+                            </Collapse>
                         </Col>
                     </Row>
 
-                    <Form :label-width="80" style="padding-top: 10px;">
+                    <Form :ref="salesReceipt.transactionID" :model="salesReceipt" :rules="salesReceiptFormRules" :label-width="80" style="padding-top: 10px;">
                         <FormItem style="display:none;">
                             <Input v-model="salesReceipt.salesOrderNumber"></Input>
                         </FormItem>
                         <FormItem label="COGS">
-                            <Input v-model="form.COGS" placeholder=""></Input>
+                            <Input v-model="salesReceipt.totalCOGS" placeholder=""></Input>
                         </FormItem>
                         <FormItem label="Comments">
-                            <Input v-model="form.comments" placeholder=""></Input>
+                            <Input v-model="salesReceipt.comments" placeholder=""></Input>
                         </FormItem>
 
                         <FormItem>
-                            <Button type="primary">Submit</Button>
+                            <Button type="primary" :loading="salesReceipt.submitLoading" :disable="salesReceipt.submitLoading" @click='submitSalesReceipt(salesReceipt.transactionID, salesReceipt)'>
+                                <span v-if="!salesReceipt.submitLoading">Submit</span>
+                                <span v-else>Loading...</span>
+                            </Button>
                         </FormItem>
                     </Form>
 
@@ -115,10 +140,13 @@
 </template>
 <script>
 import axios from 'axios'
+import D from 'dottie'
+const domain = process.env.API_DOMAIN
 
 export default {
     data () {
         return {
+            loading: false,
 
             salesReceipts: [{
                 transactionID: '',
@@ -133,125 +161,245 @@ export default {
                     inventoryID: '',
                     transactionID: '',
                     quantity: ''
-                }]
+                }],
+
+                // view properties
+                totalCOGS: '',
+                comments: '',
+                submitLoading: false
             }],
 
             inventories: [],
 
-            form: { COGS: 0, comments: '' },
-
-
-            inventorySelectTemp: {
-                selectedIndex: '',
-
-                    inventoryID: '',
-                    transactionID: '',
-                    quantity: '',
-                    storageLocationID: '',
-                    stock: ''
-
+            // Sales Receipt form
+            salesReceiptFormRules: {
+                totalCOGS: [
+                    { type: 'number', min: 0, message: 'Please enter COGS', trigger: 'blur' }
+                ]
             },
 
+            // ADD Inventory Form
             addInventoryModal: false,
             addInventoryModalLoading: true,
+
+            addInventoryForm: {
+                inventoryIndex: '',
+                transactionID: '',
+                storageLocationID: '',
+                quantity: 1
+            },
+
+            addInventoryFormRules: {
+                inventoryIndex: [
+                    { type: 'number', min: 0, message: 'Please select inventory', trigger: 'blur' }
+                ],
+                transactionID: [
+                    { required: true, message: '', trigger: 'blur' }
+                ],
+                storageLocationID: [
+                    { required: true, message: 'Please select a storage location.', trigger: 'blur' }
+                ],
+                quantity: [
+                    { type: 'number', min: 1, message: 'Quantity cannot be less than 1', trigger: 'blur' }
+                ]
+            },
+
+            selectedInventory: {},
+
         }
+
     },
     methods: {
-        asyncOK () {
-            let self = this;
-            console.log(self.inventorySelectTemp)
-            // setTimeout(() => {
-            //     this.addInventoryModal = false
-            // }, 2000)
+        addInventoryOK (formName, salesReceipt) {
+
+            this.$refs[formName][0].validate((valid) => {
+                if (valid) {
+
+                    let payload = {
+                        transactionID: this.addInventoryForm.transactionID,
+                        inventoryID: this.inventories[this.addInventoryForm.inventoryIndex]['InventoryID'],
+                        storageLocationID: this.addInventoryForm.storageLocationID,
+                        quantity: this.addInventoryForm.quantity
+                    }
+
+                    axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
+                        if (!response.data.success) {
+                            alert(response.data.message)
+                            this.addInventoryModalLoading = false
+                            return
+                        }
+                        console.log(response.data.data)
+
+                        salesReceipt.soldInventories.push(response.data.data)
+
+                        // re-compute the totalCOGS
+                        salesReceipt.totalCOGS = 0
+                        for(let i=0; i<salesReceipt.soldInventories.length; i++) {
+                            let soldInventory = salesReceipt.soldInventories[i]
+                            salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
+                        }
+                        salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+
+                        this.$Message.success('Success!');
+                        this.addInventoryModal = false
+                        this.addInventoryModalLoading = false
+
+                    }).catch(error => {
+
+                        let message = D.get(error, 'response.data.message')
+                        alert(message)
+
+                        this.addInventoryModalLoading = false
+                        this.$Message.error('Failed request!');
+                    })
+
+                } else {
+
+                    this.$Message.error('Check your entry!');
+                }
+            })
         },
         addInventory(salesReceipt) {
             this.addInventoryModal = true
-            // this.inventorySelectTemp = {
-            //     selectedIndex: '',
-            //     selection: {
-            //         inventoryID: '',
-            //         transactionID: '',
-            //         quantity: '',
-            //         storageLocationID: '',
-            //         stock: []
-            //     }
-            // }
+            this.addInventoryForm.transactionID = salesReceipt.transactionID
         },
         triggerStorageSelection() {
-            // this.inventorySelectTemp.selection = {
-            //     inventoryID: '',
-            //     transactionID: '',
-            //     quantity: '',
-            //     storageLocationID: '',
-            //     stock: []
-            // }
-            let selectedInventory = this.inventories[this.inventorySelectTemp.selectedIndex]
-            this.inventorySelectTemp.inventoryID = selectedInventory['InventoryID']
-            this.inventorySelectTemp.stock = selectedInventory['stock']
-            console.log(11111)
-            console.log(this.inventorySelectTemp)
+            // set the selectedInventory to point to the inventory object within the inventories array
+            this.selectedInventory = this.inventories[this.addInventoryForm.inventoryIndex]
+        },
+        removeSoldInventory(soldInventory, salesReceipt) {
+
+            this.$Modal.confirm({
+                title: 'Delete Sold Inventory Entry',
+                content: '<p>Confirm delete sold inventory entry of <strong>' + soldInventory.name + '</strong>?</p>',
+                loading: true,
+                onOk: () => {
+
+                    axios.delete(domain + '/api/v2/inventory/sold/delete', { data: { SoldInventoryID: soldInventory.SoldInventoryID }}).then(response => {
+                        if (!response.data.success) return alert(response.data.message)
+
+                        // remove the deleted entry
+                        salesReceipt.soldInventories.splice(salesReceipt.soldInventories.indexOf(soldInventory), 1)
+
+                        // re-compute the totalCOGS
+                        salesReceipt.totalCOGS = 0
+                        for(let i=0; i<salesReceipt.soldInventories.length; i++) {
+                            let soldInventory = salesReceipt.soldInventories[i]
+                            salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
+                        }
+                        salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+
+                        this.$Modal.remove();
+                        this.$Message.info('Succesfully removed sold inventory entry!')
+
+                    }).catch(error => {
+
+                        alert(error)
+
+                        this.$Modal.remove()
+                        this.$Message.error('Failed request!')
+
+                    })
+
+                }
+            })
+        },
+        submitSalesReceipt (formName, salesReceipt) {
+
+            console.log(this.$refs)
+
+            //salesReceipt.submitLoading = true
+
+            salesReceipt.submitLoading = true
+
+            console.log(salesReceipt)
+
+            console.log(formName)
+
+            this.$refs[formName][0].validate((valid) => {
+                if (valid) {
+
+                    // let payload = {
+                    //     transactionID: this.addInventoryForm.transactionID,
+                    //     inventoryID: this.inventories[this.addInventoryForm.inventoryIndex]['InventoryID'],
+                    //     storageLocationID: this.addInventoryForm.storageLocationID,
+                    //     quantity: this.addInventoryForm.quantity
+                    // }
+                    //
+                    // axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
+                    //     if (!response.data.success) {
+                    //         alert(response.data.message)
+                    //         this.addInventoryModalLoading = false
+                    //         return
+                    //     }
+                    //     console.log(response.data.data)
+                    //
+                    //     salesReceipt.soldInventories.push(response.data.data)
+                    //
+                    //     // re-compute the totalCOGS
+                    //     salesReceipt.totalCOGS = 0
+                    //     for(let i=0; i<salesReceipt.soldInventories.length; i++) {
+                    //         let soldInventory = salesReceipt.soldInventories[i]
+                    //         salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
+                    //     }
+                    //     salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+                    //
+                    //     this.$Message.success('Success!');
+                    //     this.addInventoryModal = false
+                    //     this.addInventoryModalLoading = false
+                    //
+                    // }).catch(error => {
+                    //
+                    //     let message = D.get(error, 'response.data.message')
+                    //     alert(message)
+                    //
+                    //     this.addInventoryModalLoading = false
+                    //     this.$Message.error('Failed request!');
+                    // })
+
+                } else {
+
+                    this.$Message.error('Check your entry!');
+                }
+            })
         }
     },
-    //     addInventory(salesReceipt) {
-    //
-    //         // add an inventory first
-    //         var tempNewInventory = salesReceipt.soldInventories.push({
-    //             name: '',
-    //             storageLocationID: '',
-    //             quantity: 1
-    //         })
-    //
-    //         this.$Modal.confirm({
-    //             props: ['name', 'storageLocationID', 'quantity'],
-    //             render: (createElement) => {
-    //                 return [
-    //                     createElement(
-    //                         'Select',
-    //
-    //                         this.inventories.map( inventory => createElement('Option', inventory.name) ),
-    //
-    //                         {
-    //                             domProps: {
-    //                                 name: self.value,
-    //                                 autofocus: true,
-    //                                 placeholder: 'Search inventories...'
-    //                             },
-    //                             on: {
-    //                                 change: (val) => {
-    //                                     tempNewInventory.name = val;
-    //                                 }
-    //                             }
-    //                         }
-    //                     ),
-    //                     '<p>The dialog box will be closed after 2 seconds</p>'
-    //                 ]
-    //             },
-    //             title: 'Add inventory for ' + salesReceipt.salesOrderNumber,
-    //             loading: true,
-    //             onOk: () => {
-    //                 setTimeout(() => {
-    //                     this.$Modal.remove();
-    //                     this.$Message.info('Asynchronously close the dialog box');
-    //                 }, 2000);
-    //             }
-    //         });
-    //     }
-    // },
+
     created () {
-        //let domain = process.env.API_DOMAIN
-        //alert(process.env.API_DOMAIN)
-        let domain = 'http://localhost:3000'
+
+        window.V = this
 
         axios.get(domain + '/api/v2/sales-receipt/pending-sales-receipt/all').then(response => {
-            if (!response.data.success) alert(response.data.message)
+
+            if (!response.data.success) return alert(response.data.message)
+
             console.log(response.data.data)
+
             this.salesReceipts = response.data.data
+
+            // compute the totalCOGS
+            for(let i=0; i<this.salesReceipts.length; i++) {
+                let salesReceipt = this.salesReceipts[i]
+
+                salesReceipt.totalCOGS = 0
+
+                for(let i=0; i<salesReceipt.soldInventories.length; i++) {
+                    let soldInventory = salesReceipt.soldInventories[i]
+                    salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
+                }
+
+                salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+
+                salesReceipt.submitLoading = false
+            }
+
+
         }).catch(error => {
             alert(error)
         })
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
-            if (!response.data.success) alert(response.data.message)
+            if (!response.data.success) return alert(response.data.message)
             console.log(response.data.data)
             this.inventories = response.data.data
         }).catch(error => {
