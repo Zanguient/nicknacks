@@ -213,7 +213,7 @@ router.post('/create-sales-receipt', function(req, res) {
         // check the country of credit card origin to apply the commission correctly.
         var stripeCommission;
 
-        if (_TRANSACTION.creditCardIsAMEXorIsNotSG) {
+        if (_TRANSACTION.details.creditCardIsAMEXorIsNotSG) {
             stripeCommission = Math.round(_TRANSACTION.details.totalAmount * 100 * stripeChargesAMEX)/100;
         } else {
             stripeCommission = Math.round(_TRANSACTION.details.totalAmount * 100 * stripeChargesMasterOrVisa)/100;
