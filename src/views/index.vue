@@ -115,14 +115,11 @@
                     </Row>
 
                     <Form :ref="salesReceipt.transactionID" :model="salesReceipt" :rules="salesReceiptFormRules" :label-width="80" style="padding-top: 10px;">
-                        <FormItem style="display:none;">
-                            <Input v-model="salesReceipt.salesOrderNumber"></Input>
+                        <FormItem prop="totalCOGS" label="COGS">
+                            <Input type="text" number v-model="salesReceipt.totalCOGS" placeholder=""></Input>
                         </FormItem>
-                        <FormItem label="COGS">
-                            <Input v-model="salesReceipt.totalCOGS" placeholder=""></Input>
-                        </FormItem>
-                        <FormItem label="Comments">
-                            <Input v-model="salesReceipt.comments" placeholder=""></Input>
+                        <FormItem prop="comments" label="Comments">
+                            <Input type="text" v-model="salesReceipt.comments" placeholder=""></Input>
                         </FormItem>
 
                         <FormItem>
@@ -146,7 +143,6 @@ const domain = process.env.API_DOMAIN
 export default {
     data () {
         return {
-            loading: false,
 
             salesReceipts: [{
                 transactionID: '',
@@ -174,7 +170,19 @@ export default {
             // Sales Receipt form
             salesReceiptFormRules: {
                 totalCOGS: [
-                    { type: 'number', min: 0, message: 'Please enter COGS', trigger: 'blur' }
+                    {
+                        validator (rule, value, callback) {
+
+                            value = parseFloat(value)
+                            // check if is integer || if it float
+                            if( (Number(value) === value && value % 1 === 0) || (Number(value) === value && value % 1 !== 0) ) {
+                                callback()
+                            } else {
+                                callback(new Error('Please enter a correct value.'))
+                            }
+                        },
+                        trigger: 'blur'
+                    }
                 ]
             },
 
@@ -210,9 +218,11 @@ export default {
 
     },
     methods: {
+
         addInventoryOK (formName, salesReceipt) {
 
             this.$refs[formName][0].validate((valid) => {
+
                 if (valid) {
 
                     let payload = {
@@ -254,7 +264,7 @@ export default {
                     })
 
                 } else {
-
+                    this.addInventoryModalLoading = false
                     this.$Message.error('Check your entry!');
                 }
             })
@@ -262,6 +272,8 @@ export default {
         addInventory(salesReceipt) {
             this.addInventoryModal = true
             this.addInventoryForm.transactionID = salesReceipt.transactionID
+
+            this.$refs['addInventoryForm'][0].resetFields()
         },
         triggerStorageSelection() {
             // set the selectedInventory to point to the inventory object within the inventories array
@@ -306,59 +318,50 @@ export default {
         },
         submitSalesReceipt (formName, salesReceipt) {
 
-            console.log(this.$refs)
-
-            //salesReceipt.submitLoading = true
-
             salesReceipt.submitLoading = true
 
-            console.log(salesReceipt)
-
-            console.log(formName)
-
             this.$refs[formName][0].validate((valid) => {
+
                 if (valid) {
 
-                    // let payload = {
-                    //     transactionID: this.addInventoryForm.transactionID,
-                    //     inventoryID: this.inventories[this.addInventoryForm.inventoryIndex]['InventoryID'],
-                    //     storageLocationID: this.addInventoryForm.storageLocationID,
-                    //     quantity: this.addInventoryForm.quantity
-                    // }
-                    //
-                    // axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
-                    //     if (!response.data.success) {
-                    //         alert(response.data.message)
-                    //         this.addInventoryModalLoading = false
-                    //         return
-                    //     }
-                    //     console.log(response.data.data)
-                    //
-                    //     salesReceipt.soldInventories.push(response.data.data)
-                    //
-                    //     // re-compute the totalCOGS
-                    //     salesReceipt.totalCOGS = 0
-                    //     for(let i=0; i<salesReceipt.soldInventories.length; i++) {
-                    //         let soldInventory = salesReceipt.soldInventories[i]
-                    //         salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
-                    //     }
-                    //     salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
-                    //
-                    //     this.$Message.success('Success!');
-                    //     this.addInventoryModal = false
-                    //     this.addInventoryModalLoading = false
-                    //
-                    // }).catch(error => {
-                    //
-                    //     let message = D.get(error, 'response.data.message')
-                    //     alert(message)
-                    //
-                    //     this.addInventoryModalLoading = false
-                    //     this.$Message.error('Failed request!');
-                    // })
+                    console.log(salesReceipt)
+
+                    let payload = {
+                        transactionID: salesReceipt.transactionID,
+                        totalCOGS: salesReceipt.totalCOGS,
+                        paymentMethod: salesReceipt.paymentMethod
+                    }
+
+                    console.log(11111)
+                    console.log(payload)
+
+                    axios.post(domain + '/api/v2/sales-receipt/create-sales-receipt', payload).then(response => {
+
+                        // if success: false
+                        if (!response.data.success) {
+                            alert(response.data.message)
+                            salesReceipt.submitLoading = false
+                            return
+                        }
+
+                        // remove the successful entry
+                        this.salesReceipts.splice(this.salesReceipts.indexOf(salesReceipt), 1)
+
+                        this.$Message.success('Successfully submitted sales receipt!');
+
+                    }).catch(error => {
+
+                        console.log(error)
+
+                        let message = D.get(error, 'response.data.message')
+                        alert(message)
+
+                        salesReceipt.submitLoading = false
+                        this.$Message.error('Failed request!');
+                    })
 
                 } else {
-
+                    salesReceipt.submitLoading = false
                     this.$Message.error('Check your entry!');
                 }
             })
@@ -375,11 +378,9 @@ export default {
 
             console.log(response.data.data)
 
-            this.salesReceipts = response.data.data
-
             // compute the totalCOGS
-            for(let i=0; i<this.salesReceipts.length; i++) {
-                let salesReceipt = this.salesReceipts[i]
+            for(let i=0; i<response.data.data.length; i++) {
+                let salesReceipt = response.data.data[i]
 
                 salesReceipt.totalCOGS = 0
 
@@ -393,6 +394,7 @@ export default {
                 salesReceipt.submitLoading = false
             }
 
+            this.salesReceipts = response.data.data
 
         }).catch(error => {
             alert(error)

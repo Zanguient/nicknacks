@@ -97,6 +97,10 @@ router.get('/pending-sales-receipt/all', function(req, res) {
 // NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {
 
+    console.log(req.body)
+
+    return res.send({ success: true })
+
     const stripeChargesAMEX = process.env.STRIPE_CHARGES_AMEX;
     const stripeChargesMasterOrVisa = process.env.STRIPE_CHARGES_AMEX_MASTER_VISA;
 
