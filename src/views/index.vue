@@ -17,6 +17,10 @@
 .ivu-menu-horizontal .ivu-menu-item {
     padding: 0 5px;
 }
+.salesReceiptCard {
+     width: 100%;
+     max-width:780px;
+}
 </style>
 <template>
     <div class="layout">
@@ -47,90 +51,94 @@
                 <Breadcrumb :style="{margin: '5px'}">
                     <BreadcrumbItem>Sales receipts</BreadcrumbItem>
                 </Breadcrumb>
+                <span v-if="salesReceipts.length < 1">
+                    <Card class="salesReceiptCard">
+                        <p slot="title">No outstanding sales receipts for accounting entry.</p>
+                    </Card>
+                </span>
+                <span v-else>
+                    <Card v-for="salesReceipt in salesReceipts" :key="salesReceipt.TransactionID" class="salesReceiptCard">
+                        <p slot="title">
+                            <Icon type="ios-cart"></Icon>
+                            {{ salesReceipt.salesOrderNumber }}
+                        </p>
 
-                <Card v-for="salesReceipt in salesReceipts" :key="salesReceipt.transactionID" style="width: 100%; max-width:780px;">
-                    <p slot="title">
-                        <Icon type="ios-cart"></Icon>
-                        {{ salesReceipt.salesOrderNumber }}
-                    </p>
+                        <Row>
+                            <Col :xs="24" :sm="12">
+                                <p><Icon type="person"></Icon> {{ salesReceipt.details.customerName }}</p>
+                                <p><Icon type="email"></Icon> {{ salesReceipt.details.customerEmail }}</p>
+                                <p><Icon type="ios-telephone"></Icon> {{ salesReceipt.customer_telephone }}</p>
+                                <p style="margin-bottom: 5px;"><Icon type="card"></Icon> {{ salesReceipt.paymentMethod }}</p>
+                            </Col>
+                            <Col :xs="24" :sm="12">
+                                <Collapse style="max-width: 100%;">
+                                    <Panel name="productsSold">
+                                        <Icon type="cube"></Icon>
+                                        Product(s) sold (<b>{{ salesReceipt.soldInventories.length }}</b>)
+                                        <p slot="content">
 
-                    <Row>
-                        <Col :xs="24" :sm="12">
-                            <p><Icon type="person"></Icon> {{ salesReceipt.customer.name }}</p>
-                            <p><Icon type="email"></Icon> {{ salesReceipt.customer.email }}</p>
-                            <p><Icon type="ios-telephone"></Icon> {{ salesReceipt.customer.phone }}</p>
-                            <p style="margin-bottom: 5px;"><Icon type="card"></Icon> {{ salesReceipt.paymentMethod }}</p>
-                        </Col>
-                        <Col :xs="24" :sm="12">
-                            <Collapse style="max-width: 100%;">
-                                <Panel name="productsSold">
-                                    <Icon type="cube"></Icon>
-                                    Product(s) sold (<b>{{ salesReceipt.soldInventories.length }}</b>)
-                                    <p slot="content">
+                                            <Modal
+                                                v-model="addInventoryModal"
+                                                title="Add Inventory"
+                                                :loading="addInventoryModalLoading"
+                                                @on-ok="addInventoryOK('addInventoryForm', salesReceipt)">
 
-                                        <Button icon="plus "type="primary" @click="addInventory(salesReceipt)">Add</Button>
+                                                <Form ref="addInventoryForm" :model="addInventoryForm" :rules="addInventoryFormRules">
+                                                    <FormItem prop="inventoryIndex">
+                                                        <Select placeholder="Select product" v-model="addInventoryForm.inventoryIndex" filterable @on-change="triggerStorageSelection()">
+                                                            <Option v-for="(inventory, index) in inventories" :value="index" :key="index">{{ inventory.name }} <br> <i>{{ inventory.sku }}</i></Option>
+                                                        </Select>
+                                                    </FormItem>
+                                                    <FormItem prop="storageLocationID">
+                                                        <Select ref="addInventoryFormStorage" placeholder="Select location" v-model="addInventoryForm.storageLocationID" filterable>
+                                                            <Option v-for="(stockItem, index) in selectedInventory.stock" :value="stockItem.StorageLocationID || -1" :key="index" :disabled="!stockItem.StorageLocationID">{{ stockItem.name }} (Qty: {{ stockItem.quantity }})</Option>
+                                                        </Select>
+                                                    </FormItem>
+                                                    <FormItem label="Quantity" prop="quantity">
+                                                        <InputNumber :max="999" :min="1" v-model="addInventoryForm.quantity"></InputNumber>
+                                                    </FormItem>
+                                                </Form>
 
-                                        <Modal
-                                            v-model="addInventoryModal"
-                                            title="Add Inventory"
-                                            :loading="addInventoryModalLoading"
-                                            @on-ok="addInventoryOK('addInventoryForm', salesReceipt)">
+                                                <p>TransactionID: {{ addInventoryForm.TransactionID }}</p>
 
-                                            <Form ref="addInventoryForm" :model="addInventoryForm" :rules="addInventoryFormRules">
-                                                <FormItem prop="inventoryIndex">
-                                                    <Select placeholder="Select product" v-model="addInventoryForm.inventoryIndex" filterable @on-change="triggerStorageSelection()">
-                                                        <Option v-for="(inventory, index) in inventories" :value="index" :key="index">{{ inventory.name }} <br> <i>{{ inventory.sku }}</i></Option>
-                                                    </Select>
-                                                </FormItem>
-                                                <FormItem prop="storageLocationID">
-                                                    <Select placeholder="Select location" v-model="addInventoryForm.storageLocationID" filterable>
-                                                        <Option v-for="(stockItem, index) in selectedInventory.stock" :value="stockItem.StorageLocationID || -1" :key="index" :disabled="!stockItem.StorageLocationID">{{ stockItem.name }} (Qty: {{ stockItem.quantity }})</Option>
-                                                    </Select>
-                                                </FormItem>
-                                                <FormItem label="Quantity" prop="quantity">
-                                                    <InputNumber :max="999" :min="1" v-model="addInventoryForm.quantity"></InputNumber>
-                                                </FormItem>
-                                            </Form>
+                                            </Modal>
 
-                                            <p>transactionID: {{ addInventoryForm.transactionID }}</p>
+                                            <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
+                                                <p slot="title">{{ soldInventory.name }} <br></p>
+                                                <a href="javascript:void(0);" slot="extra" type="primary" @click="removeSoldInventory(soldInventory, salesReceipt)">
+                                                    <Icon type="trash-b"></Icon>
+                                                </a>
+                                                <p><b>SKU:</b> {{ soldInventory.sku }}</p>
+                                                <p><b>Qty:</b> {{ soldInventory.quantity }} (from <b>{{ soldInventory.StorageLocationName }}</b>)</p>
+                                                <p><b>COGS/item:</b> {{ soldInventory.perItemCOGS }} </p>
+                                                <p><b>Total COGS: {{ soldInventory.totalCOGS }}</b></p>
+                                            </Card>
 
-                                        </Modal>
+                                            <Button icon="plus "type="primary" @click="addInventory(salesReceipt)">Add</Button>
+                                        </p>
+                                    </Panel>
+                                </Collapse>
+                            </Col>
+                        </Row>
 
+                        <Form :ref="salesReceipt.TransactionID" :model="salesReceipt" :rules="salesReceiptFormRules" :label-width="80" style="padding-top: 10px;">
+                            <FormItem prop="totalCOGS" label="COGS">
+                                <Input type="text" number v-model="salesReceipt.totalCOGS" placeholder=""></Input>
+                            </FormItem>
+                            <FormItem prop="comments" label="Comments">
+                                <Input type="text" v-model="salesReceipt.comments" placeholder=""></Input>
+                            </FormItem>
 
+                            <FormItem>
+                                <Button type="primary" :loading="salesReceipt.submitLoading" :disable="salesReceipt.submitLoading" @click='submitSalesReceipt(salesReceipt.TransactionID, salesReceipt)'>
+                                    <span v-if="!salesReceipt.submitLoading">Submit</span>
+                                    <span v-else>Loading...</span>
+                                </Button>
+                            </FormItem>
+                        </Form>
 
-                                        <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
-                                            <p slot="title">{{ soldInventory.name }} <br></p>
-                                            <a href="javascript: return false" slot="extra" type="primary" @click="removeSoldInventory(soldInventory, salesReceipt)">
-                                                <Icon type="trash-b"></Icon>
-                                            </a>
-                                            <p><b>SKU:</b> {{ soldInventory.sku }}</p>
-                                            <p><b>Qty:</b> {{ soldInventory.quantity }} (from <b>{{ soldInventory.StorageLocationName }}</b>)</p>
-                                            <p><b>COGS/item:</b> {{ soldInventory.perItemCOGS }} </p>
-                                            <p><b>Total COGS: {{ soldInventory.totalCOGS }}</b></p>
-                                        </Card>
-                                    </p>
-                                </Panel>
-                            </Collapse>
-                        </Col>
-                    </Row>
-
-                    <Form :ref="salesReceipt.transactionID" :model="salesReceipt" :rules="salesReceiptFormRules" :label-width="80" style="padding-top: 10px;">
-                        <FormItem prop="totalCOGS" label="COGS">
-                            <Input type="text" number v-model="salesReceipt.totalCOGS" placeholder=""></Input>
-                        </FormItem>
-                        <FormItem prop="comments" label="Comments">
-                            <Input type="text" v-model="salesReceipt.comments" placeholder=""></Input>
-                        </FormItem>
-
-                        <FormItem>
-                            <Button type="primary" :loading="salesReceipt.submitLoading" :disable="salesReceipt.submitLoading" @click='submitSalesReceipt(salesReceipt.transactionID, salesReceipt)'>
-                                <span v-if="!salesReceipt.submitLoading">Submit</span>
-                                <span v-else>Loading...</span>
-                            </Button>
-                        </FormItem>
-                    </Form>
-
-                </Card>
+                    </Card>
+                </span>
             </Content>
         </Layout>
     </div>
@@ -145,17 +153,17 @@ export default {
         return {
 
             salesReceipts: [{
-                transactionID: '',
-                customer: {
-                    name: '',
-                    phone: '',
-                    email: ''
+                TransactionID: '',
+                details: {
+                    customerName: '',
+                    customerPhone: '',
+                    customerEmail: ''
                 },
                 paymentMethod: '',
                 salesOrderNumber: '',
                 soldInventories: [{
-                    inventoryID: '',
-                    transactionID: '',
+                    InventoryID: '',
+                    TransactionID: '',
                     quantity: ''
                 }],
 
@@ -173,13 +181,13 @@ export default {
                     {
                         validator (rule, value, callback) {
 
-                            value = parseFloat(value)
-                            // check if is integer || if it float
-                            if( (Number(value) === value && value % 1 === 0) || (Number(value) === value && value % 1 !== 0) ) {
-                                callback()
-                            } else {
-                                callback(new Error('Please enter a correct value.'))
-                            }
+                            // check regex
+                            let regex = /^[1-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
+                            if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
+
+                            // everything passed
+                            return callback()
+
                         },
                         trigger: 'blur'
                     }
@@ -192,8 +200,8 @@ export default {
 
             addInventoryForm: {
                 inventoryIndex: '',
-                transactionID: '',
-                storageLocationID: '',
+                TransactionID: '',
+                StorageLocationID: '',
                 quantity: 1
             },
 
@@ -201,10 +209,10 @@ export default {
                 inventoryIndex: [
                     { type: 'number', min: 0, message: 'Please select inventory', trigger: 'blur' }
                 ],
-                transactionID: [
+                TransactionID: [
                     { required: true, message: '', trigger: 'blur' }
                 ],
-                storageLocationID: [
+                StorageLocationID: [
                     { required: true, message: 'Please select a storage location.', trigger: 'blur' }
                 ],
                 quantity: [
@@ -226,9 +234,9 @@ export default {
                 if (valid) {
 
                     let payload = {
-                        transactionID: this.addInventoryForm.transactionID,
-                        inventoryID: this.inventories[this.addInventoryForm.inventoryIndex]['InventoryID'],
-                        storageLocationID: this.addInventoryForm.storageLocationID,
+                        TransactionID: this.addInventoryForm.TransactionID,
+                        InventoryID: this.inventories[this.addInventoryForm.inventoryIndex]['InventoryID'],
+                        StorageLocationID: this.addInventoryForm.storageLocationID,
                         quantity: this.addInventoryForm.quantity
                     }
 
@@ -256,8 +264,7 @@ export default {
 
                     }).catch(error => {
 
-                        let message = D.get(error, 'response.data.message')
-                        alert(message)
+                        CATCH_ERR_HANDLER(error)
 
                         this.addInventoryModalLoading = false
                         this.$Message.error('Failed request!');
@@ -271,13 +278,14 @@ export default {
         },
         addInventory(salesReceipt) {
             this.addInventoryModal = true
-            this.addInventoryForm.transactionID = salesReceipt.transactionID
+            this.addInventoryForm.TransactionID = salesReceipt.TransactionID
 
             this.$refs['addInventoryForm'][0].resetFields()
         },
         triggerStorageSelection() {
             // set the selectedInventory to point to the inventory object within the inventories array
             this.selectedInventory = this.inventories[this.addInventoryForm.inventoryIndex]
+            this.$refs['addInventoryFormStorage'][0].reset()
         },
         removeSoldInventory(soldInventory, salesReceipt) {
 
@@ -306,7 +314,7 @@ export default {
 
                     }).catch(error => {
 
-                        alert(error)
+                        CATCH_ERR_HANDLER(error)
 
                         this.$Modal.remove()
                         this.$Message.error('Failed request!')
@@ -327,12 +335,11 @@ export default {
                     console.log(salesReceipt)
 
                     let payload = {
-                        transactionID: salesReceipt.transactionID,
-                        totalCOGS: salesReceipt.totalCOGS,
-                        paymentMethod: salesReceipt.paymentMethod
+                        TransactionID: salesReceipt.TransactionID,
+                        COGS: salesReceipt.totalCOGS,
+                        comments: salesReceipt.comments
                     }
 
-                    console.log(11111)
                     console.log(payload)
 
                     axios.post(domain + '/api/v2/sales-receipt/create-sales-receipt', payload).then(response => {
@@ -351,13 +358,10 @@ export default {
 
                     }).catch(error => {
 
-                        console.log(error)
-
-                        let message = D.get(error, 'response.data.message')
-                        alert(message)
-
                         salesReceipt.submitLoading = false
                         this.$Message.error('Failed request!');
+
+                        CATCH_ERR_HANDLER(error)
                     })
 
                 } else {
@@ -396,17 +400,13 @@ export default {
 
             this.salesReceipts = response.data.data
 
-        }).catch(error => {
-            alert(error)
-        })
+        }).catch(CATCH_ERR_HANDLER)
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
             if (!response.data.success) return alert(response.data.message)
             console.log(response.data.data)
             this.inventories = response.data.data
-        }).catch(error => {
-            alert(error)
-        })
+        }).catch(CATCH_ERR_HANDLER)
     }
 }
 </script>

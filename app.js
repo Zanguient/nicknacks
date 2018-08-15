@@ -2,12 +2,16 @@
 require('dotenv').load();
 
 //load models the last because it has dependencies on the previous globals.
-global.Promise = global.PROMISE = require('bluebird');
-global.DB = require('./models/index.js');
-global.MOMENT = require('moment');
-global.D = require('dottie');
+global.Promise = global.PROMISE = require('bluebird')
+global.DB = require('./models/index.js')
+global.MOMENT = require('moment')
+global.D = require('dottie')
+global.API_ERROR_HANDLER = require('./apps/apiErrorHandler')
 
 global.serverStatus = [];
+
+// path related globals
+global.__appsDir = __dirname + '/apps'
 
 const WunderlistSDK = require('wunderlist');
 global.WL = new WunderlistSDK({
@@ -256,24 +260,13 @@ app.use(function (req, res, next) {
 });
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use( (err, req, res, next) => {
     // set locals, only providing error in development
     res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
+    res.locals.error = req.app.get('env') === 'development' ? err : {}
 
-    // render the error page
-    res.status(err.status || 500);
+    API_ERROR_HANDLER(err, req, res, next)
 
-    res.json({
-        success: false,
-        error: {
-            message: 'Server error: ' + err.message +'. Please check console log.',
-            hideMessage: false,
-            debug: err
-        }
-    });
-
-    //res.render('error');
 });
 
 module.exports = app;

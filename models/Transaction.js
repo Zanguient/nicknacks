@@ -84,6 +84,9 @@ function Transaction(sequelize, DataTypes) {
                     object.transactionDateTime = MOMENT.unix(D.get(self, 'data.data.object.created')).format('Do MMM YY, HH:mm');
                     object.transactedCurrency = D.get(self, 'data.data.object.currency');
                     object.transactionReferenceCode = D.get(self, 'data.data.object.id');
+
+                    object.customerName = D.get(self, 'data.data.object.source.name') || 'Anonymous';
+
                     object.generalDescription = D.get(self, 'data.data.object.description') + ', ' + D.get(self, 'data.data.object.source.name') || 'Anonymous';
 
                     object.salesOrderNumber = (function(transaction) {
@@ -117,8 +120,6 @@ function Transaction(sequelize, DataTypes) {
                         return email;
                     })(this);
 
-                    object.customerName = D.get(self, 'data.data.object.source.name') || 'Anonymous';
-
                     object.totalAmount = (function(transaction) {
                         if (typeof transaction.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe transaction missing `amount`.');
 
@@ -140,8 +141,45 @@ function Transaction(sequelize, DataTypes) {
                     })(this);
 
                     return object;
-                } else if (this.paymentMethod === 'Bank Transfer') {
-                    // do the code for bank transfer
+                } else if (this.paymentMethod === 'bank transfer') {
+
+                    let object = {};
+
+                    // missing
+                    // we should be using the order date!!
+
+                    object.transactionDateUnixTS = D.get(self, 'data.data.object.created');
+                    object.transactionDateQBOFormat = MOMENT.unix(D.get(self, 'data.data.object.created')).format('YYYY-MM-DD');
+                    object.transactionDateTime = MOMENT.unix(D.get(self, 'data.data.object.created')).format('Do MMM YY, HH:mm');
+
+                    object.customerName = (function(txn) {
+                        let firstName = D.get(txn, 'data.data.customer_firstname')
+                        let lastName = D.get(txn, 'data.data.customer_lastname')
+
+                        var name = ''
+
+                        if (firstName) name += firstName
+                        if (lastName) name += ' ' + lastName
+
+                        return name
+                    })(this)
+
+                    object.generalDescription = D.get(self, 'salesOrderNumber') + ', ' + (object.customerName || 'Anonymous')
+
+                    object.salesOrderNumber = this.salesOrderNumber
+
+                    object.customerEmail = D.get(self, 'data.data.customer_email')
+
+                    object.customerPhone = D.get(self, 'data.data.customer_telephone')
+
+                    // MISSING!!!
+                    object.totalAmount = ''
+
+                    object.address = D.get(self, 'data.data.shipping_address')
+
+
+                    return object;
+
                 }
 
             },

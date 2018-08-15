@@ -59,7 +59,7 @@ router.post('/checkout', function (req, res) {
         status: 'pending',
         eventType: 'checkout',
         salesOrderNumber: salesOrderNumber,
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod.toLowerCase()
 
     }).then(function (transaction) {
         // send success

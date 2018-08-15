@@ -343,11 +343,13 @@ router.post('/deactivate', function (req, res, next) {
 
 router.put('/sold', function (req, res, next) {
 
+    console.log(req.body)
+
     // find the Inventory_Storage
     DB.Inventory_Storage.find({
         where: {
-            Inventory_inventoryID: req.body.inventoryID,
-            StorageLocation_storageLocationID: req.body.storageLocationID
+            Inventory_inventoryID: req.body.InventoryID,
+            StorageLocation_storageLocationID: req.body.StorageLocationID
         }
     }).then(inventory_Storage => {
         if (!inventory_Storage) {
@@ -365,10 +367,10 @@ router.put('/sold', function (req, res, next) {
             return [
                 DB.SoldInventory.create({
                     Inventory_Storage_inventory_StorageID: inventory_Storage.Inventory_StorageID,
-                    Transaction_transactionID: req.body.transactionID,
+                    Transaction_transactionID: req.body.TransactionID,
                     quantity: req.body.quantity
                 }),
-                DB.Inventory.findById(req.body.inventoryID)
+                DB.Inventory.findById(req.body.InventoryID)
             ];
         }).spread((soldInventory, inventory) => {
 
@@ -418,6 +420,7 @@ router.put('/sold', function (req, res, next) {
         if (error.name = "SequelizeUniqueConstraintError") {
             return res.status(400).send({
                 success: false,
+                message: 'Error: You are adding an item that already exist.',
                 error: {
                     message: 'Error: You are adding an item that already exist.',
                     hideMessage: false,
@@ -428,6 +431,7 @@ router.put('/sold', function (req, res, next) {
 
         return res.status(500).send({
             success: false,
+            message: 'Server error: ' + error.message +'. Please check console log.',
             error: {
                 message: 'Server error: ' + error.message +'. Please check console log.',
                 hideMessage: false,
