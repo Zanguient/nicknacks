@@ -61,10 +61,6 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
     _debug(req.body)
 
-    // declare the credit card charges.
-    const stripeChargesAMEX = process.env.STRIPE_CHARGES_AMEX;
-    const stripeChargesMasterOrVisa = process.env.STRIPE_CHARGES_AMEX_MASTER_VISA;
-
     // check if the transactionID is valid
     if ([undefined, null, false].indexOf(req.body.TransactionID) > -1 || isNaN(parseInt(req.body.TransactionID))) {
         return res.status(400).send({ success: false, message: '`TransactionID` is missing or invalid.'})
@@ -187,6 +183,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
                 let error = new Error('QBO error. See `QBOResponse` for more information.')
                 error.QBOResponse = customer
+                error.category = 'QBO'
                 throw error
 
             }
@@ -207,9 +204,15 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
         // create single product line
         // to upgrade this portion when magento can send meta data
-        let lines = require(__appsDir + '/QBO/QBOSalesReceiptLine')(_TRANSACTION)
+        let lines = require(__appsDir + '/QBO/QBOSalesReceiptLine')(_TRANSACTION.details)
 
         salesReceipt.Line = lines
+
+        // TO BE REMOVED AFTER IMPLEMENTATION OF totalAmount
+        salesReceipt.TotalAmt = 899
+        salesReceipt.Line[0]['Amount'] = 899
+        salesReceipt.Line[0]['SalesItemLineDetail']["UnitPrice"] = 899
+        salesReceipt.Line[1]['Amount'] = 899
 
         // comments
         if (req.body.comments) salesReceipt.PrivateNote = req.body.comments;
@@ -250,6 +253,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
             // create journal entry
             let journal = require(__appsDir + '/QBO/QBOJournalCOGS')(_TRANSACTION.details, _COGS)
+            _debug(journal)
             let createJournalCOGS = QBO.createJournalEntryAsync(journal);
             promises.push(createJournalCOGS);
 
@@ -275,6 +279,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
             let error = new Error('QBO error. See `QBOResponse` for more information.')
             error.QBOResponse = QBOerrors
+            error.category = 'QBO'
             throw error
 
         }
@@ -283,7 +288,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
         _TRANSACTION.status = 'completed';
         if (_CREATED_SALES_RECEIPT && D.get(_CREATED_SALES_RECEIPT, "Id")) _TRANSACTION.qboSalesReceiptId = D.get(_CREATED_SALES_RECEIPT, "Id");
         if (_CREATED_EXPENSE && D.get(_CREATED_EXPENSE, "Id")) _TRANSACTION.qboStripeExpenseId = D.get(_CREATED_EXPENSE, "Id");
-        if (_CREATED_EXPENSE && D.get(_CREATED_JOURNAL, "Id")) _TRANSACTION.qboCOGSJournalId = D.get(_CREATED_JOURNAL, "Id");
+        if (_CREATED_JOURNAL && D.get(_CREATED_JOURNAL, "Id")) _TRANSACTION.qboCOGSJournalId = D.get(_CREATED_JOURNAL, "Id");
 
         return _TRANSACTION.save().catch(function(err) {
 

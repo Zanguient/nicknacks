@@ -141,16 +141,19 @@ function Transaction(sequelize, DataTypes) {
                     })(this);
 
                     return object;
-                } else if (this.paymentMethod === 'bank transfer') {
+                }
+
+                else if (this.paymentMethod === 'bank transfer') {
 
                     let object = {};
 
                     // missing
                     // we should be using the order date!!
+                    let momentDate = MOMENT(this.createdAt)
 
-                    object.transactionDateUnixTS = D.get(self, 'data.data.object.created');
-                    object.transactionDateQBOFormat = MOMENT.unix(D.get(self, 'data.data.object.created')).format('YYYY-MM-DD');
-                    object.transactionDateTime = MOMENT.unix(D.get(self, 'data.data.object.created')).format('Do MMM YY, HH:mm');
+                    object.transactionDateUnixTS = momentDate.unix()
+                    object.transactionDateQBOFormat = momentDate.format('YYYY-MM-DD');
+                    object.transactionDateTime = momentDate.format('Do MMM YY, HH:mm');
 
                     object.customerName = (function(txn) {
                         let firstName = D.get(txn, 'data.data.customer_firstname')

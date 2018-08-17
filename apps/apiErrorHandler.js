@@ -30,6 +30,14 @@ function apiErrorHandler(err, req, res, next, config) {
     console.log('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
     console.log(D.get(err, 'message') || D.get(config, 'message'))
     console.log(err)
+
+    // category dependent outputs
+    if (err.category === 'QBO') {
+        console.log('====================')
+        console.log(err.category + ' error output:')
+        console.log(JSON.stringify(err.QBOResponse))
+    }
+
     console.log('**END OUTPUT**')
     console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^')
 

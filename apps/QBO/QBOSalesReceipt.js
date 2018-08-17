@@ -85,10 +85,10 @@ var QBOSalesReceiptModel = (transaction, customer) => {
 
     //dates and references
     defaults.TxnDate = transaction.details.transactionDateQBOFormat
-    defaults.DocNumber = transaction.details.salesOrderNumber
+    defaults.DocNumber = 'SO' + transaction.details.salesOrderNumber
 
     // total amount
-    defaults.totalAmount = transaction.details.totalAmount
+    defaults.TotalAmt = transaction.details.totalAmount
 
     if (transaction.paymentMethod.toLowerCase() === 'stripe') {
 

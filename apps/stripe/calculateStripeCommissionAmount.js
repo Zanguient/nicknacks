@@ -1,7 +1,8 @@
 function calculateStripeCommissionAmount(transactionDetails) {
 
-    const stripeChargesAMEX = 0.032;
-    const stripeChargesMasterOrVisa = 0.027;
+    // declare the credit card charges.
+    const stripeChargesAMEX = process.env.STRIPE_CHARGES_AMEX;
+    const stripeChargesMasterOrVisa = process.env.STRIPE_CHARGES_AMEX_MASTER_VISA;
 
     var stripeCommissionAmount;
 

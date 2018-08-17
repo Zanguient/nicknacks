@@ -1,11 +1,11 @@
-const QBOSalesReceiptLine = (transaction) => {
+const QBOSalesReceiptLine = (transactionDetails) => {
 
     let defaults = [
         {
             //"Id": "1",
             "LineNum": 1,
-            "Description": transaction.details.generalDescription,
-            "Amount": transaction.details.totalAmount,
+            "Description": transactionDetails.generalDescription,
+            "Amount": transactionDetails.totalAmount,
             "DetailType": "SalesItemLineDetail",
             "SalesItemLineDetail": {
 
@@ -14,17 +14,17 @@ const QBOSalesReceiptLine = (transaction) => {
                     "value": "42",
                     "name": "Custom item"
                 },
-                "UnitPrice": transaction.details.totalAmount,
+                "UnitPrice": transactionDetails.totalAmount,
                 "Qty": 1,
                 "TaxCodeRef": {
                     "value": "15"
                 }
             }
-          },{
-            "Amount": transaction.details.totalAmount,
+        },{
+            "Amount": transactionDetails.totalAmount,
             "DetailType": "SubTotalLineDetail",
             "SubTotalLineDetail": {}
-          }
+        }
     ]
 
     return defaults
