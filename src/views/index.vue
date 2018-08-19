@@ -16,6 +16,9 @@
 }
 .menuItem {
     padding: 0 5px !important;
+    @media all and (max-width: 320px) {
+        font-size: 11px !important;
+    }
 }
 </style>
 
@@ -25,19 +28,25 @@
         <Menu mode="horizontal" theme="light" active-name="1">
 
             <MenuItem class="menuItem" name="1" to="/">
-                <Icon class="menuIcon" type="ios-cart"></Icon>
+                <Icon class="menuIcon" type="ios-cart"/>
                 Sales
             </MenuItem>
             <MenuItem class="menuItem" name="2" to="/delivery">
-                <Icon class="menuIcon" type="ios-briefcase" ></Icon>
+                <Icon class="menuIcon" type="ios-briefcase" />
                 Delivery
             </MenuItem>
-            <MenuItem class="menuItem" name="3">
-                <Icon class="menuIcon" type="ios-cube" ></Icon>
-                Inventory
-            </MenuItem>
+            <Submenu class="menuItem" name="3">
+                <template slot="title">
+                    <Icon class="menuIcon" type="ios-cube" />
+                    Inventory
+                </template>
+                <MenuItem name="3-1" to="/inventory">List</MenuItem>
+                <MenuItem name="3-2">Transfer</MenuItem>
+                <MenuItem name="3-3">Discrepancy</MenuItem>
+            </Submenu>
+
             <MenuItem class="menuItem" name="4" >
-                <Icon class="menuIcon" type="ios-boat" ></Icon>
+                <Icon class="menuIcon" type="ios-boat" />
                 Shipment
             </MenuItem>
 
