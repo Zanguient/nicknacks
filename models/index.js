@@ -1,12 +1,12 @@
 var databaseUrl = process.env.DB_URL;
 var logging = process.env.DB_LOGGING ? console.log : false;
-
-var cls = require('continuation-local-storage');
 var fs = require('fs');
 var path = require('path');
 var Sequelize = require('sequelize');
 
-Sequelize.cls = cls.createNamespace('sequelizeTransactionNameSpace');
+var cls = require('continuation-local-storage');
+const namespace = cls.createNamespace('sequelizeTransactionNameSpace')
+Sequelize.cls = namespace
 
 require('sequelize-isunique-validator')(Sequelize);
 

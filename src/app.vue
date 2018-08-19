@@ -2,7 +2,7 @@
     @import 'styles/common.css';
 </style>
 <template>
-    <div>
+    <div id="main" class="app-main">
         <router-view></router-view>
     </div>
 </template>

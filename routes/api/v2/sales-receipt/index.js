@@ -1,11 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const debug = require('debug')
+const express = require('express')
+const router = express.Router()
+const debug = require('debug')('api:sales-receipt')
 
-router.get('/pending-sales-receipt/all', function(req, res) {
+router.get('/pending/all', (req, res) => {
 
     let options = {
-        where: {},
+        where: {
+            status: 'pending'
+        },
         order: [ ['TransactionID', 'DESC'] ],
         include: [{
             model: DB.Inventory_Storage,
@@ -37,10 +39,52 @@ router.get('/pending-sales-receipt/all', function(req, res) {
         }]
     }
 
-    if (req.query.filter === "all") {
-        delete options.limit;
-    } else {
-        options.where.status = 'pending';
+    DB.Transaction.findAll(options).then(function(transactions) {
+
+        res.send({
+            success: true,
+            data: transactions
+        })
+
+    }).catch(err => { API_ERROR_HANDLER(err, req, res, next) })
+
+})
+
+router.get('/pending-delivery/all', (req, res) => {
+
+    let options = {
+        where: {
+            status: 'completed'
+        },
+        order: [ ['TransactionID', 'DESC'] ],
+        include: [{
+            model: DB.Inventory_Storage,
+            through: {
+                model: DB.SoldInventory,
+                attributes: [
+                    'SoldInventoryID',
+                    'Transaction_transactionID',
+                    'Inventory_inventoryID',
+                    'StorageLocation_storageLocationID',
+                    'quantity'
+                ]
+            },
+            include: [{
+                model: DB.StorageLocation,
+                attributes: [
+                    'StorageLocationID',
+                    'name'
+                ]
+            }, {
+                model: DB.Inventory,
+                attributes: [
+                    'InventoryID',
+                    'name',
+                    'cogs',
+                    'sku'
+                ]
+            }]
+        }]
     }
 
     DB.Transaction.findAll(options).then(function(transactions) {
@@ -54,12 +98,9 @@ router.get('/pending-sales-receipt/all', function(req, res) {
 
 })
 
-// NICKNACK POST ROUTES
 router.post('/create-sales-receipt', (req, res, next) => {
 
-    let _debug = debug('api:create-sales-receipt')
-
-    _debug(req.body)
+    debug(req.body)
 
     // check if the transactionID is valid
     if ([undefined, null, false].indexOf(req.body.TransactionID) > -1 || isNaN(parseInt(req.body.TransactionID))) {
@@ -217,7 +258,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
         // comments
         if (req.body.comments) salesReceipt.PrivateNote = req.body.comments;
 
-        _debug(salesReceipt)
+        debug(salesReceipt)
 
         let createSalesReceipt = QBO.createSalesReceiptAsync(salesReceipt)
         promises.push(createSalesReceipt)
@@ -229,7 +270,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
         if (_TRANSACTION.paymentMethod.toLowerCase() === 'stripe') {
 
             let expense = require(__appsDir + '/QBO/QBOPurchase')(_TRANSACTION.details)
-            _debug(expense)
+            debug(expense)
 
             let createExpense = QBO.createPurchaseAsync(expense);
             promises.push(createExpense);
@@ -253,7 +294,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
             // create journal entry
             let journal = require(__appsDir + '/QBO/QBOJournalCOGS')(_TRANSACTION.details, _COGS)
-            _debug(journal)
+            debug(journal)
             let createJournalCOGS = QBO.createJournalEntryAsync(journal);
             promises.push(createJournalCOGS);
 
@@ -314,5 +355,77 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
 });
 
+router.post('/deliver', (req, res, next) => {
+
+    DB.Transaction.findOne({
+        where: { TransactionID: req.body.TransactionID },
+        include: [{
+            model: DB.Inventory_Storage,
+            through: {
+                model: DB.SoldInventory,
+                attributes: [
+                    'SoldInventoryID',
+                    'Transaction_transactionID',
+                    'Inventory_inventoryID',
+                    'StorageLocation_storageLocationID',
+                    'quantity'
+                ]
+            },
+            include: [{
+                model: DB.StorageLocation
+            }, {
+                model: DB.Inventory
+            }]
+        }]
+    }).then(transaction => {
+
+        if(!transaction) {
+            let error = new Error('Unable to find the transaction.')
+            throw error
+        }
+
+        return DB.sequelize.transaction(t => {
+
+            return PROMISE.resolve().then(() => {
+
+                let promises = []
+
+                transaction.status = 'delivered';
+                promises.push(transaction.save())
+
+                transaction.Inventory_Storages.forEach(inventoryDelivered => {
+
+                    let phyiscalInventoryID = inventoryDelivered.Inventory_StorageID;
+                    let quantityDelivered = inventoryDelivered.SoldInventory.quantity;
+
+                    promises.push(DB.Inventory_Storage.update({
+                        quantity: DB.sequelize.literal( 'quantity - ' + parseInt(quantityDelivered) )
+                    }, {
+                        where: { Inventory_StorageID: phyiscalInventoryID }
+                    }))
+
+                    promises.push(DB.Transaction.findById(1).then(() => {
+                        throw new Error('Test')
+                    }))
+
+                })
+
+                // this is important for transaction to work, if not you need to call spread
+                // otherwise commit will be called when the first DB action completes without error.
+                return PROMISE.all(promises)
+
+            })
+
+        })
+
+    }).spread(() => {
+
+        return res.send({
+            success: true
+        });
+
+    }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
+
+});
 
 module.exports = router;

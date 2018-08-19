@@ -1,5 +1,6 @@
-const express = require('express');
-const router = express.Router();
+const express = require('express')
+const router = express.Router()
+const debug = require('debug')('api:inventory')
 
 router.get('/all', function (req, res, next) {
 
@@ -343,7 +344,7 @@ router.post('/deactivate', function (req, res, next) {
 
 router.put('/sold', function (req, res, next) {
 
-    console.log(req.body)
+    debug(req.body)
 
     // find the Inventory_Storage
     DB.Inventory_Storage.find({
@@ -352,92 +353,77 @@ router.put('/sold', function (req, res, next) {
             StorageLocation_storageLocationID: req.body.StorageLocationID
         }
     }).then(inventory_Storage => {
+
         if (!inventory_Storage) {
-            return res.status(400).send({
-                success: false,
-                message: 'Unable to find `Inventory_Storage`',
-                debug: {
-                    message: 'Unable to find `Inventory_Storage`',
-                    error: ''
-                }
-            })
+            let err = new Error('Unable to find `Inventory_Storage`')
+            err.status = 400
+            throw err
         }
 
-        return PROMISE.resolve().then(() => {
-            return [
-                DB.SoldInventory.create({
-                    Inventory_Storage_inventory_StorageID: inventory_Storage.Inventory_StorageID,
-                    Transaction_transactionID: req.body.TransactionID,
-                    quantity: req.body.quantity
-                }),
-                DB.Inventory.findById(req.body.InventoryID)
-            ];
-        }).spread((soldInventory, inventory) => {
+        let promises = []
 
-            return [
-
-                DB.SoldInventory.findOne({
-                    where: {
-                        SoldInventoryID: soldInventory.SoldInventoryID
-                    },
+        // create the Sold Inventory Record and return it with associated models
+        let createSoldInventoryRecord = DB.SoldInventory.create({
+            Inventory_Storage_inventory_StorageID: inventory_Storage.Inventory_StorageID,
+            Transaction_transactionID: req.body.TransactionID,
+            quantity: req.body.quantity
+        }).then((soldInventory) => {
+            return DB.SoldInventory.findOne({
+                where: {
+                    SoldInventoryID: soldInventory.SoldInventoryID
+                },
+                include: [{
+                    model: DB.Inventory_Storage,
                     include: [{
-                        model: DB.Inventory_Storage,
-                        include: [{
-                            model: DB.StorageLocation
-                        }]
+                        model: DB.StorageLocation
                     }]
-                }),
+                }]
+            })
+        })
+        promises.push(createSoldInventoryRecord)
 
-                inventory
-            ]
 
-        }).spread((soldInventory, inventory) => {
+        let findInventory = DB.Inventory.findById(req.body.InventoryID)
+        promises.push(findInventory)
 
-            var obj = {};
 
-            obj.Inventory_StorageID = soldInventory.Inventory_StorageID
-            obj.InventoryID = inventory.InventoryID
-            obj.SoldInventoryID = soldInventory.SoldInventoryID
-            obj.quantity = soldInventory.quantity
-            obj.StorageLocationID = soldInventory.isStoredAt.StorageLocationID
-            obj.StorageLocationName = soldInventory.isStoredAt.name
-            obj.name = inventory.name
-            obj.sku = inventory.sku
-            obj.perItemCOGS = inventory.cogs
-            obj.totalCOGS = (parseFloat(obj.perItemCOGS) * parseFloat(obj.quantity)).toFixed(2)
+        return promises;
 
-            return res.send({
-                success: true,
-                data: obj
-            });
+    }).spread((soldInventory, inventory) => {
 
+        var obj = {};
+
+        obj.Inventory_StorageID = soldInventory.Inventory_StorageID
+        obj.InventoryID = inventory.InventoryID
+        obj.SoldInventoryID = soldInventory.SoldInventoryID
+        obj.quantity = soldInventory.quantity
+        obj.StorageLocationID = soldInventory.isStoredAt.StorageLocationID
+        obj.StorageLocationName = soldInventory.isStoredAt.name
+        obj.name = inventory.name
+        obj.sku = inventory.sku
+        obj.perItemCOGS = inventory.cogs
+        obj.totalCOGS = (parseFloat(obj.perItemCOGS) * parseFloat(obj.quantity)).toFixed(2)
+
+        return res.send({
+            success: true,
+            data: obj
         })
 
-    }).catch(error => {
+    })
+    .catch(error => {
 
-        console.log(error)
-
+        // most likely the case whereby the sold inventory is already added.
         if (error.name = "SequelizeUniqueConstraintError") {
-            return res.status(400).send({
-                success: false,
-                message: 'Error: You are adding an item that already exist.',
-                error: {
-                    message: 'Error: You are adding an item that already exist.',
-                    hideMessage: false,
-                    debug: error
-                }
-            })
+
+            let newError = new Error('Error: You are adding an item that already exist.')
+            newError.status = 400
+            newError.debug = error
+
+            return API_ERROR_HANDLER(newError, req, res, next)
+
         }
 
-        return res.status(500).send({
-            success: false,
-            message: 'Server error: ' + error.message +'. Please check console log.',
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        })
+        API_ERROR_HANDLER(error, req, res, next)
 
     })
 
@@ -446,15 +432,11 @@ router.put('/sold', function (req, res, next) {
 router.delete('/sold/delete', (req, res, next) => {
 
     if(!req.body.SoldInventoryID || isNaN(parseInt(req.body.SoldInventoryID))) {
-        return res.status(400).send({
-            success: false,
-            message: 'You did not provide `SoldInventoryID`',
-            error: {
-                message: '`SoldInventoryID not provided.`',
-                hideMessage: false,
-                debug: null
-            }
-        })
+
+        let error = new Error('You did not provide `SoldInventoryID`')
+        error.status = 400
+        throw error
+
     }
 
     DB.SoldInventory.destroy({
@@ -463,24 +445,9 @@ router.delete('/sold/delete', (req, res, next) => {
         }
     }).then(() => {
 
-        return res.send({
-            success: true
-        })
+        return res.send({ success: true })
 
-    }).catch(error => {
-
-        console.log(error)
-
-        return res.status(500).send({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        })
-
-    })
+    }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
 })
 
