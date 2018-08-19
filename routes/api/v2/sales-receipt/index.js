@@ -404,11 +404,14 @@ router.post('/deliver', (req, res, next) => {
                         where: { Inventory_StorageID: phyiscalInventoryID }
                     }))
 
-                    promises.push(DB.Transaction.findById(1).then(() => {
-                        throw new Error('Test')
-                    }))
-
                 })
+
+                //record inventory movement
+                let recordMovement = DB.InventoryMovement.create({
+                    source: 'delivery',
+                    sourceData: transaction
+                })
+                promises.push(recordMovement)
 
                 // this is important for transaction to work, if not you need to call spread
                 // otherwise commit will be called when the first DB action completes without error.
