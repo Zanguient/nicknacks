@@ -37,6 +37,15 @@ new Vue({
 
 window.CATCH_ERR_HANDLER = (err) => {
     console.log('CATCH_ERR_HANDLER output:')
-    console.log(D.get(err , 'response'))
-    alert(D.get(err, 'response.data.message'))
+    console.log(err)
+
+    let response = console.log(D.get(err , 'response'))
+
+    //if this is an api response
+    if(response) {
+        console.log(D.get(err , 'response'))
+        alert(D.get(err, 'response.data.message'))
+    } else {
+        alert(err)
+    }
 }
