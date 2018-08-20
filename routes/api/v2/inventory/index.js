@@ -2,7 +2,50 @@ const express = require('express')
 const router = express.Router()
 const debug = require('debug')('api:inventory')
 
-router.get('/all', function (req, res, next) {
+let inventoryIncludes = [{
+
+    // include all the places which the inventories are stored.
+    model: DB.StorageLocation,
+    through: {
+        // and the quantites of how many inventories stored is in the cross table
+        model: DB.Inventory_Storage,
+        attributes: [
+            'Inventory_StorageID',
+            'StorageLocation_storageLocationID',
+            'Inventory_inventoryID',
+            'quantity'
+        ]
+    }
+
+}, {
+
+    // also need to include its transit inventory
+    model: DB.TransitInventory,
+    where: { isInventorised: false },
+    required: false,
+    attributes: [
+        'TransitInventoryID',
+        'Inventory_inventoryID',
+        'quantity'
+    ]
+}]
+
+let inventoryStorageIncludes = [{
+    model: DB.Transaction,
+    where: { status: { $not: 'delivered' } },
+    through: {
+        model: DB.SoldInventory,
+        attributes: [
+            'SoldInventoryID',
+            'quantity',
+            'Inventory_Storage_inventory_StorageID',
+            'Transaction_transactionID'
+        ]
+    },
+    required: true
+}]
+
+router.get('/all', (req, res, next) => {
 
     PROMISE.resolve().then(() => {
 
@@ -12,49 +55,11 @@ router.get('/all', function (req, res, next) {
                     notActive: { $not: true}
                 },
                 order: [ ['sku', 'ASC'], ['name', 'ASC'] ],
-                include: [{
-
-                    // include all the places which the inventories are stored.
-                    model: DB.StorageLocation,
-                    through: {
-                        // and the quantites of how many inventories stored is in the cross table
-                        model: DB.Inventory_Storage,
-                        attributes: [
-                            'Inventory_StorageID',
-                            'StorageLocation_storageLocationID',
-                            'Inventory_inventoryID',
-                            'quantity'
-                        ]
-                    }
-                }, {
-
-                    // also need to include its transit inventory
-                    model: DB.TransitInventory,
-                    where: { isInventorised: false },
-                    required: false,
-                    attributes: [
-                        'TransitInventoryID',
-                        'Inventory_inventoryID',
-                        'quantity'
-                    ]
-                }]
+                include: inventoryIncludes
             }),
 
             DB.Inventory_Storage.findAll({
-                include: [{
-                    model: DB.Transaction,
-                    where: { status: { $not: 'delivered' } },
-                    through: {
-                        model: DB.SoldInventory,
-                        attributes: [
-                            'SoldInventoryID',
-                            'quantity',
-                            'Inventory_Storage_inventory_StorageID',
-                            'Transaction_transactionID'
-                        ]
-                    },
-                    required: true
-                }]
+                include: inventoryStorageIncludes
             })
         ]
 
@@ -120,7 +125,6 @@ router.get('/all', function (req, res, next) {
 
             inventory.stock.push(transitStock);
 
-            delete inventory.TransitInventories;
         })
 
         res.send({
@@ -142,7 +146,7 @@ router.get('/all', function (req, res, next) {
 
 })
 
-router.put('/add', function (req, res, next) {
+router.put('/add', (req, res, next) => {
 
     DB.Inventory.create(req.body).then( inventory => {
 
@@ -210,70 +214,77 @@ router.put('/add', function (req, res, next) {
 
 router.post('/update', (req, res, next) => {
 
-    var where = { InventoryID: req.body.InventoryID };
+    debug(req.body)
 
-    PROMISE.resolve().then( () => {
+    let where = { InventoryID: req.body.InventoryID };
 
-        var promises = [];
+    DB.Inventory.update(req.body, {
+        where: where
+    }).then(inventory => {
+        return [
+            DB.Inventory.findById(req.body.InventoryID, {
+                include: inventoryIncludes
+            }),
 
-        promises.push(DB.Inventory.update(req.body, {
-            where: where
-        }));
-
-        req.body.storageAndQuantities.forEach(el => {
-            var quantityUpdate = DB.Inventory_Storage.update({
-                quantity: el.quantity
-            }, {
-
+            DB.Inventory_Storage.findAll({
                 where: {
-                    StorageLocation_storageLocationID: el.StorageLocation_storageLocationID,
                     Inventory_inventoryID: req.body.InventoryID
                 },
-                limit: 1
+                include: inventoryStorageIncludes
+            })
+        ]
+    }).spread( (inventory, soldInventories) => {
+
+        // merge inventories with soldInventories
+        inventory = JSON.parse(JSON.stringify(inventory))
+        soldInventories = JSON.parse(JSON.stringify(soldInventories))
+
+        inventory.soldInventories = soldInventories
+
+        // for each of the soldInventories record
+        inventory.soldInventories.forEach(element => {
+
+            // calculating for quantities sold
+            let quantitySold = 0;
+
+            // for each of the transactions within this soldInventory
+            // NOTE: a single line of soldInventory is a pair between Transaction and
+            //       a particular physical inventory stored at a place (Inventory_Storage)
+            element.Transactions.forEach( element => {
+                quantitySold += parseInt(element.SoldInventory.quantity)
             });
-            promises.push(quantityUpdate);
-        });
 
-        return promises;
+            let soldStockObject = inventory.stock.find( item => {
+                if (item.name === "Sold") return item;
+                return false;
+            })
 
-    }).spread(inventory => {
+            if (soldStockObject) {
+                soldStockObject.quantity += quantitySold;
+            } else {
+                inventory.stock.push({name: "Sold", quantity: quantitySold })
+            }
 
-        return DB.Inventory.findById(inventory.InventoryID, {
-            include: [{
-                model: DB.StorageLocation,
-                through: {
-                    model: DB.Inventory_Storage,
-                    attributes: [
-                        'Inventory_StorageID',
-                        'StorageLocation_storageLocationID',
-                        'Inventory_inventoryID',
-                        'quantity'
-                    ]
-                }
-            }]
         })
 
-    }).then(inventory => {
+        // Loop through the transit inventories to generate the Transit object.
+
+        let transitStock = { name: 'Transit', quantity: 0 };
+
+        inventory.TransitInventories.forEach(transit => {
+            transitStock.quantity += parseInt(transit.quantity)
+        });
+
+        inventory.stock.push(transitStock);
+
+        console.log(inventory)
 
         return res.send({
             success: true,
             inventory: inventory
-        });
+        })
 
-    }).catch( error => {
-
-        console.log(error);
-
-        return res.status(500).send({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        });
-
-    })
+    }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
 
 
 });

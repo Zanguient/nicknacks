@@ -21,6 +21,39 @@
 
         <Table no-data-text="No inventories..." disabled-hover size="small" stripe border :columns="columns" :data="inventories"></Table>
 
+        <Modal
+            v-model="editInventoryModal.show"
+            title="Edit product"
+            :loading="editInventoryModal.loading"
+            @on-ok="editInventoryOK('editInventoryForm', editInventoryModal.inventory)">
+
+            <Form ref="editInventoryForm" :model="editInventoryModal.form" :rules="editInventoryModal.formRules">
+
+                <FormItem label="Name" prop="name">
+                    <Input v-model="editInventoryModal.form.name"></Input>
+                </FormItem>
+                <FormItem label="SKU" prop="sku">
+                    <Input v-model="editInventoryModal.form.sku"></Input>
+                </FormItem>
+                <FormItem prop="cogs" label="COGS">
+                    <Input type="text" number v-model="editInventoryModal.form.cogs"></Input>
+                </FormItem>
+
+            </Form>
+            <Collapse>
+                <Panel>
+                    Advanced
+                    <p slot="content">
+                        <Button type="warning" @click="deactivateInv(inventory)">Deactivate</Button>
+                        <Button type="error" @click="deleteInv(inventory)">Delete</Button>
+                    </p>
+                </Panel>
+            </Collapse>
+
+            <p>InventoryID: {{ editInventoryModal.inventory.InventoryID }}</p>
+
+        </Modal>
+
     </div>
 </template>
 <script>
@@ -106,7 +139,7 @@ export default {
                 render: (h, params) => {
                     return h('Button', {
                         props: {
-                            type: 'text',
+                            type: 'primary',
                             size: 'small'
                         },
                         on: {
@@ -121,43 +154,84 @@ export default {
             inventories: [],
 
             // ADD Inventory Form
-            addInventoryModal: {
+            editInventoryModal: {
                 show: false,
                 loading: true,
-                salesReceipt: '',
+                inventory: '',
                 form: {
-                    inventoryIndex: '',
-                    StorageLocationID: '',
-                    quantity: 1
+                    name: '',
+                    sku: '',
+                    cogs: 0
                 },
                 formRules: {
-                    inventoryIndex: [
-                        { type: 'number', min: 0, message: 'Please select inventory', trigger: 'blur' }
+                    name: [
+                        { required: true, message: 'The name cannot be empty', trigger: 'blur' }
                     ],
-                    StorageLocationID: [
-                        { required: true, message: 'Please select a storage location.', trigger: 'blur' }
+                    sku: [
+                        { required: true, message: 'The sku cannot be empty', trigger: 'blur' }
                     ],
-                    quantity: [
-                        { type: 'number', min: 1, message: 'Quantity cannot be less than 1', trigger: 'blur' }
-                    ]
-                },
+                    cogs: [{
+                        validator (rule, value, callback) {
 
-                selectedInventory: {
-                    stock: []
+                            // check regex
+                            let regex = /^[1-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
+                            if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
+
+                            // everything passed
+                            return callback()
+
+                        },
+                        trigger: 'blur'
+                    }]
                 }
             }
         }
 
     },
     methods: {
+        /* TO BE WORKED ON */
+        deactivateInv(inventory) {
+            this.$Modal.confirm({
+                render: (h) => {
 
-        editInventory (inventory) {
-            this.$Modal.info({
-                title: inventory.name,
-                content: JSON.stringify(inventory)
-            });
+                    this.deactivateInvSKU = ''
+
+                    return h('Input', {
+                        props: {
+                            value: this.deactivateInvSKU,
+                            autofocus: true,
+                            placeholder: 'To confirm, please type the product sku'
+                        },
+                        on: {
+                            input: (val) => {
+                                this.deactivateInvSKU = val;
+                            }
+                        }
+                    })
+                },
+                onOk() {
+                    if(this.deactivateInvSKU.toLowerCase === inventory.sku.toLowerCase()) {
+                        // do delete
+
+
+                        // if successful
+                    }
+                },
+                loading: true
+            })
         },
 
+        editInventory (inventory) {
+
+            this.editInventoryModal.form.name = inventory.name
+            this.editInventoryModal.form.sku = inventory.sku
+            this.editInventoryModal.form.cogs = inventory.cogs
+            this.editInventoryModal.inventory = inventory
+            this.editInventoryModal.show = true
+
+        },
+
+        /* TO BE WORKED ON */
         // showTransitDetails (inventory) {
         //     let content = 'Error retrieving information...'
         //     let soldInv = D.get(inventory, 'soldInventories[0]')
@@ -174,144 +248,56 @@ export default {
         //     });
         // },
 
-        addInventoryOK (formName, salesReceipt) {
+        editInventoryOK (formName, inventory) {
+
+            let newVal = this.editInventoryModal.form
+            if (newVal.name === inventory.name && newVal.sku === inventory.sku && newVal.cogs === inventory.cogs) {
+                //no changes.
+
+                this.$Message.success('There are no changes made.');
+
+                this.editInventoryModal.show = false
+                this.editInventoryModal.loading = false
+
+                return
+            }
 
             this.$refs[formName].validate(valid => {
 
                 if (valid) {
 
                     let payload = {
-                        TransactionID: this.addInventoryModal.salesReceipt.TransactionID,
-                        InventoryID: this.addInventoryModal.selectedInventory['InventoryID'],
-                        StorageLocationID: this.addInventoryModal.form.storageLocationID,
-                        quantity: this.addInventoryModal.form.quantity
+                        InventoryID: this.editInventoryModal.inventory.InventoryID,
+                        name: this.editInventoryModal.form.name,
+                        sku: this.editInventoryModal.form.sku,
+                        cogs: this.editInventoryModal.form.cogs
                     }
 
-                    axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
+                    axios.post(domain + '/api/v2/inventory/update', payload).then(response => {
                         if (!response.data.success) {
                             alert(response.data.message)
-                            this.addInventoryModal.loading = false
+                            this.editInventoryModal.loading = false
                             return
                         }
-                        salesReceipt.soldInventories.push(response.data.data)
+
+                        // set the new inventory data for view
+                        let index = _.findIndex(this.inventories, ['InventoryID', inventory.InventoryID])
+                        this.$set(this.inventories, index, response.data.inventory)
 
                         this.$Message.success('Success!');
-                        this.addInventoryModal.show = false
-                        this.addInventoryModal.loading = false
+                        this.editInventoryModal.show = false
+                        this.editInventoryModal.loading = false
 
                     }).catch(error => {
 
                         CATCH_ERR_HANDLER(error)
 
-                        this.addInventoryModal.loading = false
+                        this.editInventoryModal.loading = false
                         this.$Message.error('Failed request!');
                     })
 
                 } else {
-                    this.addInventoryModal.loading = false
-                    this.$Message.error('Check your entry!');
-                }
-            })
-        },
-        addInventory(salesReceipt) {
-            this.addInventoryModal.show = true
-            this.addInventoryModal.salesReceipt = salesReceipt
-            this.addInventoryModal.form = {
-                inventoryIndex: '',
-                StorageLocationID: '',
-                quantity: 1
-            }
-            this.addInventoryModal.selectedInventory = { stock: [] }
-            this.$refs['addInventoryForm'].resetFields()
-            this.$refs['addInventoryFormStorage'].reset()
-            this.addInventoryModal.inventories = this.inventories
-
-        },
-        triggerStorageSelection() {
-            // set the selectedInventory to point to the inventory object within the inventories array
-            let i = this.addInventoryModal.form.inventoryIndex
-            if (this.inventories[i]) {
-                this.addInventoryModal.selectedInventory = this.inventories[i]
-                this.$refs['addInventoryFormStorage'].reset()
-            }
-        },
-        removeSoldInventory(soldInventory, salesReceipt) {
-
-            this.$Modal.confirm({
-                title: 'Delete Sold Inventory Entry',
-                content: '<p>Confirm delete sold inventory entry of <strong>' + soldInventory.name + '</strong>?</p>',
-                loading: true,
-                onOk: () => {
-
-                    axios.delete(domain + '/api/v2/inventory/sold/delete', { data: { SoldInventoryID: soldInventory.SoldInventoryID }}).then(response => {
-                        if (!response.data.success) return alert(response.data.message)
-
-                        // remove the deleted entry
-                        salesReceipt.soldInventories.splice(salesReceipt.soldInventories.indexOf(soldInventory), 1)
-
-                        // re-compute the totalCOGS
-                        salesReceipt.totalCOGS = 0
-                        for(let i=0; i<salesReceipt.soldInventories.length; i++) {
-                            let soldInventory = salesReceipt.soldInventories[i]
-                            salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
-                        }
-                        salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
-
-                        this.$Modal.remove();
-                        this.$Message.info('Succesfully removed sold inventory entry!')
-
-                    }).catch(error => {
-
-                        CATCH_ERR_HANDLER(error)
-
-                        this.$Modal.remove()
-                        this.$Message.error('Failed request!')
-
-                    })
-
-                }
-            })
-        },
-        submitSalesReceipt (formName, salesReceipt) {
-
-            salesReceipt.submitLoading = true
-
-            this.$refs[formName][0].validate((valid) => {
-
-                if (valid) {
-
-                    console.log(salesReceipt)
-
-                    let payload = {
-                        TransactionID: salesReceipt.TransactionID,
-                        COGS: salesReceipt.totalCOGS,
-                        comments: salesReceipt.comments
-                    }
-
-                    axios.post(domain + '/api/v2/sales-receipt/create-sales-receipt', payload).then(response => {
-
-                        // if success: false
-                        if (!response.data.success) {
-                            alert(response.data.message)
-                            salesReceipt.submitLoading = false
-                            return
-                        }
-
-                        // remove the successful entry
-                        this.salesReceipts.splice(this.salesReceipts.indexOf(salesReceipt), 1)
-
-                        this.$Message.success('Successfully submitted sales receipt!');
-
-                    }).catch(error => {
-
-                        salesReceipt.submitLoading = false
-                        this.$Message.error('Failed request!');
-
-                        CATCH_ERR_HANDLER(error)
-                    })
-
-                } else {
-                    salesReceipt.submitLoading = false
+                    this.editInventoryModal.loading = false
                     this.$Message.error('Check your entry!');
                 }
             })
