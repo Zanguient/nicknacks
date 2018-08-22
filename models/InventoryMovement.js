@@ -16,6 +16,10 @@ function InventoryMovement(sequelize, DataTypes) {
             allowNull: false,
             defaultValue: {}
         },
+        user: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
         remarks: {
             type: DataTypes.STRING,
             allowNull: true
@@ -34,7 +38,7 @@ function InventoryMovement(sequelize, DataTypes) {
 
             associate: function (models) {
 
-                
+
 
             }
 

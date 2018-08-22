@@ -1,7 +1,7 @@
 <template>
     <div>
-
-        <Breadcrumb :style="{margin: '5px'}">
+        <Spin size="large" fix v-if="spinShow"></Spin>
+        <Breadcrumb class="mainBreadCrumb">
             <BreadcrumbItem>Delivery</BreadcrumbItem>
         </Breadcrumb>
 
@@ -96,6 +96,8 @@ const domain = process.env.API_DOMAIN
 export default {
     data () {
         return {
+
+            spinShow: true,
 
             salesReceipts: [{
                 TransactionID: '',
@@ -286,8 +288,6 @@ export default {
 
         window.V = this
 
-        this.$Spin.show()
-
         axios.get(domain + '/api/v2/sales-receipt/pending-delivery/all').then(response => {
 
             if (!response.data.success) return alert(response.data.message)
@@ -301,7 +301,7 @@ export default {
 
             this.salesReceipts = response.data.data
 
-        }).catch(CATCH_ERR_HANDLER).then(() => { this.$Spin.hide() })
+        }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
             if (!response.data.success) return alert(response.data.message)

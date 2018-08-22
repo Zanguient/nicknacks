@@ -401,16 +401,17 @@ router.post('/deliver', (req, res, next) => {
                     promises.push(DB.Inventory_Storage.update({
                         quantity: DB.sequelize.literal( 'quantity - ' + parseInt(quantityDelivered) )
                     }, {
-                        where: { Inventory_StorageID: phyiscalInventoryID }
+                        where: { Inventory_StorageID: phyiscalInventoryID },
+                        transaction: t // forEach seemed to be out of the CLS scoping, need to manually pass `t`
                     }))
 
                 })
 
                 //record inventory movement
-                let recordMovement = DB.InventoryMovement.create({
-                    source: 'delivery',
-                    sourceData: transaction
-                })
+                let createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
+                
+                // same for DB calls "required" from outside, it will be outside of this CLS scoping, need to manually pass `t`
+                let recordMovement = createInventoryRecord(t, 'delivery', transaction, req.user)
                 promises.push(recordMovement)
 
                 // this is important for transaction to work, if not you need to call spread

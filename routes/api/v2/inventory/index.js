@@ -27,7 +27,13 @@ let inventoryIncludes = [{
         'TransitInventoryID',
         'Inventory_inventoryID',
         'quantity'
-    ]
+    ],
+    include: [{
+        model: DB.Shipment,
+        attributes: [
+            'name', 'estimatedShipOut', 'actualShipOut', 'expectedArrival', 'remarks'
+        ]
+    }]
 }]
 
 let inventoryStorageIncludes = [{
@@ -291,69 +297,67 @@ router.post('/update', (req, res, next) => {
 
 router.delete('/delete', (req, res, next) => {
 
-    var where = { InventoryID: req.body.InventoryID };
+    debug(req.body)
 
-    DB.Inventory.destroy({
-        where: where,
-        limit: 1
-    }).then(() => {
+    DB.Inventory.findById(req.body.InventoryID, {
+        include: inventoryIncludes
+    }).then(inventory => {
+
+        if (!inventory) {
+            //no inventory is found. don't care just respond that it is deleted.
+            return
+        }
+
+        // inventory is found
+        return DB.sequelize.transaction(t => {
+
+            let promises = []
+
+            //record inventory movement
+            let createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
+            // same for DB calls "required" from outside, it will be outside of this CLS scoping, need to manually pass `t`
+            let recordMovement = createInventoryRecord(t, 'inventoryDeleted', inventory, req.user)
+            promises.push(recordMovement)
+
+            let destroy = inventory.destroy()
+            promises.push(destroy)
+
+            // don't need to call a spread. instead just call #all to wait for all before commiting.
+            return PROMISE.all(promises)
+
+        })
+
+    })
+    .then(() => {
 
         return res.send({
             success: true
-        });
-
-    }).catch(error => {
-
-        console.log(error);
-
-        return res.status(500).send({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        });
+        })
 
     })
+    .catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
+})
 
-});
+router.post('/deactivate', (req, res, next) => {
 
-router.post('/deactivate', function (req, res, next) {
-
-    var where = { InventoryID: req.body.InventoryID };
+    let where = { InventoryID: req.body.InventoryID };
 
     DB.Inventory.update({
         notActive: true
     }, {
         where: where
-    }).then(function(inventory) {
+    }).then(inventory => {
 
         return res.send({
-            success: true,
-            inventory: inventory
-        });
+            success: true
+        })
 
-    }).catch(function(error) {
-
-        console.log(error);
-
-        return res.status(500).send({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        });
-
-    })
-
+    }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) })
 
 });
 
-router.put('/sold', function (req, res, next) {
+router.put('/sold', (req, res, next) => {
 
     debug(req.body)
 
@@ -461,103 +465,5 @@ router.delete('/sold/delete', (req, res, next) => {
     }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
 })
-
-router.post('/inventory/delivered', function (req, res, next) {
-
-    DB.Transaction.findOne({
-        where: { TransactionID: req.body.TransactionID },
-        include: [{
-            model: DB.Inventory_Storage,
-            through: {
-                model: DB.SoldInventory,
-                attributes: [
-                    'SoldInventoryID',
-                    'Transaction_transactionID',
-                    'Inventory_inventoryID',
-                    'StorageLocation_storageLocationID',
-                    'quantity'
-                ]
-            },
-            include: [{
-                model: DB.StorageLocation
-            }, {
-                model: DB.Inventory
-            }]
-        }]
-    }).then(function(transaction) {
-
-        if(!transaction) throw 'unable to find';
-
-        // do some math to deduct the inventory
-        //return res.send(transaction);
-
-
-        return DB.sequelize.transaction(function(t) {
-
-            return PROMISE.resolve().then(function() {
-                var promises = []
-
-                transaction.Inventory_Storages.forEach(function(inventoryDelivered) {
-
-                    var phyiscalInventoryID = inventoryDelivered.Inventory_StorageID;
-                    var quantityDelivered = inventoryDelivered.SoldInventory.quantity;
-
-                    promises.push(DB.Inventory_Storage.update({
-                        quantity: DB.sequelize.literal( 'quantity - ' + parseInt(quantityDelivered) )
-                    }, {
-                        where: { Inventory_StorageID: phyiscalInventoryID }
-                    }));
-
-                });
-
-
-                transaction.status = 'delivered';
-                promises.push(transaction.save());
-
-                return promises;
-            });
-
-        });
-
-    }).then(function() {
-
-        return res.send({
-            success: true
-        });
-
-    }).catch(function(error) {
-
-        if (error === 'unable to find') {
-            return res.send({ success: false, error: {
-                message: 'Unable to find the related transaction. Please refresh browser and try again.',
-                hideMessage: false
-            }});
-        }
-
-        return res.status(500).send({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        });
-
-    })
-
-});
-
-/*
-
-return res.status(400).send({
-                success: false,
-                error: {
-                    message: 'Unable to find transaction using `transactionID` provided',
-                    hideMessage: false,
-                    debug: {}
-                }
-            });
-
-*/
 
 module.exports = router;

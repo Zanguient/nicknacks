@@ -1,21 +1,7 @@
-<style scoped>
-.ivu-table-cell {
-    padding-left: 4px !important;
-    padding-right: 4px !important;
-    @media all and (max-width: 320px) {
-        font-size: 10px !important;
-    }
-}
-
-.expand-row{
-    margin-bottom: 16px;
-}
-</style>
-
 <template>
     <div>
-
-        <Breadcrumb :style="{margin: '5px'}">
+        <Spin size="large" fix v-if="spinShow"></Spin>
+        <Breadcrumb class="mainBreadCrumb">
             <BreadcrumbItem>Inventory</BreadcrumbItem>
         </Breadcrumb>
 
@@ -27,7 +13,7 @@
             :loading="editInventoryModal.loading"
             @on-ok="editInventoryOK('editInventoryForm', editInventoryModal.inventory)">
 
-            <Form ref="editInventoryForm" :model="editInventoryModal.form" :rules="editInventoryModal.formRules">
+            <Form label-position="right" :label-width="80" ref="editInventoryForm" :model="editInventoryModal.form" :rules="editInventoryModal.formRules">
 
                 <FormItem label="Name" prop="name">
                     <Input v-model="editInventoryModal.form.name"></Input>
@@ -40,17 +26,55 @@
                 </FormItem>
 
             </Form>
+
             <Collapse>
                 <Panel>
                     Advanced
                     <p slot="content">
-                        <Button type="warning" @click="deactivateInv(inventory)">Deactivate</Button>
-                        <Button type="error" @click="deleteInv(inventory)">Delete</Button>
+                        <Button type="warning" @click="deactivateInv(editInventoryModal.inventory)">Deactivate</Button>
+                        <Button type="error" @click="deleteInv(editInventoryModal.inventory)">Delete</Button>
                     </p>
                 </Panel>
             </Collapse>
 
             <p>InventoryID: {{ editInventoryModal.inventory.InventoryID }}</p>
+
+        </Modal>
+
+
+        <Modal
+            v-model="transitModal.show"
+            title="Transit Info">
+
+            <h1>{{transitModal.inventory.name}}</h1>
+
+            <Card v-for="transitInv in transitModal.inventory.TransitInventories" :key="transitInv.TransactionInventoryID">
+                <p slot="title">
+                    <Icon type="ios-boat"></Icon>
+                    {{transitInv.Shipment.name}}
+                </p>
+                <p>Quantity: {{transitInv.quantity}}</p>
+                <p>Est. Shipout: {{ transitInv.Shipment.estimatedShipOut | momentUnix }}</p>
+            </Card>
+
+        </Modal>
+
+        <Modal
+            v-model="soldModal.show"
+            title="Sold information">
+
+            <h1>{{soldModal.inventory.name}}</h1>
+            <span v-for="soldInv in soldModal.inventory.soldInventories" :key="soldInv.Inventory_StorageID">
+                <Card v-for="txn in soldInv.Transactions" :key="txn.TransactionID">
+                    <p slot="title">
+                        <Icon type="ios-cart"></Icon>
+                        SO: {{txn.salesOrderNumber}}
+                    </p>
+                    <p>Name: {{txn.details.customerName}}</p>
+                    <p>Date sold: {{ txn.details.transactionDateTime }}</p>
+                    <p>Qty: {{ txn.SoldInventory.quantity }}</p>
+                </Card>
+            </span>
 
         </Modal>
 
@@ -60,6 +84,7 @@
 import axios from 'axios'
 import D from 'dottie'
 import _ from 'lodash'
+import moment from 'moment'
 const domain = process.env.API_DOMAIN
 
 export default {
@@ -67,6 +92,8 @@ export default {
     data () {
 
         return {
+
+            spinShow: true,
 
             columns: [{
                 title: 'Name',
@@ -84,7 +111,7 @@ export default {
             }, {
                 title: 'COGS',
                 key: 'cogs',
-                width: 45
+                width: 40
             }, {
                 title: 'Stock',
                 render: (h, params) => {
@@ -135,7 +162,8 @@ export default {
                     return stuff
                 }
             }, {
-                title: 'Actions',
+                title: 'Action',
+                width: 45,
                 render: (h, params) => {
                     return h('Button', {
                         props: {
@@ -155,6 +183,8 @@ export default {
 
             // ADD Inventory Form
             editInventoryModal: {
+                deactivateInvSKU: '',
+                deleteInvSKU: '',
                 show: false,
                 loading: true,
                 inventory: '',
@@ -171,6 +201,7 @@ export default {
                         { required: true, message: 'The sku cannot be empty', trigger: 'blur' }
                     ],
                     cogs: [{
+                        required: true,
                         validator (rule, value, callback) {
 
                             // check regex
@@ -184,38 +215,131 @@ export default {
                         trigger: 'blur'
                     }]
                 }
+            },
+
+            transitModal: {
+                show: false,
+                inventory: ''
+            },
+            soldModal: {
+                show: false,
+                inventory: ''
             }
         }
 
     },
     methods: {
-        /* TO BE WORKED ON */
+
         deactivateInv(inventory) {
+            let self = this
             this.$Modal.confirm({
                 render: (h) => {
 
-                    this.deactivateInvSKU = ''
-
                     return h('Input', {
                         props: {
-                            value: this.deactivateInvSKU,
+                            value: this.editInventoryModal.deactivateInvSKU,
                             autofocus: true,
                             placeholder: 'To confirm, please type the product sku'
                         },
                         on: {
                             input: (val) => {
-                                this.deactivateInvSKU = val;
+                                this.editInventoryModal.deactivateInvSKU = val;
                             }
                         }
                     })
                 },
                 onOk() {
-                    if(this.deactivateInvSKU.toLowerCase === inventory.sku.toLowerCase()) {
-                        // do delete
 
-
-                        // if successful
+                    if(self.editInventoryModal.deactivateInvSKU.toLowerCase() !== inventory.sku.toLowerCase()) {
+                        alert('Your sku entered does not match.')
+                        this.$Modal.remove()
+                        return
                     }
+
+                    // do delete
+                    axios.post(domain + '/api/v2/inventory/deactivate', { InventoryID: inventory.InventoryID }).then(response => {
+                        if (!response.data.success) {
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
+                        }
+
+                        // remove the inventory from view
+                        let index = _.findIndex(self.inventories, ['InventoryID', inventory.InventoryID])
+                        self.inventories.splice(index, 1)
+
+                        self.$Message.success('Success!');
+                        self.$Modal.remove()
+                        self.editInventoryModal.show = false
+
+                    }).catch(error => {
+
+                        CATCH_ERR_HANDLER(error)
+
+                        self.$Modal.loading = false
+                        self.$Message.error('Failed request!');
+                    })
+
+                },
+                loading: true
+            })
+        },
+
+        deleteInv(inventory) {
+
+            let self = this
+            this.$Modal.confirm({
+                render: (h) => {
+
+                    return h('p', [
+                        'DANGER: This process is irreversible. Only delete an inventory if you made a mistake in creating it.',
+                        h('Input', {
+                            props: {
+                                value: this.editInventoryModal.deleteInvSKU,
+                                autofocus: true,
+                                placeholder: 'To confirm, please type the product sku'
+                            },
+                            on: {
+                                input: (val) => {
+                                    this.editInventoryModal.deleteInvSKU = val;
+                                }
+                            }
+                        })
+                    ])
+
+                },
+                onOk() {
+
+                    if(self.editInventoryModal.deleteInvSKU.toLowerCase() !== inventory.sku.toLowerCase()) {
+                        alert('Your sku entered does not match.')
+                        this.$Modal.remove()
+                        return
+                    }
+
+                    // do delete
+                    axios.delete(domain + '/api/v2/inventory/delete', { data: {InventoryID: inventory.InventoryID} }).then(response => {
+                        if (!response.data.success) {
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
+                        }
+
+                        // remove the inventory from view
+                        let index = _.findIndex(self.inventories, ['InventoryID', inventory.InventoryID])
+                        self.inventories.splice(index, 1)
+
+                        self.$Message.success('Success!');
+                        self.$Modal.remove()
+                        self.editInventoryModal.show = false
+
+                    }).catch(error => {
+
+                        CATCH_ERR_HANDLER(error)
+
+                        self.$Modal.loading = false
+                        self.$Message.error('Failed request!');
+                    })
+
                 },
                 loading: true
             })
@@ -231,22 +355,16 @@ export default {
 
         },
 
-        /* TO BE WORKED ON */
-        // showTransitDetails (inventory) {
-        //     let content = 'Error retrieving information...'
-        //     let soldInv = D.get(inventory, 'soldInventories[0]')
-        //
-        //     if (soldInv) {
-        //         for(let i=0; i<soldInv.Transactions.length; i++) {
-        //             let t = soldInv.Transactions[i];
-        //
-        //         }
-        //     }
-        //     this.$Modal.info({
-        //         title: title,
-        //         content: content
-        //     });
-        // },
+
+        showTransitDetails (inventory) {
+            this.transitModal.inventory = inventory
+            this.transitModal.show = true
+        },
+
+        showSoldDetails (inventory) {
+            this.soldModal.inventory = inventory
+            this.soldModal.show = true
+        },
 
         editInventoryOK (formName, inventory) {
 
@@ -303,12 +421,15 @@ export default {
             })
         }
     },
+    filters: {
+        momentUnix(date) {
+            return moment(parseInt(date)).format('DD MMM YY');
+        }
+    },
 
     created () {
 
         window.V = this
-
-        this.$Spin.show()
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
             if (!response.data.success) return alert(response.data.message)
@@ -344,9 +465,7 @@ export default {
 
             this.columns[1].filters = categoryFilters
 
-            this.$Spin.hide()
-
-        }).catch(CATCH_ERR_HANDLER)
+        }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
     }
 }
 </script>
