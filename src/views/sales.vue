@@ -192,27 +192,28 @@ export default {
 
                     axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
                         if (!response.data.success) {
-                            alert(response.data.message)
-                            this.addInventoryModal.loading = false
-                            return
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
                         }
+
                         salesReceipt.soldInventories.push(response.data.data)
 
-                        this.$Message.success('Success!');
+                        this.$Message.success('Success!')
                         this.addInventoryModal.show = false
-                        this.addInventoryModal.loading = false
 
                     }).catch(error => {
 
                         CATCH_ERR_HANDLER(error)
+                        this.$Message.error('Failed request!')
 
+                    }).then(() => {
                         this.addInventoryModal.loading = false
-                        this.$Message.error('Failed request!');
                     })
 
                 } else {
                     this.addInventoryModal.loading = false
-                    this.$Message.error('Check your entry!');
+                    this.$Message.error('Check your entry!')
                 }
             })
         },
@@ -247,7 +248,11 @@ export default {
                 onOk: () => {
 
                     axios.delete(domain + '/api/v2/inventory/sold/delete', { data: { SoldInventoryID: soldInventory.SoldInventoryID }}).then(response => {
-                        if (!response.data.success) return alert(response.data.message)
+                        if (!response.data.success) {
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
+                        }
 
                         // remove the deleted entry
                         salesReceipt.soldInventories.splice(salesReceipt.soldInventories.indexOf(soldInventory), 1)
@@ -260,16 +265,15 @@ export default {
                         }
                         salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
 
-                        this.$Modal.remove();
                         this.$Message.info('Succesfully removed sold inventory entry!')
 
                     }).catch(error => {
 
                         CATCH_ERR_HANDLER(error)
-
-                        this.$Modal.remove()
                         this.$Message.error('Failed request!')
 
+                    }).then(() => {
+                        this.$Modal.remove()
                     })
 
                 }
@@ -295,9 +299,9 @@ export default {
 
                         // if success: false
                         if (!response.data.success) {
-                            alert(response.data.message)
-                            salesReceipt.submitLoading = false
-                            return
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
                         }
 
                         // remove the successful entry
@@ -307,10 +311,11 @@ export default {
 
                     }).catch(error => {
 
-                        salesReceipt.submitLoading = false
                         this.$Message.error('Failed request!');
-
                         CATCH_ERR_HANDLER(error)
+
+                    }).then(() => {
+                        salesReceipt.submitLoading = false
                     })
 
                 } else {
@@ -327,7 +332,11 @@ export default {
 
         axios.get(domain + '/api/v2/sales-receipt/pending/all').then(response => {
 
-            if (!response.data.success) return alert(response.data.message)
+            if (!response.data.success) {
+                let error = new Error('API operation not successful.')
+                error.reponse = response
+                throw error
+            }
 
             console.log(response.data.data)
 
@@ -351,9 +360,16 @@ export default {
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
-            if (!response.data.success) return alert(response.data.message)
+            
+            if (!response.data.success) {
+                let error = new Error('API operation not successful.')
+                error.reponse = response
+                throw error
+            }
+
             console.log(response.data.data)
             this.inventories = response.data.data
+
         }).catch(CATCH_ERR_HANDLER)
     }
 }

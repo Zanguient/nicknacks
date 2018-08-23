@@ -17,6 +17,11 @@ const routers = [
             title: 'Inventory',
             name: 'Inventory',
             component: (resolve) => require(['./views/inventory.vue'], resolve)
+        }, ,{
+            path: '/shipment',
+            title: 'Shipment',
+            name: 'Shipment',
+            component: (resolve) => require(['./views/shipment.vue'], resolve)
         }]
     }
 ];

@@ -5,6 +5,8 @@
             <BreadcrumbItem>Inventory</BreadcrumbItem>
         </Breadcrumb>
 
+        <Button type="primary" @click="addProduct()">Add product</Button>
+
         <Table no-data-text="No inventories..." disabled-hover size="small" stripe border :columns="columns" :data="inventories"></Table>
 
         <Modal
@@ -41,7 +43,6 @@
 
         </Modal>
 
-
         <Modal
             v-model="transitModal.show"
             title="Transit Info">
@@ -77,6 +78,29 @@
             </span>
 
         </Modal>
+
+        <Modal
+            v-model="addInventoryModal.show"
+            title="Add product"
+            :loading="addInventoryModal.loading"
+            @on-ok="addInventoryOK('addInventoryForm')">
+
+            <Form label-position="right" :label-width="80" ref="addInventoryForm" :model="addInventoryModal.form" :rules="addInventoryModal.formRules">
+
+                <FormItem label="Name" prop="name">
+                    <Input v-model="addInventoryModal.form.name"></Input>
+                </FormItem>
+                <FormItem label="SKU" prop="sku">
+                    <Input v-model="addInventoryModal.form.sku"></Input>
+                </FormItem>
+                <FormItem prop="cogs" label="COGS">
+                    <Input type="text" number v-model="addInventoryModal.form.cogs"></Input>
+                </FormItem>
+
+            </Form>
+
+        </Modal>
+
 
     </div>
 </template>
@@ -181,13 +205,46 @@ export default {
 
             inventories: [],
 
-            // ADD Inventory Form
+            // EDIT Inventory Form
             editInventoryModal: {
                 deactivateInvSKU: '',
                 deleteInvSKU: '',
                 show: false,
                 loading: true,
                 inventory: '',
+                form: {
+                    name: '',
+                    sku: '',
+                    cogs: 0
+                },
+                formRules: {
+                    name: [
+                        { required: true, message: 'The name cannot be empty', trigger: 'blur' }
+                    ],
+                    sku: [
+                        { required: true, message: 'The sku cannot be empty', trigger: 'blur' }
+                    ],
+                    cogs: [{
+                        required: true,
+                        validator (rule, value, callback) {
+
+                            // check regex
+                            let regex = /^[1-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
+                            if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
+
+                            // everything passed
+                            return callback()
+
+                        },
+                        trigger: 'blur'
+                    }]
+                }
+            },
+
+            // ADD Inventory Form
+            addInventoryModal: {
+                show: false,
+                loading: true,
                 form: {
                     name: '',
                     sku: '',
@@ -232,6 +289,8 @@ export default {
 
         deactivateInv(inventory) {
             let self = this
+            this.editInventoryModal.deactivateInvSKU = ''
+
             this.$Modal.confirm({
                 render: (h) => {
 
@@ -288,6 +347,8 @@ export default {
         deleteInv(inventory) {
 
             let self = this
+            this.editInventoryModal.deleteInvSKU = ''
+
             this.$Modal.confirm({
                 render: (h) => {
 
@@ -355,7 +416,6 @@ export default {
 
         },
 
-
         showTransitDetails (inventory) {
             this.transitModal.inventory = inventory
             this.transitModal.show = true
@@ -393,9 +453,9 @@ export default {
 
                     axios.post(domain + '/api/v2/inventory/update', payload).then(response => {
                         if (!response.data.success) {
-                            alert(response.data.message)
-                            this.editInventoryModal.loading = false
-                            return
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
                         }
 
                         // set the new inventory data for view
@@ -404,18 +464,64 @@ export default {
 
                         this.$Message.success('Success!');
                         this.editInventoryModal.show = false
-                        this.editInventoryModal.loading = false
 
                     }).catch(error => {
 
                         CATCH_ERR_HANDLER(error)
-
-                        this.editInventoryModal.loading = false
                         this.$Message.error('Failed request!');
+
+                    }).then(() => {
+                        this.editInventoryModal.loading = false
                     })
 
                 } else {
                     this.editInventoryModal.loading = false
+                    this.$Message.error('Check your entry!');
+                }
+            })
+        },
+
+        addProduct() {
+            this.addInventoryModal.show = true
+        },
+
+        addInventoryOK (formName) {
+
+            this.$refs[formName].validate(valid => {
+
+                if (valid) {
+
+                    let payload = {
+                        name: this.addInventoryModal.form.name,
+                        sku: this.addInventoryModal.form.sku,
+                        cogs: this.addInventoryModal.form.cogs
+                    }
+
+                    axios.put(domain + '/api/v2/inventory/add', payload).then(response => {
+                        if (!response.data.success) {
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
+                        }
+                        console.log(response.data)
+
+                        // push the new inventory into view
+                        this.inventories.unshift(response.data.inventory)
+
+                        this.$Message.success('Success!');
+                        this.addInventoryModal.show = false
+
+                    }).catch(error => {
+
+                        CATCH_ERR_HANDLER(error)
+                        this.$Message.error('Failed request!')
+
+                    }).then(() => {
+                        this.addInventoryModal.loading = false
+                    })
+
+                } else {
+                    this.addInventoryModal.loading = false
                     this.$Message.error('Check your entry!');
                 }
             })
@@ -432,7 +538,13 @@ export default {
         window.V = this
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
-            if (!response.data.success) return alert(response.data.message)
+            
+            if (!response.data.success) {
+                let error = new Error('API operation not successful.')
+                error.reponse = response
+                throw error
+            }
+
             console.log(response.data.data)
             this.inventories = response.data.data
 

@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const debug = require('debug')('api:inventory')
+const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
 
 let inventoryIncludes = [{
 
@@ -115,7 +116,13 @@ router.get('/all', (req, res, next) => {
             if (soldStockObject) {
                 soldStockObject.quantity += quantitySold;
             } else {
-                matchedInventory.stock.push({name: "Sold", quantity: quantitySold })
+
+                if (!matchedInventory.stock) {
+                    matchedInventory.stock = {name: "Sold", quantity: quantitySold }
+                } else {
+                    matchedInventory.stock.push({name: "Sold", quantity: quantitySold })
+                }
+
             }
 
         });
@@ -129,7 +136,11 @@ router.get('/all', (req, res, next) => {
                 transitStock.quantity += parseInt(transit.quantity)
             });
 
-            inventory.stock.push(transitStock);
+            if (!inventory.stock) {
+                inventory.stock = [transitStock]
+            } else {
+                inventory.stock.push(transitStock)
+            }
 
         })
 
@@ -154,69 +165,32 @@ router.get('/all', (req, res, next) => {
 
 router.put('/add', (req, res, next) => {
 
-    DB.Inventory.create(req.body).then( inventory => {
+    DB.Inventory.create(req.body, {returning: true}).then(inventory => {
+        
+        return [
+            DB.Inventory.findById(inventory.InventoryID, {
+                include: inventoryIncludes
+            }),
 
-        var promises = [ inventory ]; //push inventory back to the next bubble.
+            DB.Inventory_Storage.findAll({
+                where: {
+                    Inventory_inventoryID: inventory.InventoryID
+                },
+                include: inventoryStorageIncludes
+            })
+        ]
+    }).spread( (inventory, soldInventories) => {
 
-        req.body.storageAndQuantities.forEach( el => {
-            promises.push(  DB.Inventory_Storage.create({
-                Inventory_inventoryID: inventory.InventoryID,
-                StorageLocation_storageLocationID: el.StorageLocationID,
-                quantity: el.quantity
-            })  )
-        });
-
-        return promises;
-
-    }).spread(inventory => {
-
-        return DB.Inventory.findById(inventory.InventoryID, {
-            include: [{
-                model: DB.StorageLocation,
-                through: {
-                    model: DB.Inventory_Storage,
-                    attributes: [
-                        'Inventory_StorageID',
-                        'StorageLocation_storageLocationID',
-                        'Inventory_inventoryID',
-                        'quantity'
-                    ]
-                }
-            }]
-        });
-
-    }).then(inventory => {
+        let processed = singleInventoryProcessor(inventory, soldInventories)
 
         return res.send({
             success: true,
-            inventory: inventory
-        });
+            inventory: processed
+        })
 
-    }).catch(function(error) {
+    }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
 
-        console.log(error);
-
-        return res.status(400).json({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        });
-        return res.status(500).json({
-            success: false,
-            error: {
-                message: 'Server error: ' + error.message +'. Please check console log.',
-                hideMessage: false,
-                debug: error
-            }
-        });
-
-    })
-
-
-});
+})
 
 router.post('/update', (req, res, next) => {
 
@@ -241,53 +215,11 @@ router.post('/update', (req, res, next) => {
         ]
     }).spread( (inventory, soldInventories) => {
 
-        // merge inventories with soldInventories
-        inventory = JSON.parse(JSON.stringify(inventory))
-        soldInventories = JSON.parse(JSON.stringify(soldInventories))
-
-        inventory.soldInventories = soldInventories
-
-        // for each of the soldInventories record
-        inventory.soldInventories.forEach(element => {
-
-            // calculating for quantities sold
-            let quantitySold = 0;
-
-            // for each of the transactions within this soldInventory
-            // NOTE: a single line of soldInventory is a pair between Transaction and
-            //       a particular physical inventory stored at a place (Inventory_Storage)
-            element.Transactions.forEach( element => {
-                quantitySold += parseInt(element.SoldInventory.quantity)
-            });
-
-            let soldStockObject = inventory.stock.find( item => {
-                if (item.name === "Sold") return item;
-                return false;
-            })
-
-            if (soldStockObject) {
-                soldStockObject.quantity += quantitySold;
-            } else {
-                inventory.stock.push({name: "Sold", quantity: quantitySold })
-            }
-
-        })
-
-        // Loop through the transit inventories to generate the Transit object.
-
-        let transitStock = { name: 'Transit', quantity: 0 };
-
-        inventory.TransitInventories.forEach(transit => {
-            transitStock.quantity += parseInt(transit.quantity)
-        });
-
-        inventory.stock.push(transitStock);
-
-        console.log(inventory)
+        let processed = singleInventoryProcessor(inventory, soldInventories)
 
         return res.send({
             success: true,
-            inventory: inventory
+            inventory: processed
         })
 
     }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })

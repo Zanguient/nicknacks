@@ -45,7 +45,7 @@
                 <MenuItem name="3-3">Discrepancy</MenuItem>
             </Submenu>
 
-            <MenuItem class="menuItem" name="4" >
+            <MenuItem class="menuItem" name="4"  to="/shipment">
                 <Icon class="menuIcon" type="ios-boat" />
                 Shipment
             </MenuItem>
