@@ -5,6 +5,13 @@
 
 function apiErrorHandler(err, req, res, next, config) {
 
+    if(D.get(err, 'status') === 404) {
+        return res.status(404).send({
+            success: false,
+            message: 'Not found.'
+        })
+    }
+
     res.status(D.get(err, 'status') || 500);
 
     // use simple timestamps to mark 500 errors.
@@ -13,44 +20,51 @@ function apiErrorHandler(err, req, res, next, config) {
     // severity
     let severityDefaults = ['high', 'medium', 'low']
 
-    console.log('vvvvvvvvvvvvvvvvvvvvvvv')
+    let toLog = !D.get(err, 'noLogging')
 
-    // if severity is defined
-    let level = D.get(err, 'level') || D.get(config, 'level')
-    if (level) {
-        if (severityDefaults.indexOf(level) < 0) {
-            console.log('**ERROR - HIGH ** Wrong error severity level defined. It can only be `high`, `medium or `low`.')
+    if (toLog) {
+
+        console.log('vvvvvvvvvvvvvvvvvvvvvvv')
+
+        // if severity is defined
+        let level = D.get(err, 'level') || D.get(config, 'level')
+        if (level) {
+            if (severityDefaults.indexOf(level) < 0) {
+                console.log('**ERROR - HIGH ** Wrong error severity level defined. It can only be `high`, `medium or `low`.')
+            }
         }
+
+        // for level of severity. if not stated, assume critical
+        level = level || 'high'
+
+        // logging
+        console.log('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
+        console.log(D.get(err, 'message') || D.get(config, 'message'))
+        console.log(err)
+
+        // category dependent outputs
+        if (err.category === 'QBO') {
+            console.log('====================')
+            console.log(err.category + ' error output:')
+            console.log(JSON.stringify(err.QBOResponse))
+        }
+
+        console.log('**END OUTPUT**')
+        console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^')
+
     }
 
-    // for level of severity. if not stated, assume critical
-    level = level || 'high'
-
-    // logging
-    console.log('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
-    console.log(D.get(err, 'message') || D.get(config, 'message'))
-    console.log(err)
-
-    // category dependent outputs
-    if (err.category === 'QBO') {
-        console.log('====================')
-        console.log(err.category + ' error output:')
-        console.log(JSON.stringify(err.QBOResponse))
-    }
-
-    console.log('**END OUTPUT**')
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^')
-
-    // default responseObject
-    var responseObject = {
+    // default response
+    let responseObject = {
         success: false,
-        message: 'Server error: ' + D.get(err, 'message') +' Please check console log. (' + timestamp + ')',
+        message: 'Server error: ' + D.get(err, 'message'),
         error: {
             timestamp: timestamp
         }
     }
 
     // MODIFIERS
+    if (toLog) responseObject.message += ' Please check console log. (' + timestamp + ')'
     if (D.get(config, 'message')) responseObject.message = D.get(config, 'message')
     if (D.get(config, 'message') && D.get(config, 'attachTimeStampToResponse') === true) responseObject.message += ' (TS:' + timestamp + ')'
 

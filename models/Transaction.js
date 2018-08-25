@@ -76,7 +76,47 @@ function Transaction(sequelize, DataTypes) {
 
                 if (!this.paymentMethod) return null;
 
-                if (this.paymentMethod === 'stripe') {
+                // old stripe webhook will carry this, we are checking for new magento webhooks
+                if (D.get(self, 'data.type') !== 'charge.succeeded') {
+
+                    let object = {};
+
+                    let momentDate = MOMENT.unix(D.get(self, 'data.order_created_at'))
+
+                    object.transactionDateUnixTS = momentDate.unix()
+                    object.transactionDateQBOFormat = momentDate.format('YYYY-MM-DD');
+                    object.transactionDateTime = momentDate.format('Do MMM YY, HH:mm');
+
+                    object.customerName = (function(txn) {
+                        let firstName = D.get(txn, 'data.data.customer_firstname')
+                        let lastName = D.get(txn, 'data.data.customer_lastname')
+
+                        var name = ''
+
+                        if (firstName) name += firstName
+                        if (lastName) name += ' ' + lastName
+
+                        return name
+                    })(this)
+
+                    object.generalDescription = D.get(self, 'salesOrderNumber') + ', ' + (object.customerName || 'Anonymous')
+
+                    object.salesOrderNumber = this.salesOrderNumber
+
+                    object.customerEmail = D.get(self, 'data.data.customer_email')
+
+                    object.customerPhone = D.get(self, 'data.data.customer_telephone')
+
+                    // MISSING!!!
+                    object.totalAmount = ''
+
+                    object.address = D.get(self, 'data.data.shipping_address')
+
+
+                    return object;
+
+                } else {
+                    // this is the old stripe object.
                     let object = {};
 
                     object.transactionDateUnixTS = D.get(self, 'data.data.object.created');
@@ -141,48 +181,6 @@ function Transaction(sequelize, DataTypes) {
                     })(this);
 
                     return object;
-                }
-
-                else if (this.paymentMethod === 'bank transfer') {
-
-                    let object = {};
-
-                    // missing
-                    // we should be using the order date!!
-                    let momentDate = MOMENT(this.createdAt)
-
-                    object.transactionDateUnixTS = momentDate.unix()
-                    object.transactionDateQBOFormat = momentDate.format('YYYY-MM-DD');
-                    object.transactionDateTime = momentDate.format('Do MMM YY, HH:mm');
-
-                    object.customerName = (function(txn) {
-                        let firstName = D.get(txn, 'data.data.customer_firstname')
-                        let lastName = D.get(txn, 'data.data.customer_lastname')
-
-                        var name = ''
-
-                        if (firstName) name += firstName
-                        if (lastName) name += ' ' + lastName
-
-                        return name
-                    })(this)
-
-                    object.generalDescription = D.get(self, 'salesOrderNumber') + ', ' + (object.customerName || 'Anonymous')
-
-                    object.salesOrderNumber = this.salesOrderNumber
-
-                    object.customerEmail = D.get(self, 'data.data.customer_email')
-
-                    object.customerPhone = D.get(self, 'data.data.customer_telephone')
-
-                    // MISSING!!!
-                    object.totalAmount = ''
-
-                    object.address = D.get(self, 'data.data.shipping_address')
-
-
-                    return object;
-
                 }
 
             },

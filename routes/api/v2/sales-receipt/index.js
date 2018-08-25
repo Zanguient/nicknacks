@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const debug = require('debug')('api:sales-receipt')
 
-router.get('/pending/all', (req, res) => {
+router.get('/pending/all', (req, res, next) => {
 
     let options = {
         where: {
@@ -50,7 +50,7 @@ router.get('/pending/all', (req, res) => {
 
 })
 
-router.get('/pending-delivery/all', (req, res) => {
+router.get('/pending-delivery/all', (req, res, next) => {
 
     let options = {
         where: {
@@ -409,7 +409,7 @@ router.post('/deliver', (req, res, next) => {
 
                 //record inventory movement
                 let createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
-                
+
                 // same for DB calls "required" from outside, it will be outside of this CLS scoping, need to manually pass `t`
                 let recordMovement = createInventoryRecord(t, 'delivery', transaction, req.user)
                 promises.push(recordMovement)

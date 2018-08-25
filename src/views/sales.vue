@@ -29,8 +29,9 @@
                         <p slot="content">
                             <Icon type="ios-person" /> {{ salesReceipt.details.customerName }}<br>
                             <Icon type="ios-mail" /> {{ salesReceipt.details.customerEmail }}<br>
-                            <Icon type="ios-phone-portrait" /> {{ salesReceipt.customer_telephone }}<br>
+                            <Icon type="ios-phone-portrait" /> {{ salesReceipt.details.customerPhone }}<br>
                             <Icon type="ios-card" /> {{ salesReceipt.paymentMethod }}<br>
+                            <Icon type="ios-calendar-outline" /> {{ salesReceipt.details.transactionDateTime }}
                         </p>
                     </Panel>
                     <Panel name="productsSold">
@@ -360,7 +361,7 @@ export default {
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
-            
+
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')
                 error.reponse = response

@@ -166,7 +166,7 @@ router.get('/all', (req, res, next) => {
 router.put('/add', (req, res, next) => {
 
     DB.Inventory.create(req.body, {returning: true}).then(inventory => {
-        
+
         return [
             DB.Inventory.findById(inventory.InventoryID, {
                 include: inventoryIncludes
