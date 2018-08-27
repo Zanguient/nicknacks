@@ -26,8 +26,11 @@ function createWunderlistTask(fromMagento, options) {
             return getTaskByID(parseInt(task.WunderlistTaskID)).then(wunderlistTask => {
 
                 // if wunderlist task exist also, return false
-                if (!(D.get(wunderlistTask, 'code') === 404)) return false
-
+                if (!(D.get(wunderlistTask, 'code') === 404)) {
+                    debug('Task exist in wunderlist')
+                    return false
+                }
+                debug('Task does not exist in wunderlist')
                 return task
             })
 
