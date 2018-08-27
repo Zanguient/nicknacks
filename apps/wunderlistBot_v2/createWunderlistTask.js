@@ -63,7 +63,7 @@ function createWunderlistTask(fromMagento, options) {
             let itemBody = '\n\n\n# Purchase'
             for(let i=0; i<items.length; i++) {
                 let item = items[i]
-                itemBody += '\n\n## ' + (i+1) + '. item.name'
+                itemBody += '\n\n## ' + (i+1) + '. ' + item.name
 
                 if (item.product_description && item.product_description.length > 0) {
                     itemBody += '\n(Description ' + item.product_description + ')'
