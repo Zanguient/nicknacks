@@ -9,7 +9,8 @@ function WunderlistTask(sequelize, DataTypes) {
         },
         salesOrderID: {
             type: DataTypes.BIGINT,
-            allowNull: false
+            allowNull: false,
+            unique: true
         },
         status: {
             type: DataTypes.STRING,

@@ -30,6 +30,9 @@ function createWunderlistTask(fromMagento, options) {
                     debug('Task exist in wunderlist')
                     return false
                 }
+
+                // if tas
+                debug(wunderlistTask)
                 debug('Task does not exist in wunderlist')
                 return task
             })
@@ -209,12 +212,11 @@ function createWunderlistTask(fromMagento, options) {
 
             //dbTask is an object if the task exists in DB but was deleted off wunderlist
             if (typeof dbTask !== 'string') {
-                dbTask.WunderlistTaskID: TASK_DATA.id
-                return dbTask.save()
-            }
+                return dbTask.destroy()
+            } else { return false }
 
+        }).then(() => {
 
-            // if not means its a brand new entry, create DB record as well.
             return DB.WunderlistTask.create({
                 WunderlistTaskID: TASK_DATA.id,
                 salesOrderID: obj.ID.default
