@@ -23,7 +23,7 @@ function wunderlistBot(fromMagento, options) {
         error.status = 400
         throw error
     }
-    type = type.toLowerCase
+    type = type.toLowerCase()
 
     if (type === 'order')
         // 1.  SALES ORDER
