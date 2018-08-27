@@ -175,7 +175,7 @@ function createWunderlistTask(fromMagento, options) {
             if (obj.paymentMethod.toLowerCase() === 'bank transfer') {
                 debug('Bank transfer detected. Creating subtask...')
                 let verifySubtask = createSubtask({
-                    'list_id': taskData.id,
+                    'task_id': taskData.id,
                     'title': 'Verify bank transfer: ' + obj.totals.grand_total_incl_tax
                 })
                 promises.push(verifySubtask)
