@@ -179,7 +179,9 @@ function createWunderlistTask(fromMagento, options) {
                     'title': 'Verify bank transfer: ' + obj.totals.grand_total_incl_tax
                 })
                 promises.push(verifySubtask)
-            } else { return false }
+            } else { promises.push(false) }
+
+            return promises
 
         }).spread((noteData, subtask)=> {
 
