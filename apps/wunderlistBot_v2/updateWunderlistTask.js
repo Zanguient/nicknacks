@@ -12,7 +12,7 @@ const prepareComments = require('.prepareComments')
 function updateWunderlistTask(fromMagento, options) {
 
     let obj = {}
-    obj.ID = makeIDObject(fromMagento.increment_id)
+    obj.ID = makeIDObject(fromMagento.order_id)
 
     debug('Initiating process for: ' + obj.ID.withoutHex)
 

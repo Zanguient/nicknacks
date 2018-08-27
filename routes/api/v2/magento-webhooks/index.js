@@ -12,7 +12,7 @@ router.post('/sales-order', (req, res, next) => {
 
     debug(req.body)
 
-    if(D.get(req, 'query.livemode') === false) {
+    if(D.get(req, 'query.livemode') === 'false') {
         console.log(req.body)
         return res.send({ success: false })
     }
@@ -89,7 +89,7 @@ router.post('/sales-order/comment', (req, res, next) => {
 
     debug(req.body)
 
-    if(D.get(req, 'query.livemode') === false) {
+    if(D.get(req, 'query.livemode') === 'false') {
         console.log(req.body)
         return res.send({ success: false })
     }
@@ -109,10 +109,60 @@ router.post('/sales-order/comment', (req, res, next) => {
         throw error
     }
 
+    // peculiar to orderComment, the increment_id contains the sales order id and underscored its own ID.
+    salesOrderNumber = salesOrderNumber.split('_')
+    salesOrderNumber = salesOrderNumber[0]
+
+    // just create order_id for downstream use
+    req.body.order_id = salesOrderNumber
+
     // find if transaction already exist
     DB.Transaction.findOne({
         where: {
-            salesOrderNumber: req.body.increment_id
+            salesOrderNumber: salesOrderNumber
+        }
+    }).then(txn => {
+
+        if(!txn) {
+            let error = new Error('Sales order is not found. Please ensure that the "order" created and the webhook is working.')
+            error.status = 400
+            throw error
+        }
+
+        return wunderlistBot(req.body)
+
+    }).then(() => {
+        // send success
+        return res.send({
+            success: true
+        })
+
+    }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
+
+})
+
+router.post('/others', (req, res, next) => {
+
+    debug(req.body)
+
+    if(D.get(req, 'query.livemode') === 'false') {
+        console.log(req.body)
+        return res.send({ success: false })
+    }
+
+    // get sales order number
+    var salesOrderNumber = D.get(req, 'body.order_id')
+
+    if(!salesOrderNumber) {
+        let error = new Error('Missing `order_id` parameter as salesOrderNumber.')
+        error.status = 400
+        throw error
+    }
+
+    // find if transaction already exist
+    DB.Transaction.findOne({
+        where: {
+            salesOrderNumber: salesOrderNumber
         }
     }).then(txn => {
 

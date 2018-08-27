@@ -60,7 +60,38 @@ function createWunderlistTask(fromMagento, options) {
 
             obj.totals = fromMagento.totals
 
-            let body = '# ' + obj.ID.stub
+            /* TITLE */
+
+            let title = obj.ID.stub
+
+            // for sofa, add logo
+            let sofa = _.find(fromMagento.items, (item) => {
+                if (typeof item.sku === 'string') {
+                    return item.sku.toLowerCase().indexOf('sofa') > -1
+                }
+            })
+            let mila = _.find(fromMagento.items, (item) => {
+                if (typeof item.sku === 'string') {
+                    return item.sku.toLowerCase().indexOf('mila') > -1
+                }
+            })
+            if (sofa || mila) {
+                title += ' '
+                if (sofa) title += '🛋'
+                if (mila) title += '👕'
+            }
+
+            // title += ' ,'  + obj.name // the address already has the name
+            // if (obj.address && obj.address.length > 0 ) title += ', ' + obj.name
+            // title += ' ,' + obj.phone // the address also already has the telephone
+            let titleShort = title + ', ' + obj.name
+            let titleLong = title + +', ' + obj.address
+
+            /* BODY */
+            let body = '# ' + titleLong
+
+            body += '\n\n\n# Info'
+            body += '\nSales Order: ' + obj.ID.stub
             body += '\nName: ' + obj.name
             body += '\nEmail: ' + obj.email
             body += '\nPhone: ' + obj.phone
@@ -89,33 +120,9 @@ function createWunderlistTask(fromMagento, options) {
             body += '\nWithout tax: ' + obj.totals.grand_total
             body += '\nWith tax: ' +  obj.totals.grand_total_incl_tax
 
-            let title = obj.ID.stub
-
-            // for sofa, add logo
-            let sofa = _.find(fromMagento.items, (item) => {
-                if (typeof item.sku === 'string') {
-                    return item.sku.toLowerCase().indexOf('sofa') > -1
-                }
-            })
-            let mila = _.find(fromMagento.items, (item) => {
-                if (typeof item.sku === 'string') {
-                    return item.sku.toLowerCase().indexOf('mila') > -1
-                }
-            })
-            if (sofa || mila) {
-                title += ' '
-                if (sofa) title += '🛋'
-                if (mila) title += '👕'
-            }
-
-            // title += ' ,'  + obj.name // the address already has the name
-            if (obj.address && obj.address.length > 0 ) title += ' ,' + obj.address
-            // title += ' ,' + obj.phone // the address also already has the telephone
-
-
             var taskObject = {
                 'list_id': parseInt(process.env.WL_LIST_ID_FOR_SALES_DELIVERY),
-                'title': title,
+                'title': titleShort,
                 'starred': true
             }
             if (obj.deliveryDate) taskObject.due_date = obj.dateOfDelivery;
