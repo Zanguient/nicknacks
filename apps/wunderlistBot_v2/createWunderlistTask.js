@@ -104,7 +104,7 @@ function createWunderlistTask(fromMagento, options) {
         // if (obj.address && obj.address.length > 0 ) title += ', ' + obj.name
         // title += ' ,' + obj.phone // the address also already has the telephone
         let titleShort = title + ', ' + obj.name
-        let titleLong = title + +', ' + obj.address
+        let titleLong = title + ', ' + obj.address
 
         /* BODY */
         let body = '# ' + titleLong
@@ -216,7 +216,7 @@ function createWunderlistTask(fromMagento, options) {
             })
 
         })
-        
+
     })
 
 }
