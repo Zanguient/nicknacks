@@ -25,7 +25,7 @@ function wunderlistBot(fromMagento, options) {
     }
     type = type.toLowerCase()
 
-    if (type === 'order')
+    if (type === 'order') {
         // 1.  SALES ORDER
         return createWunderlistTask(fromMagento, options)
 
@@ -35,6 +35,6 @@ function wunderlistBot(fromMagento, options) {
 
     }
 
-};
+}
 
 module.exports = wunderlistBot;
