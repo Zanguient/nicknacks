@@ -54,7 +54,8 @@ router.get('/pending-delivery/all', (req, res, next) => {
 
     let options = {
         where: {
-            status: 'completed'
+            status: 'completed',
+            eventType: 'checkout'
         },
         order: [ ['TransactionID', 'DESC'] ],
         include: [{
