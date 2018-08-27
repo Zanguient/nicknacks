@@ -55,7 +55,10 @@ router.get('/pending-delivery/all', (req, res, next) => {
     let options = {
         where: {
             status: 'completed',
-            eventType: 'checkout'
+            $or: [
+                { eventType: 'checkout'},
+                { eventType: 'charge-succeeded'}
+            ]
         },
         order: [ ['TransactionID', 'DESC'] ],
         include: [{
