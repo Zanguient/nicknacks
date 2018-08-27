@@ -2,12 +2,14 @@ const debug = require('debug')('apps:wunderlistBot:promises:updateTask')
 
 function updateTask(id, rev, payload) {
     return new PROMISE(function(resolve, reject) {
-        WL.http.tasks.getID(id, rev, payload).done((data, statusCode) => {
-            if(statusCode !== 201) {
+        WL.http.tasks.update(id, rev, payload).done((data, statusCode) => {
+            if(statusCode !== 200) {
                 let error = new Error('Wunderlist update task error with statusCode: ' + statusCode)
                 error.status = 500
+                debug(error)
                 reject(error)
             } else {
+                debug(data)
                 resolve(data)
             }
         }).fail((resp, code) => {

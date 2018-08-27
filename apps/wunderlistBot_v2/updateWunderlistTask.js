@@ -6,7 +6,7 @@ const _ = require('lodash')
 const getTaskByID = require('./promises/getTaskByID')
 const createTaskComment = require('./promises/createTaskComment')
 const updateTask = require('./promises/updateTask')
-const prepareComments = require('.prepareComments')
+const prepareComments = require('./prepareComments')
 
 
 function updateWunderlistTask(fromMagento, options) {
@@ -19,7 +19,7 @@ function updateWunderlistTask(fromMagento, options) {
     // first time if the task exist on DB
     return DB.WunderlistTask.find({
         where: { salesOrderID: obj.ID.default }
-    }).then((task => {
+    }).then(task => {
 
         if (!task) {
             let error = new Error('Wunderlist task on DB not found. Please make sure `Order` webhook is working and resend it.')
@@ -31,7 +31,7 @@ function updateWunderlistTask(fromMagento, options) {
 
     }).then(wunderlistTask => {
 
-        if (!wunderslistTask.id) {
+        if (!wunderlistTask.id) {
             let error = new Error('Wunderlist task on WL not found. Please make sure `Order` webhook is working and task exists on Wunderlist App.')
             error.status = 500
             throw error
@@ -66,16 +66,17 @@ function updateWunderlistTask(fromMagento, options) {
             let starred = (fromMagento.type.toLowerCase() === 'ordercomment') ? true : false
 
             if (wunderlistTask.due_date !== deliveryDate || wunderlistTask.starred !== starred) {
-                debug(ID.withoutHex + ': Updating task because either `due_date` or `starred` is different.')
+                debug(obj.ID.withoutHex + ': Updating task because either `due_date` or `starred` is different. With payload:')
                 let taskUpdatePayload = {
                     due_date: deliveryDate,
                     starred: starred
                 }
-                promises.push(updateTask(wunderlistTask.id, wunderlistTask.rev, taskUpdatePayload))
+                debug(taskUpdatePayload)
+                promises.push(updateTask(wunderlistTask.id, wunderlistTask.revision, taskUpdatePayload))
             }
 
         }
-        return PROMISES.all(promises)
+        return PROMISE.all(promises)
 
     })
 

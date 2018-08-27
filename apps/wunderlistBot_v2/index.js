@@ -30,7 +30,6 @@ function wunderlistBot(fromMagento, options) {
         return createWunderlistTask(fromMagento, options)
 
     } else {
-
         return updateWunderlistTask(fromMagento, options)
 
     }

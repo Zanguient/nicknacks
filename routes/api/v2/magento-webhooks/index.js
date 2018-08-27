@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const debug = require('debug')('api:magento-webhooks')
-const wunderlistBot = require(__appsDir + '/wunderlistBot_v2/createWunderlistTask')
+const wunderlistBot = require(__appsDir + '/wunderlistBot_v2/index')
 
 router.post('*', (req, res, next) => {
     if(req.query.token !== process.env.STRIPE_SIMPLE_TOKEN) return res.status(403).send()

@@ -6,6 +6,7 @@ function createTaskNote(payload) {
             if(statusCode !== 201) {
                 let error = new Error('Wunderlist note creation error with statusCode: ' + statusCode)
                 error.status = 500
+                debug(error)
                 reject(error)
             } else {
                 debug(data)

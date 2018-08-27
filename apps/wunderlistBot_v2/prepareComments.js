@@ -1,5 +1,7 @@
 'use strict';
 
+const makeIDObject = require('./makeIDObject')
+
 function prepareComments(fromMagento) {
 
     let obj = {}
@@ -15,7 +17,10 @@ function prepareComments(fromMagento) {
         obj.address = fromMagento.data.shipping_address
 
 
-        obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
+        if (fromMagento.data.delivery_date) {
+            obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
+            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('MMMM Do YYYY')
+        }
         obj.deliveryTime = fromMagento.data.delivery_time
         obj.deliveryComments = fromMagento.data.delivery_comments
 
@@ -24,7 +29,7 @@ function prepareComments(fromMagento) {
 
         /* BODY */
         let body = '# ' + obj.salesOrderID.stub
-        if (type === 'ordercoment') { body += ' Order Comment' }
+        if (type === 'ordercomment') { body += ' Order Comment' }
 
         else if (type === 'shipment') {
             body += ' Delivery Order (No.'
@@ -33,7 +38,7 @@ function prepareComments(fromMagento) {
 
         else if (type === 'shipmentcomment') {
             body += ' Delivery Comment (for DO No.'
-            body += ' ' + obj.docID.withoutHex + ')' 
+            body += ' ' + obj.docID.withoutHex + ')'
         }
 
         // if there are comments
@@ -43,7 +48,7 @@ function prepareComments(fromMagento) {
         if (obj.address && obj.address.length > 0) {
             body += '\n\n\n# Delivery'
             body += '\nAddress:' + obj.address
-            body += '\nDelivery date: ' + (obj.deliveryDate || 'Not indicated')
+            body += '\nDelivery date: ' + (obj.deliveryDateFull || 'Not indicated')
             body += '\nTime: ' + (obj.deliveryTime || 'Not indicated')
             if (obj.delivery_comments && obj.delivery_comments.length > 0) body += '\nComment: ' + obj.delivery_comments
         }

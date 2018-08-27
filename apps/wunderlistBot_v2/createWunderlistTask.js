@@ -36,7 +36,10 @@ function createWunderlistTask(fromMagento, options) {
             obj.paymentMethod = fromMagento.data.payment_method
 
             obj.address = fromMagento.data.shipping_address
-            obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
+            if (fromMagento.data.delivery_date) {
+                obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
+                obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('MMMM Do YYYY')
+            }
             obj.deliveryTime = fromMagento.data.delivery_time
             obj.deliveryComments = fromMagento.data.delivery_comments
 
@@ -105,7 +108,7 @@ function createWunderlistTask(fromMagento, options) {
             if (obj.address && obj.address.length > 0) {
                 body += '\n\n\n# Delivery'
                 body += '\nAddress: ' + obj.address
-                body += '\nDelivery date: ' + (obj.deliveryDate || 'Not indicated')
+                body += '\nDelivery date: ' + (obj.deliveryDateFull || 'Not indicated')
                 body += '\nTime: ' + (obj.deliveryTime || 'Not indicated')
                 if (obj.delivery_comments && obj.delivery_comments.length > 0) body += '\nComment: ' + obj.delivery_comments
             }
