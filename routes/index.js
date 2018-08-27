@@ -415,6 +415,7 @@ router.post('/refunded', function (req, res) {
         return res.status(400).send({ success: false, error: { message: 'unable to parse sales order number.'} });
     } else {
         salesOrderNumber = salesOrderNumber.split(',')[0].trim();
+        salesOrderNumber = salesOrderNumber.replace('#', '');
     }
 
     var _TRANSACTION;
