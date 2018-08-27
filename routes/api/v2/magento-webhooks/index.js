@@ -44,10 +44,7 @@ router.post('/sales-order', (req, res, next) => {
     // find if transaction already exist
     DB.Transaction.findOne({
         where: {
-            $or: {
-                salesOrderNumber: req.body.increment_id,
-                salesOrderNumber: '#' + req.body.increment_id
-            }
+            salesOrderNumber: req.body.increment_id
         }
     }).then(txn => {
 
