@@ -5,6 +5,7 @@ const makeIDObject = require('./makeIDObject.js')
 const _ = require('lodash')
 const createTask = require('./promises/createTask')
 const createTaskNote = require('./promises/createTaskNote')
+const createSubtask = require('./promises/createSubtask')
 
 function createWunderlistTask(fromMagento, options) {
 
@@ -138,6 +139,8 @@ function createWunderlistTask(fromMagento, options) {
 
                 TASK_DATA = taskData
 
+                let promises = []
+
                 debug(obj.ID.withoutHex + ': Respond from WL in creating task:');
                 debug(JSON.stringify(taskData));
 
@@ -150,12 +153,28 @@ function createWunderlistTask(fromMagento, options) {
                 // add the note.
                 debug(obj.ID.withoutHex + ': Adding note...');
 
-                return createTaskNote(noteObject)
+                promises.push(createTaskNote(noteObject))
 
-            }).then(noteData => {
+
+                // create subtasks for bank transfer
+                if (obj.paymentMethod.toLowerCase() === 'bank transfer') {
+                    debug('Bank transfer detected. Creating subtask...')
+                    let verifySubtask = createSubtask({
+                        'list_id': taskData.id,
+                        'title': 'Verify bank transfer: ' + obj.totals.grand_total_incl_tax
+                    })
+                    promises.push(verifySubtask)
+                } else { return false }
+
+            }).spread((noteData, subtask)=> {
 
                 debug(obj.ID.withoutHex + ': Respond from WL in creating note:');
                 debug(JSON.stringify(noteData));
+
+                if(subtask) {
+                    debug(obj.ID.withoutHex + ': Respond from WL in creating subtask:');
+                    debug(JSON.stringify(subtask));
+                }
 
                 let options = {}
 
