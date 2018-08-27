@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var debug = require('debug')('routes:v2:shipment');
+var debug = require('debug')('api:shipment');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -10,9 +10,9 @@ router.get('/', function (req, res, next) {
     });
 });
 
-router.get('/all', function(req, res, next) {
+router.get('/all', (req, res, next) => {
 
-    const where = {};
+    let where = {}
     var order = [ ['estimatedShipOut', 'DESC'] ]; // by default the order is by estimatedShipOut date
 
     if (req.query.hasArrived) {
@@ -37,17 +37,17 @@ router.get('/all', function(req, res, next) {
                 ]
             }
         }]
-    }).then(function (shipments) {
+    }).then(shipments => {
 
-        var shipments = JSON.parse(JSON.stringify(shipments));
+        var shipments = JSON.parse(JSON.stringify(shipments))
 
         // re-format the Inventories json
         // admittedly, Inventories should have be named Products.
-        shipments.forEach(function(shipment) {
+        shipments.forEach(shipment => {
 
-            shipment.products = [];
+            shipment.products = []
 
-            shipment.Inventories.forEach(function(inventory) {
+            shipment.Inventories.forEach(inventory => {
                 shipment.products.push({
                     InventoryID: inventory.InventoryID,
                     name: inventory.name,
@@ -59,25 +59,14 @@ router.get('/all', function(req, res, next) {
             delete shipment.Inventories;
         });
 
+        console.log(shipments)
+
         res.send({
             success: true,
             shipments: shipments
         });
 
-    }).catch(function(err) {
-        console.log(err)
-        res.status(500).send({
-            success: false,
-            error: {
-                message: 'An error has occurred, please try again',
-                hideMessage: false,
-                debug: {
-                    message: 'Catch handler',
-                    errorObject: err
-                }
-            }
-        });
-    });
+    }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
 });
 

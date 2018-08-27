@@ -44,7 +44,6 @@ router.get('/', function(req, res, next) {
 
     }
 
-
     PROMISE.resolve().then(function() {
 
         return [
