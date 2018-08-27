@@ -16,6 +16,8 @@ function getTaskByID(payload) {
             let error = new Error(D.get(resp, 'error.message'))
             error.WLResp = resp
             error.WLResp.code = code
+            // we want 404 to resolve...
+            if (code == 404) resolve({ resp: resp, code: code })
             reject(error)
         })
     })
