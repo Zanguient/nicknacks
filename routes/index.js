@@ -4,8 +4,11 @@ const path = require('path');
 
 
 /* GET home page. */
-router.get('/admin*', function (req, res) {
-  res.sendFile(path.resolve(__dirname, '../dist/index.html'));
+router.get('/admin_' + process.env.ADMIN_URL_SUFFIX + '*', function (req, res) {
+// console.log(path.resolve(__dirname, '../dist/index.html'))
+//
+//     res.sendFile(path.resolve(__dirname, 'index.html'));
+    res.render('admin')
 });
 // NICKNACK POST ROUTES
 router.post('/create-sales-receipt', function(req, res) {

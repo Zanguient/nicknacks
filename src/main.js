@@ -15,7 +15,8 @@ Vue.use(require('vue-moment'))
 // 路由配置
 const RouterConfig = {
     mode: 'history',
-    routes: Routers
+    routes: Routers,
+    base: '/admin_' + process.env.ADMIN_URL_SUFFIX + '/'
 }
 const router = new VueRouter(RouterConfig)
 
