@@ -7,6 +7,7 @@ const getTaskByID = require('./promises/getTaskByID')
 const createTaskComment = require('./promises/createTaskComment')
 const updateTask = require('./promises/updateTask')
 const prepareComments = require('./prepareComments')
+const createSubtask = require('./promises/createSubtask')
 
 
 function updateWunderlistTask(fromMagento, options) {
@@ -73,6 +74,23 @@ function updateWunderlistTask(fromMagento, options) {
                 }
                 debug(taskUpdatePayload)
                 promises.push(updateTask(wunderlistTask.id, wunderlistTask.revision, taskUpdatePayload))
+            }
+
+            // write this as a separate module
+            if (['shipment', 'shipmentcomment'].indexOf(fromMagento.type.toLowerCase()) !== -1) {
+
+                if(Array.isArray(fromMagento.trackinginfo) && fromMagento.trackinginfo.length > 0 ) {
+
+                    for(let i=0; i<fromMagento.trackinginfo.length; i++) {
+                        let tracking = fromMagento.trackinginfo[i]
+                        let title = tracking.title + ' (' + tracking.number + ')'
+
+                        promises.push(createSubtask({
+                            'task_id': wunderlistTask.id,
+                            'title': title
+                        }))
+                    }
+                }
             }
 
         }

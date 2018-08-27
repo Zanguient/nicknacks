@@ -19,7 +19,7 @@ function prepareComments(fromMagento) {
 
         if (fromMagento.data.delivery_date) {
             obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
-            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('MMMM Do YYYY')
+            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('Do MMMM YYYY')
         }
         obj.deliveryTime = fromMagento.data.delivery_time
         obj.deliveryComments = fromMagento.data.delivery_comments
@@ -47,10 +47,20 @@ function prepareComments(fromMagento) {
         // there can be non-deliverable products. So if have address will put
         if (obj.address && obj.address.length > 0) {
             body += '\n\n\n# Delivery'
-            body += '\nAddress:' + obj.address
+            body += '\nAddress: ' + obj.address
             body += '\nDelivery date: ' + (obj.deliveryDateFull || 'Not indicated')
             body += '\nTime: ' + (obj.deliveryTime || 'Not indicated')
             if (obj.delivery_comments && obj.delivery_comments.length > 0) body += '\nComment: ' + obj.delivery_comments
+        }
+
+        if (['shipment', 'shipmentcomment'].indexOf(type) !== -1) {
+            if (D.get(fromMagento, 'trackinginfo')) {
+                body += '\n\n\n# Tracking'
+                for(let i=0; i<fromMagento.trackinginfo.length; i++) {
+                    let tracking = fromMagento.trackinginfo[i]
+                    body += '\n' + (i+1) + '. ' + tracking.title + ' (' + tracking.number + ')'
+                }
+            }
         }
 
         return body
