@@ -28,16 +28,16 @@ function createWunderlistTask(fromMagento, options) {
                 // if wunderlist task exist also, return false
                 if (!(D.get(wunderlistTask, 'code') === 404)) return false
 
-                return true
+                return task
             })
 
         } else {
 
-            return true
+            return 'toCreateBrandNewEntries'
         }
-    }).then(toCreate => {
+    }).then(dbTask => {
 
-        if (!toCreate) {
+        if (dbTask === false) {
             debug('Wunderlist task already exist. Returning...')
             return false
         }
@@ -204,6 +204,14 @@ function createWunderlistTask(fromMagento, options) {
                 throw error
             }
 
+            //dbTask is an object if the task exists in DB but was deleted off wunderlist
+            if (typeof dbTask !== 'string') {
+                dbTask.WunderlistTaskID: TASK_DATA.id
+                return dbTask.save()
+            }
+
+
+            // if not means its a brand new entry, create DB record as well.
             return DB.WunderlistTask.create({
                 WunderlistTaskID: TASK_DATA.id,
                 salesOrderID: obj.ID.default
@@ -216,6 +224,7 @@ function createWunderlistTask(fromMagento, options) {
                 console.log('CRITICAL: ' + obj.ID.stub + ' adding to db errored! Error is: ' + JSON.stringify(err));
                 throw err
             })
+
 
         })
 
