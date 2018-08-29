@@ -219,10 +219,30 @@ router.post('/create-sales-receipt', (req, res, next) => {
             // if there are more than one error, throw
             let errors = customer.Fault.Error;
 
-            if (errors.length === 1 && D.get(errors[0], 'code') === "5010") {
+            if ( errors.length === 1 && (D.get(errors[0], 'code') === "5010") ) {
 
                 // we don't need this to fail, so just log.
                 console.log('Note: ' + errors[0].Message + ' for updating customer ' + _CUSTOMER.Id + ' ' + _CUSTOMER.DisplayName);
+
+            } else if ( errors.length === 1 && (D.get(errors[0], 'code') === "6240") ) {
+
+                // 6240 is where this current customer has the same name as an existing one.
+                // solution is to add a random short string
+                let newCustomer = {}
+
+                // the minimum
+                D.set(newCustomer, 'PrimaryEmailAddr.Address', _TRANSACTION.details.customerEmail)
+                D.set(newCustomer, 'DisplayName', _TRANSACTION.details.customerName + ' ' + Math.random().toString(36).substring(2, 7))
+
+                // other information
+
+                // address
+                if (_TRANSACTION.details.address) D.set(newCustomer, 'BillAddr.Line1', _TRANSACTION.details.address)
+                if (_TRANSACTION.details.addressZip) D.set(newCustomer, 'BillAddr.PostalCode', _TRANSACTION.details.addressZip)
+                if (_TRANSACTION.details.addressCountry) D.set(newCustomer, 'BillAddr.Country', _TRANSACTION.details.addressCountry)
+
+                // create the customer
+                return QBO.createCustomerAsync(newCustomer)
 
             } else {
 
@@ -232,7 +252,9 @@ router.post('/create-sales-receipt', (req, res, next) => {
                 throw error
 
             }
+            return customer
         }
+    }).then((customer) => {
 
         // no errors are thrown, proceed.
         _CUSTOMER = {
