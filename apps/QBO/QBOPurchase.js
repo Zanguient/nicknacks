@@ -1,4 +1,4 @@
-const QBOPurchase = (transactionDetails) => {
+const QBOPurchase = (transactionDetails, stripeCommission) => {
     let defaults = {
         "AccountRef": {
             "value": "46",
@@ -31,9 +31,6 @@ const QBOPurchase = (transactionDetails) => {
 
     defaults.TxnDate = transactionDetails.transactionDateQBOFormat
     defaults.DocNumber = transactionDetails.salesOrderNumber
-
-    // check the country of credit card origin to apply the commission correctly.
-    let stripeCommission = require(__appsDir + '/stripe/calculateStripeCommissionAmount')(transactionDetails)
 
     //description
     let description = 'SO: ' + transactionDetails.salesOrderNumber

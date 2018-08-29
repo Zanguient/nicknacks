@@ -81,7 +81,8 @@ function Transaction(sequelize, DataTypes) {
 
                     let object = {};
 
-                    let momentDate = MOMENT.unix(D.get(self, 'data.order_created_at'))
+                    let momentDate = MOMENT(self.createdAt)
+                    //let momentDate = MOMENT.unix(D.get(self, 'data.order_created_at'))
 
                     object.transactionDateUnixTS = momentDate.unix()
                     object.transactionDateQBOFormat = momentDate.format('YYYY-MM-DD');

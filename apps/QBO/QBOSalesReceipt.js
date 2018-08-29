@@ -92,7 +92,8 @@ var QBOSalesReceiptModel = (transaction, customer) => {
 
     if (transaction.paymentMethod.toLowerCase() === 'stripe') {
 
-        defaults.PaymentRefNum = transaction.transactionReferenceCode
+        // now that stripe object is separately stored, cannot retrieve.
+        //defaults.PaymentRefNum = transaction.transactionReferenceCode
 
         return defaults
     }

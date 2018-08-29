@@ -10,7 +10,7 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
         // the documents can be undefined (if the error was thrown higher up before creation)
         // of can be false (if the error was thrown later)
 
-        if ([undefined, false].indexOf(salesReceipt) === -1 && !D.get(salesReceipt, "Fault")) {
+        if ([undefined, false].indexOf(salesReceipt) === -1 && !D.get(salesReceipt, "Fault") && salesReceipt.Id) {
             console.log('INFO: Sales receipt found. Deleting...')
             var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({
                 "Id": salesReceipt.Id,
@@ -18,7 +18,7 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
             });
         }
 
-        if ([undefined, false].indexOf(expense) === -1 && !D.get(expense, "Fault")) {
+        if ([undefined, false].indexOf(expense) === -1 && !D.get(expense, "Fault") && expense.Id) {
             console.log('INFO: Expense document found. Deleting...')
             var deleteExpense = QBO.deletePurchaseAsync({
                 "Id": expense.Id,
@@ -26,7 +26,7 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
             });
         }
 
-        if ([undefined, false].indexOf(journalCOGS) === -1 && !D.get(journalCOGS, "Fault")) {
+        if ([undefined, false].indexOf(journalCOGS) === -1 && !D.get(journalCOGS, "Fault") && journalCOGS.Id) {
             console.log('INFO: Journal found. Deleting...')
             var deleteJournalCOGS = QBO.deleteJournalEntryAsync({
                 "Id": journalCOGS.Id,

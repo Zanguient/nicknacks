@@ -240,7 +240,46 @@ router.post('/create-sales-receipt', (req, res, next) => {
             DisplayName: customer.DisplayName
         }
 
-        let promises = []
+
+
+        /* STRIPE COMMISSION / EXPENSE */
+
+        // if paymentMethod is stripe, create expense - expense is called `purchase` by QuickBooks
+        if (_TRANSACTION.paymentMethod.toLowerCase() === 'stripe') {
+
+            let getStripeCharge = require(__appsDir + '/stripe/getStripeCharge')
+
+            return getStripeCharge(_TRANSACTION.salesOrderNumber).then(charge => {
+
+                if (!charge) throw new Error('Transaction payment method is stripe, but no stripe charge found on StripeEvent.')
+
+                const calculateStripeCommissionAmount = require(__appsDir + '/stripe/calculateStripeCommissionAmount')
+
+                let stripeComms = calculateStripeCommissionAmount(charge)
+
+                var expense = require(__appsDir + '/QBO/QBOPurchase')(_TRANSACTION.details, stripeComms)
+                debug(expense)
+
+                return QBO.createPurchaseAsync(expense)
+
+            })
+
+        } else {
+
+            return false
+        }
+
+    }).then(expense => {
+
+        _CREATED_EXPENSE = expense
+
+        if (D.get(expense, 'Fault')) {
+            let error = new Error('QBO error for expense. See `QBOResponse` for more information.')
+            error.QBOResponse = expense
+            error.category = 'QBO'
+            throw error
+        }
+
 
         /* SALES RECEIPT */
 
@@ -264,76 +303,45 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
         debug(salesReceipt)
 
-        let createSalesReceipt = QBO.createSalesReceiptAsync(salesReceipt)
-        promises.push(createSalesReceipt)
+        return QBO.createSalesReceiptAsync(salesReceipt)
 
+    }).then(salesReceipt => {
 
-        /* STRIPE COMMISSION / EXPENSE */
+        _CREATED_SALES_RECEIPT = salesReceipt
 
-        // if paymentMethod is stripe, create expense - expense is called `purchase` by QuickBooks
-        if (_TRANSACTION.paymentMethod.toLowerCase() === 'stripe') {
-
-            let expense = require(__appsDir + '/QBO/QBOPurchase')(_TRANSACTION.details)
-            debug(expense)
-
-            let createExpense = QBO.createPurchaseAsync(expense);
-            promises.push(createExpense);
-
-        } else {
-
-            // promise array gap filler
-            promises.push(false)
+        if (D.get(salesReceipt, 'Fault')) {
+            let error = new Error('QBO error for sales receipt. See `QBOResponse` for more information.')
+            error.QBOResponse = salesReceipt
+            error.category = 'QBO'
+            throw error
         }
-
 
 
         /* JOURNAL ENTRY FOR COGS */
 
-        if (_COGS === 0) {
+        // create journal entry
+        let journal = (parseFloat(_COGS) > 0) ? require(__appsDir + '/QBO/QBOJournalCOGS')(_TRANSACTION.details, _COGS): false
+        debug(journal)
 
-            // promise array gap filler
-            promises.push(false);
+        return QBO.createJournalEntryAsync(journal)
 
-        } else {
 
-            // create journal entry
-            let journal = require(__appsDir + '/QBO/QBOJournalCOGS')(_TRANSACTION.details, _COGS)
-            debug(journal)
-            let createJournalCOGS = QBO.createJournalEntryAsync(journal);
-            promises.push(createJournalCOGS);
+    }).then(journalEntry => {
 
-        }
-        return promises;
+        _CREATED_JOURNAL = journalEntry
 
-    }).spread(function(salesReceipt, expense, journalEntry) {
-
-        _CREATED_SALES_RECEIPT = salesReceipt;
-        _CREATED_EXPENSE = expense;
-        _CREATED_JOURNAL = journalEntry;
-
-        var QBOerrors = []
-
-        // pushing errors
-        var elements = [ salesReceipt, expense, journalEntry];
-        for (var i = 0; i < elements.length; i++) {
-            var element = elements[i];
-            if (D.get(element, 'Fault')) QBOerrors.push(element);
-        }
-
-        if (QBOerrors.length > 0) {
-
-            let error = new Error('QBO error. See `QBOResponse` for more information.')
-            error.QBOResponse = QBOerrors
+        if (D.get(journalEntry, 'Fault')) {
+            let error = new Error('QBO error for COGS journal entry. See `QBOResponse` for more information.')
+            error.QBOResponse = journalEntry
             error.category = 'QBO'
             throw error
-
         }
 
         //then finally update the entry as completed.
         _TRANSACTION.status = 'completed';
-        if (_CREATED_SALES_RECEIPT && D.get(_CREATED_SALES_RECEIPT, "Id")) _TRANSACTION.qboSalesReceiptId = D.get(_CREATED_SALES_RECEIPT, "Id");
-        if (_CREATED_EXPENSE && D.get(_CREATED_EXPENSE, "Id")) _TRANSACTION.qboStripeExpenseId = D.get(_CREATED_EXPENSE, "Id");
-        if (_CREATED_JOURNAL && D.get(_CREATED_JOURNAL, "Id")) _TRANSACTION.qboCOGSJournalId = D.get(_CREATED_JOURNAL, "Id");
+        if (_CREATED_SALES_RECEIPT && D.get(_CREATED_SALES_RECEIPT, "Id")) _TRANSACTION.qboSalesReceiptId =_CREATED_SALES_RECEIPT.Id
+        if (_CREATED_EXPENSE && D.get(_CREATED_EXPENSE, "Id")) _TRANSACTION.qboStripeExpenseId = _CREATED_EXPENSE.Id
+        if (_CREATED_JOURNAL && D.get(_CREATED_JOURNAL, "Id")) _TRANSACTION.qboCOGSJournalId = _CREATED_JOURNAL.Id
 
         return _TRANSACTION.save().catch(function(err) {
 
@@ -342,7 +350,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
             // don't gobble up the error.
             throw err
 
-        });
+        })
 
     })
     .then(transaction => {
@@ -350,14 +358,14 @@ router.post('/create-sales-receipt', (req, res, next) => {
     })
     .catch(function (err) {
 
+        API_ERROR_HANDLER(err, req, res, next)
+
         // if anything goes wrong, attempt to delete all the documents
         require(__appsDir + '/QBO/deleteAllEntriesIfSomeErrorsOccur')(_CREATED_SALES_RECEIPT, _CREATED_EXPENSE, _CREATED_JOURNAL)
 
-        API_ERROR_HANDLER(err, req, res, next)
+    })
 
-    });
-
-});
+})
 
 router.post('/deliver', (req, res, next) => {
 
