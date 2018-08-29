@@ -292,12 +292,6 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
         salesReceipt.Line = lines
 
-        // TO BE REMOVED AFTER IMPLEMENTATION OF totalAmount
-        salesReceipt.TotalAmt = 899
-        salesReceipt.Line[0]['Amount'] = 899
-        salesReceipt.Line[0]['SalesItemLineDetail']["UnitPrice"] = 899
-        salesReceipt.Line[1]['Amount'] = 899
-
         // comments
         if (req.body.comments) salesReceipt.PrivateNote = req.body.comments;
 
