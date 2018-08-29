@@ -1,4 +1,4 @@
-const debug = require('debug')('apps:wunderlistBot:promises:updateTask')
+const debug = require('debug')('nn:apps:wunderlistBot:promises:updateTask')
 
 function updateTask(id, rev, payload) {
     return new PROMISE(function(resolve, reject) {

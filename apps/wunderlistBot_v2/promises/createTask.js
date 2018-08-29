@@ -1,4 +1,4 @@
-const debug = require('debug')('apps:wunderlistBot:promises:createTask')
+const debug = require('debug')('nn:apps:wunderlistBot:promises:createTask')
 
 function createTask(payload) {
     return new PROMISE(function(resolve, reject) {

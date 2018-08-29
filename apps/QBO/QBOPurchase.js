@@ -36,7 +36,7 @@ const QBOPurchase = (transactionDetails) => {
     let stripeCommission = require(__appsDir + '/stripe/calculateStripeCommissionAmount')(transactionDetails)
 
     //description
-    let description = 'SO: ' transactionDetails.salesOrderNumber
+    let description = 'SO: ' + transactionDetails.salesOrderNumber
     description += ', Name:' + transactionDetails.customerName
     description += ', Email: ' + transactionDetails.customerEmail
 

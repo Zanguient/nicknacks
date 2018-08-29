@@ -108,7 +108,8 @@ function Transaction(sequelize, DataTypes) {
                     object.customerPhone = D.get(self, 'data.data.customer_telephone')
 
                     // MISSING!!!
-                    object.totalAmount = ''
+                    object.totalAmount = D.get(self, 'data.totals.grand_total_incl_tax')
+                    if (!object.totalAmount) throw new Error('`totalAmount` is missing from transaction.`')
 
                     object.address = D.get(self, 'data.data.shipping_address')
 
@@ -161,7 +162,10 @@ function Transaction(sequelize, DataTypes) {
                     })(this);
 
                     object.totalAmount = (function(transaction) {
-                        if (typeof transaction.data.data.object.amount === "undefined") console.log('CRITICAL: Stripe transaction missing `amount`.');
+                        if (typeof transaction.data.data.object.amount === "undefined") {
+                            let error = new Error('CRITICAL: Stripe transaction missing `amount`.')
+                            throw error
+                        }
 
                         // stripe amount is in cents. need to divide by 100;
                         return parseInt(transaction.data.data.object.amount)/100;

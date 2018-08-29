@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const debug = require('debug')('api:magento-webhooks')
+const debug = require('debug')('nn:api:magento-webhooks')
 const wunderlistBot = require(__appsDir + '/wunderlistBot_v2/index')
 
 router.post('*', (req, res, next) => {

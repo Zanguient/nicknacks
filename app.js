@@ -36,7 +36,7 @@ function WLConnection() {
         throw new Error('CRITICAL: Wunderlist connection failed.');
     });
 }
-//WLConnection();
+WLConnection();
 
 var express = require('express');
 var path = require('path');
@@ -91,6 +91,7 @@ app.use('/api/v2/magento-webhooks', require('./routes/api/v2/magento-webhooks'))
 app.use('/api/v2/sales-receipt', require('./routes/api/v2/sales-receipt'));
 app.use('/api/v2/inventory', require('./routes/api/v2/inventory'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
+app.use('/api/v2/stripe-webhooks', require('./routes/api/v2/stripe-webhooks'));
 
 
 /* SAFARI/IOS Bug */

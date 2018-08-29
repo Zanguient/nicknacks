@@ -41,7 +41,7 @@ Object.keys(db).forEach(function (modelName) {
 //call db.[Model].sync() to sync only one model.
 //db.WunderlistTask.sync();
 //db.Token.sync({force: true});
-//sequelize.sync();
+sequelize.sync();
 
 
 db.sequelize = sequelize;

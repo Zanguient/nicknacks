@@ -17,7 +17,7 @@ module.exports = merge(webpackBaseConfig, {
   mode: 'development',
   devtool: '#source-map',
   output: {
-    publicPath: '/dist/',
+    publicPath: '/',
     filename: '[name].js',
     chunkFilename: '[name].chunk.js'
   },
@@ -43,7 +43,7 @@ module.exports = merge(webpackBaseConfig, {
     //     filename: 'vendors.js'
     // }),
     new HtmlWebpackPlugin({
-      filename: '../index.html',
+      filename: '../views/admin.hbs',
       template: './src/template/index.ejs',
       inject: false
     })

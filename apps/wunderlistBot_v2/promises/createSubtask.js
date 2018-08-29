@@ -1,4 +1,4 @@
-const debug = require('debug')('apps:wunderlistBot:promises:createSubtask')
+const debug = require('debug')('nn:apps:wunderlistBot:promises:createSubtask')
 
 function createSubtask(payload) {
     return new PROMISE(function(resolve, reject) {

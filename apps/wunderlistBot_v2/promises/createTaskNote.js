@@ -1,4 +1,4 @@
-const debug = require('debug')('apps:wunderlistBot:promises:createTaskNote')
+const debug = require('debug')('nn:apps:wunderlistBot:promises:createTaskNote')
 
 function createTaskNote(payload) {
     return new PROMISE(function(resolve, reject) {

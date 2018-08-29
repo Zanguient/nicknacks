@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const debug = require('debug')('api:inventory')
+const debug = require('debug')('nn:api:inventory')
 const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
 
 let inventoryIncludes = [{

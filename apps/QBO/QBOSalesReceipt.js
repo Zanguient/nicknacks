@@ -92,7 +92,7 @@ var QBOSalesReceiptModel = (transaction, customer) => {
 
     if (transaction.paymentMethod.toLowerCase() === 'stripe') {
 
-        defaults.PaymentRefNum = _TRANSACTION.transactionReferenceCode
+        defaults.PaymentRefNum = transaction.transactionReferenceCode
 
         return defaults
     }

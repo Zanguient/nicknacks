@@ -3,7 +3,7 @@ const D = require('dottie');
 const cheerio = require('cheerio');
 const moment = require('moment');
 const S = require('string');
-const debug = require('debug')('apps:wunderlistBot')
+const debug = require('debug')('nn:apps:wunderlistBot')
 
 const M = require('./errorObjectMerger');
 const makeIDObject = require('./makeIDObject.js');
