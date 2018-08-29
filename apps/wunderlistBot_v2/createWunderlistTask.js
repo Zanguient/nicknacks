@@ -150,7 +150,7 @@ function createWunderlistTask(fromMagento, options) {
             'title': titleShort,
             'starred': true
         }
-        if (obj.deliveryDate) taskObject.due_date = obj.dateOfDelivery;
+        if (obj.deliveryDate) taskObject.due_date = obj.deliveryDate;
 
         // pust taskObject to wunderlist
         debug(obj.ID.withoutHex + ': Creating a task in wunderlist with taskObject:');
