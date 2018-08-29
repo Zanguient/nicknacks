@@ -30,7 +30,7 @@ const QBOPurchase = (transactionDetails, stripeCommission) => {
     }
 
     defaults.TxnDate = transactionDetails.transactionDateQBOFormat
-    defaults.DocNumber = transactionDetails.salesOrderNumber
+    defaults.DocNumber = 'SO' + transactionDetails.salesOrderNumber
 
     //description
     let description = 'SO: ' + transactionDetails.salesOrderNumber
