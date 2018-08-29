@@ -19,7 +19,7 @@ function prepareComments(fromMagento) {
 
         if (fromMagento.data.delivery_date) {
             obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
-            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('Do MMMM YYYY')
+            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('Do MMMM YYYY dddd')
         }
         obj.deliveryTime = fromMagento.data.delivery_time
         obj.deliveryComments = fromMagento.data.delivery_comments
