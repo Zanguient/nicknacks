@@ -1,7 +1,11 @@
 function calculateStripeCommissionAmountOnRefund(stripeObject) {
 
-    const stripeChargesAMEX = 0.032;
-    const stripeChargesMasterOrVisa = 0.027;
+    // declare the credit card charges.
+    let stripeChargesAMEX = parseFloat(process.env.STRIPE_CHARGES_AMEX)
+    if (isNaN(stripeChargesAMEX)) throw new Error('Environment variables `STRIPE_CHARGES_AMEX` not defined.')
+
+    let stripeChargesMasterOrVisa = parseFloat(process.env.STRIPE_CHARGES_AMEX_MASTER_VISA)
+    if (isNaN(stripeChargesMasterOrVisa)) throw new Error('Environment variables `STRIPE_CHARGES_AMEX_MASTER_VISA` not defined.')
 
     var total = parseInt(D.get(stripeObject, 'data.object.amount'));
     var amountRefunded = parseInt(D.get(stripeObject, 'data.object.amount_refunded'));

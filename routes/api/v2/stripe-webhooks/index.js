@@ -62,17 +62,6 @@ router.post('/refunded', function (req, res, next) {
 
     var _TRANSACTION;
 
-    // save the data
-    // return DB.Transaction.findOne({
-    //     data: req.body,
-    //     status: 'pending',
-    //     eventType: 'refunded',
-    //     salesOrderNumber: salesOrderNumber,
-    //     eventId: req.body.id,
-    //     paymentMethod: 'stripe'
-    // })
-
-    // save the data
     return DB.Transaction.findOne({
         where: { salesOrderNumber: salesOrderNumber }
     })
@@ -81,9 +70,6 @@ router.post('/refunded', function (req, res, next) {
         if (!transaction) throw new Error('Transaction not found for refund!')
 
         _TRANSACTION = transaction;
-
-        let stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(transaction.data);
-
 
         return DB.StripeEvent.create({
             data: req.body,
@@ -94,88 +80,90 @@ router.post('/refunded', function (req, res, next) {
         })
     }).then((stripeEvent) => {
 
+        let stripeCommissionReturned = calculateStripeCommissionAmountOnRefund(req.body);
+
         if(D.get(req, 'body.livemode') === 'false') {
             console.log(req.body);
             console.log(_TRANSACTIION)
-            console.log('returning: ' + calculateStripeCommissionAmountOnRefund(_TRANSACTION.data))
+            console.log('returning: ' + stripeCommissionReturned)
             console.log(stripeEvent)
             return res.send({ success: true });
         }
 
-            // create a journal entry to reduce stripe commission
-            return QBO.createJournalEntryAsync({
-                "DocNumber": transaction.salesOrderNumber + '-R',
-                "TxnDate": MOMENT().format('YYYY-MM-DD'),
-                "PrivateNote": "Refund for " + transaction.details.salesOrderNumber,
-                "Line": [{
-                    // credit stripe transit cash for refund
-                    "Id": "0",
-                    "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
-                    "DetailType": "JournalEntryLineDetail",
-                    "JournalEntryLineDetail": {
-                        // take out from stripe transit account
-                        "PostingType": "Credit",
-                        "AccountRef": {
-                            "value": "46",
-                            "name": "Stripe Transit"
-                        }
+        // create a journal entry to reduce stripe commission
+        return QBO.createJournalEntryAsync({
+            "DocNumber": transaction.salesOrderNumber + '-R',
+            "TxnDate": MOMENT().format('YYYY-MM-DD'),
+            "PrivateNote": "Refund for " + transaction.details.salesOrderNumber,
+            "Line": [{
+                // credit stripe transit cash for refund
+                "Id": "0",
+                "Amount": D.get(req.body, 'data.object.amount_refunded')/100,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    // take out from stripe transit account
+                    "PostingType": "Credit",
+                    "AccountRef": {
+                        "value": "46",
+                        "name": "Stripe Transit"
                     }
-                }, {
-                    // debit sales refund
-                    "Amount": D.get(transaction.data, 'data.object.amount_refunded')/100,
-                    "DetailType": "JournalEntryLineDetail",
-                    "JournalEntryLineDetail": {
-                        "PostingType": "Debit",
-                        "AccountRef": {
-                            "value": "30",
-                            "name": "Sales Refund"
-                        }
-                    }
-                }, {
-                    // debit stripe transit because stripe will return some money in refund.
-                    "Id": "1",
-                    "Amount": stripeCommissionReturned,
-                    "DetailType": "JournalEntryLineDetail",
-                    "JournalEntryLineDetail": {
-                        "PostingType": "Debit",
-                        "AccountRef": {
-                            "value": "46",
-                            "name": "Stripe Transit"
-                        }
-                    }
-                }, {
-                    // credit expenses to lower expenses from recovered stripe commission
-                    "Amount": stripeCommissionReturned,
-                    "DetailType": "JournalEntryLineDetail",
-                    "JournalEntryLineDetail": {
-                        "PostingType": "Credit",
-                        "AccountRef": {
-                            "value": "33",
-                            "name": "Stripe Charges"
-                        }
-                    }
-                }]
-            })
-            .then(function(journalEntry) {
-
-                if (!journalEntry || D.get(journalEntry, 'Fault')) {
-                    let error = new Error('QBO error in creating refund journal entry. See QBO Response.')
-                    error.QBOResponse = journalEntry
-                    throw error
                 }
+            }, {
+                // debit sales refund
+                "Amount": D.get(req.body, 'data.object.amount_refunded')/100,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Debit",
+                    "AccountRef": {
+                        "value": "30",
+                        "name": "Sales Refund"
+                    }
+                }
+            }, {
+                // debit stripe transit because stripe will return some money in refund.
+                "Id": "1",
+                "Amount": stripeCommissionReturned,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Debit",
+                    "AccountRef": {
+                        "value": "46",
+                        "name": "Stripe Transit"
+                    }
+                }
+            }, {
+                // credit expenses to lower expenses from recovered stripe commission
+                "Amount": stripeCommissionReturned,
+                "DetailType": "JournalEntryLineDetail",
+                "JournalEntryLineDetail": {
+                    "PostingType": "Credit",
+                    "AccountRef": {
+                        "value": "33",
+                        "name": "Stripe Charges"
+                    }
+                }
+            }]
+        })
 
-                _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
+    }).then(function(journalEntry) {
 
-                return _TRANSACTION.save()
-            })
-            .then(function(transaction) {
+        if (!journalEntry || D.get(journalEntry, 'Fault')) {
+            let error = new Error('QBO error in creating refund journal entry. See QBO Response.')
+            error.QBOResponse = journalEntry
+            throw error
+        }
 
-                // send success
-                return res.send({
-                    success: true
-                })
+        _TRANSACTION.qboRefundJournalId = D.get(journalEntry, "Id");
 
-            })
+        return _TRANSACTION.save()
+    })
+    .then(function(transaction) {
+
+        // send success
+        return res.send({
+            success: true
+        })
+
     })
     .catch(function (error) { API_ERROR_HANDLER(error, req, res, next) });
 
