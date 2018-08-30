@@ -99,7 +99,7 @@ function updateWunderlistTask(fromMagento, options) {
                     let title = tracking.title + ' (' + tracking.number + ')'
 
                     promises.push(createSubtask({
-                        'task_id': wunderlistTask.id,
+                        'task_id': _TASK_ID,
                         'title': title
                     }))
                 }
