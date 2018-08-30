@@ -252,8 +252,9 @@ router.post('/create-sales-receipt', (req, res, next) => {
                 throw error
 
             }
-            return customer
         }
+
+        return customer
     }).then((customer) => {
 
         // no errors are thrown, proceed.
