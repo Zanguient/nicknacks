@@ -89,22 +89,27 @@ function createWunderlistTask(fromMagento, options) {
 
         let title = obj.ID.stub
 
+
+        let icons = ' '
+
+        if (obj.paymentMethod.toLowerCase() === 'bank transfer') icons += '💵'
+
         // for sofa, add logo
         let sofa = _.find(fromMagento.items, (item) => {
             if (typeof item.sku === 'string') {
                 return item.sku.toLowerCase().indexOf('sofa') > -1
             }
         })
+        if (sofa) icons += '🛋'
+
         let mila = _.find(fromMagento.items, (item) => {
             if (typeof item.sku === 'string') {
                 return item.sku.toLowerCase().indexOf('mila') > -1
             }
         })
-        if (sofa || mila) {
-            title += ' '
-            if (sofa) title += '🛋'
-            if (mila) title += '👕'
-        }
+        if (mila) icons += '👕'
+
+        if (icons.length > 0) title += icons
 
         // title += ' ,'  + obj.name // the address already has the name
         // if (obj.address && obj.address.length > 0 ) title += ', ' + obj.name
