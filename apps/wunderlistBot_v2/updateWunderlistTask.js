@@ -17,6 +17,8 @@ function updateWunderlistTask(fromMagento, options) {
 
     debug('Initiating process for: ' + obj.ID.withoutHex)
 
+    var _TASK_ID
+
     // first time if the task exist on DB
     return DB.WunderlistTask.find({
         where: { salesOrderID: obj.ID.default }
@@ -28,7 +30,9 @@ function updateWunderlistTask(fromMagento, options) {
             throw error
         }
 
-        return getTaskByID(parseInt(task.WunderlistTaskID))
+        _TASK_ID = parseInt(task.WunderlistTaskID)
+
+        return getTaskByID(_TASK_ID)
 
     }).then(wunderlistTask => {
 
@@ -41,9 +45,6 @@ function updateWunderlistTask(fromMagento, options) {
         // it exists on DB and on WL, create the comment it.
         debug(obj.ID.withoutHex + ': Creating comment and updating task')
 
-
-        var promises = []
-
         /* COMMENTS */
         let commentPayload = {
             'task_id': parseInt(wunderlistTask.id),
@@ -51,8 +52,14 @@ function updateWunderlistTask(fromMagento, options) {
         }
 
         // update task with comment
-        promises.push(createTaskComment(commentPayload))
+        // creating comment will change the wunderlist revision. so have to do this sequentially.
+        return createTaskComment(commentPayload)
 
+    }).then(comment => {
+
+        return getTaskByID(_TASK_ID)
+
+    }).then(wunderlistTask => {
 
         /* TASK UPDATES AND STARRING */
 
@@ -73,28 +80,36 @@ function updateWunderlistTask(fromMagento, options) {
                     starred: starred
                 }
                 debug(taskUpdatePayload)
-                promises.push(updateTask(wunderlistTask.id, wunderlistTask.revision, taskUpdatePayload))
+                return updateTask(wunderlistTask.id, wunderlistTask.revision, taskUpdatePayload)
+            } else {
+                return false
             }
-
-            // write this as a separate module
-            if (['shipment', 'shipmentcomment'].indexOf(fromMagento.type.toLowerCase()) !== -1) {
-
-                if(Array.isArray(fromMagento.trackinginfo) && fromMagento.trackinginfo.length > 0 ) {
-
-                    for(let i=0; i<fromMagento.trackinginfo.length; i++) {
-                        let tracking = fromMagento.trackinginfo[i]
-                        let title = tracking.title + ' (' + tracking.number + ')'
-
-                        promises.push(createSubtask({
-                            'task_id': wunderlistTask.id,
-                            'title': title
-                        }))
-                    }
-                }
-            }
-
         }
-        return PROMISE.all(promises)
+    }).then(() => {
+
+        // write this as a separate module
+        if (['shipment', 'shipmentcomment'].indexOf(fromMagento.type.toLowerCase()) !== -1) {
+
+            let promises = []
+
+            if(Array.isArray(fromMagento.trackinginfo) && fromMagento.trackinginfo.length > 0 ) {
+
+                for(let i=0; i<fromMagento.trackinginfo.length; i++) {
+                    let tracking = fromMagento.trackinginfo[i]
+                    let title = tracking.title + ' (' + tracking.number + ')'
+
+                    promises.push(createSubtask({
+                        'task_id': wunderlistTask.id,
+                        'title': title
+                    }))
+                }
+
+                return PROMISE.all(promises)
+            }
+
+        } else {
+            return false
+        }
 
     })
 
