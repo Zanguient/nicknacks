@@ -7,9 +7,15 @@ import App from './app.vue'
 import 'iview/dist/styles/iview.css'
 import locale from 'iview/dist/locale/en-US'
 import D from 'dottie'
+import moment from 'moment'
 
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
+
+//filters
+Vue.filter('unixToDate', value => {
+    return moment(parseInt(value)).format('DD MMM YYYY');
+})
 
 // 路由配置
 const RouterConfig = {

@@ -31,7 +31,8 @@
                             <Icon type="ios-mail" /> {{ salesReceipt.details.customerEmail }}<br>
                             <Icon type="ios-phone-portrait" /> {{ salesReceipt.details.customerPhone }}<br>
                             <Icon type="ios-card" /> {{ salesReceipt.paymentMethod }}<br>
-                            <Icon type="ios-calendar-outline" /> {{ salesReceipt.details.transactionDateTime }}
+                            <Icon type="ios-calendar-outline" /> {{ salesReceipt.details.transactionDateTime }}<br>
+                            <Icon type="logo-usd" /> {{ salesReceipt.details.totalAmount }}
                         </p>
                     </Panel>
                     <Panel name="productsSold">
@@ -209,11 +210,15 @@ export default {
                         this.$Message.error('Failed request!')
 
                     }).then(() => {
+                        let self = this
                         this.addInventoryModal.loading = false
+                        setTimeout(() => { self.addInventoryModal.loading = true }, 1)
                     })
 
                 } else {
+                    let self = this
                     this.addInventoryModal.loading = false
+                    setTimeout(() => { self.addInventoryModal.loading = true }, 1)
                     this.$Message.error('Check your entry!')
                 }
             })

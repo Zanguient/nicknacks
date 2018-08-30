@@ -435,7 +435,6 @@ export default {
                 this.$Message.success('There are no changes made.');
 
                 this.editInventoryModal.show = false
-                this.editInventoryModal.loading = false
 
                 return
             }
@@ -471,11 +470,15 @@ export default {
                         this.$Message.error('Failed request!');
 
                     }).then(() => {
+                        let self = this
                         this.editInventoryModal.loading = false
+                        setTimeout(() => { self.editInventoryModal.loading = true }, 1)
                     })
 
                 } else {
+                    let self = this
                     this.editInventoryModal.loading = false
+                    setTimeout(() => { self.editInventoryModal.loading = true }, 1)
                     this.$Message.error('Check your entry!');
                 }
             })
@@ -517,11 +520,15 @@ export default {
                         this.$Message.error('Failed request!')
 
                     }).then(() => {
+                        let self = this
                         this.addInventoryModal.loading = false
+                        setTimeout(() => { self.addInventoryModal.loading = true }, 1)
                     })
 
                 } else {
+                    let self = this
                     this.addInventoryModal.loading = false
+                    setTimeout(() => { self.addInventoryModal.loading = true }, 1)
                     this.$Message.error('Check your entry!');
                 }
             })
@@ -529,7 +536,7 @@ export default {
     },
     filters: {
         momentUnix(date) {
-            return moment(parseInt(date)).format('DD MMM YY');
+            return moment(parseInt(date)).format('DD MMM YYYY');
         }
     },
 
