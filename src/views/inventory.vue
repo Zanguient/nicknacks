@@ -229,7 +229,7 @@ export default {
                         validator (rule, value, callback) {
 
                             // check regex
-                            let regex = /^[1-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
+                            let regex = /^\d{1,6}(\.\d{1,2})?$/
                             if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
 
                             // everything passed
@@ -262,7 +262,7 @@ export default {
                         validator (rule, value, callback) {
 
                             // check regex
-                            let regex = /^[1-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
+                            let regex = /^\d{1,6}(\.\d{1,2})?$/
                             if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
 
                             // everything passed
@@ -538,7 +538,7 @@ export default {
         window.V = this
 
         axios.get(domain + '/api/v2/inventory/all').then(response => {
-            
+
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')
                 error.reponse = response
