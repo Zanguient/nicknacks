@@ -10,7 +10,6 @@ import D from 'dottie'
 
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
-Vue.use(require('vue-moment'))
 
 // 路由配置
 const RouterConfig = {
