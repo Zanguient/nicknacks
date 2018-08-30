@@ -105,9 +105,6 @@ app.all('*', function (req, res, next) {
   next();
 });
 
-
-const wunderlistBot = require('./apps/wunderlistBot')
-
 // attempt refresh on server start
 const QBOToken = require('./apps/QBO/QBOToken')
 QBOToken()
