@@ -72,7 +72,26 @@ function apiErrorHandler(err, req, res, next, config) {
     // server logs.
     if (process.env.NODE_ENV === 'development') {
         responseObject.error.message = D.get(err, 'message')
-        responseObject.error.debug = err
+
+        var cache = []
+        responseObject.error.debug = JSON.stringify(err, (key, value) => {
+            if (typeof value === 'object' && value !== null) {
+                if (cache.indexOf(value) !== -1) {
+                    // Duplicate reference found
+                    try {
+                        // If this value does not reference a parent it can be deduped
+                        return JSON.parse(JSON.stringify(value));
+                    } catch (error) {
+                        // discard key if value cannot be deduped
+                        return;
+                    }
+                }
+                // Store value in our collection
+                cache.push(value);
+            }
+            return value;
+        })
+        cache = null
     }
 
     // pass the timestamp to the frontend.

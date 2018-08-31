@@ -53,7 +53,31 @@ function Shipment(sequelize, DataTypes) {
         timestamps: true,
         tableName: 'Shipment',
         instanceMethods: {},
-        getterMethods: {},
+        getterMethods: {
+            products: function() {
+
+                let self = this
+                var products = null
+
+                if (D.get(self, 'Inventories')) {
+
+                    products = []
+
+                    this.Inventories.forEach(inventory => {
+                        products.push({
+                            InventoryID: inventory.InventoryID,
+                            name: inventory.name,
+                            sku: inventory.sku,
+                            quantity: inventory.TransitInventory.quantity
+                        })
+                    })
+
+                }
+
+                return products
+
+            }
+        },
         classMethods: {
 
             associate: function (models) {
