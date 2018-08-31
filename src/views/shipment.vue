@@ -122,7 +122,7 @@
 
             <Divider>⚠️ DANGER</Divider>
 
-            <div style="width: 100%; text-align: center;">
+            <div v-if="addShipmentModal.form.mode === 'edit'" style="width: 100%; text-align: center;">
                 <Button  type="error" @click="deleteShipment(addShipmentModal.form)">
                     <Icon type="ios-trash" /> Delete Shipment
                 </Button>
@@ -329,6 +329,9 @@ export default {
             this.addShipmentModal.show = true
         },
         deleteShipment(shipment) {
+
+            // how did you get a delete button when you are in 'add' mode?
+            if (this.addShipmentModal.form.mode === 'add') this.addShipmentModal.show = false
 
             let self = this
             let ShipmentID = shipment.ShipmentID
