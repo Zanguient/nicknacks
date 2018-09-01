@@ -50,8 +50,8 @@ window.CATCH_ERR_HANDLER = (err) => {
 
     //if this is an api response
     if(response) {
-        console.log(D.get(err , 'response'))
-        alert(D.get(err, 'response.data.message'))
+        console.log(response)
+        alert(D.get(response, 'data.error.message'))
     } else {
         alert(err)
     }
