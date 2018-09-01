@@ -340,8 +340,9 @@ router.post('/create-sales-receipt', (req, res, next) => {
         let journal = (parseFloat(_COGS) > 0) ? require(__appsDir + '/QBO/QBOJournalCOGS')(_TRANSACTION.details, _COGS): false
         debug(journal)
 
-        return QBO.createJournalEntryAsync(journal)
+        if (journal) return QBO.createJournalEntryAsync(journal)
 
+        return journal
 
     }).then(journalEntry => {
 
