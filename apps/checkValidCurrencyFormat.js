@@ -14,7 +14,7 @@ function checkValidCurrencyFormat(value) {
     }
 
     // check regex
-    let regex = /^[1-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
+    let regex = /^[0-9]\d*(((,\d{3}){1})?(\.\d{0,2})?)$/
     if (!regex.test(value)) return false
 
     return parseFloat(value).toFixed(2)
