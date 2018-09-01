@@ -109,7 +109,7 @@ function createWunderlistTask(fromMagento, options) {
         })
         if (mila) icons += '👕'
 
-        if (icons.length > 0) title += icons
+        if (icons.length > 1) title += icons
 
         // title += ' ,'  + obj.name // the address already has the name
         // if (obj.address && obj.address.length > 0 ) title += ', ' + obj.name
