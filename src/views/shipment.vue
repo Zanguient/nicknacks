@@ -120,12 +120,14 @@
 
             </Form>
 
-            <Divider>⚠️ DANGER</Divider>
+            <div v-if="addShipmentModal.form.mode === 'edit'">
+                <Divider>⚠️ DANGER</Divider>
 
-            <div v-if="addShipmentModal.form.mode === 'edit'" style="width: 100%; text-align: center;">
-                <Button  type="error" @click="deleteShipment(addShipmentModal.form)">
-                    <Icon type="ios-trash" /> Delete Shipment
-                </Button>
+                <div style="width: 100%; text-align: center;">
+                    <Button  type="error" @click="deleteShipment(addShipmentModal.form)">
+                        <Icon type="ios-trash" /> Delete Shipment
+                    </Button>
+                </div>
             </div>
 
 
