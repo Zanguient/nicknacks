@@ -8,9 +8,11 @@ import 'iview/dist/styles/iview.css'
 import locale from 'iview/dist/locale/en-US'
 import D from 'dottie'
 import moment from 'moment'
+import Element from 'element-ui'
 
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
+Vue.use(Element)
 
 //filters
 Vue.filter('unixToDate', value => {

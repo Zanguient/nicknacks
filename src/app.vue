@@ -1,5 +1,7 @@
 <style scoped>
     @import 'styles/common.css';
+    @import '../node_modules/element-ui/lib/theme-chalk/index.css';
+
 </style>
 <template>
     <div id="main" class="app-main">

@@ -76,6 +76,11 @@ function Shipment(sequelize, DataTypes) {
 
                 return products
 
+            },
+            status: function() {
+                if (this.hasArrived) return 'Inventorised'
+                if (this.actualShipOut) return 'On sail'
+                return 'Not shipped'
             }
         },
         classMethods: {

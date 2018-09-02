@@ -100,36 +100,42 @@ router.post('/shipout', function(req, res, next) {
 
     debug(req.body);
 
-    return DB.Shipment.update({
-        shipOutDetails: req.body.shipOutDetails,
-        actualShipOut: req.body.actualShipOut
-    }, {
-        where: { ShipmentID: req.body.ShipmentID },
-        limit: 1,
-        returning: true
-    }).then(function(shipment) {
+    return DB.Shipment.findOne({
+        where: { ShipmentID: req.body.ShipmentID }
+    }).then(shipment => {
+
+        if (!shipment) {
+            let error = new Error('No shipment was found.')
+            error.status = 400
+            throw error
+        }
+
+        if (shipment.hasArrived) {
+            let error = new Error('You cannot shipout a shipment that has arrived and been inventorised.')
+            error.status = 400
+            throw error
+        }
+
+        shipment.shipOutDetails = req.body.shipOutDetails
+        shipment.actualShipOut = req.body.actualShipOut
+        shipment.expectedArrival = req.body.expectedArrival
+
+        return shipment.save({ returning: true })
+
+    })
+    .then(shipment => {
+        return getShipmentWithProducts({ ShipmentID: shipment.ShipmentID })
+    })
+    .then(shipment => {
 
         res.send({
             success: true,
-            shipment: shipment[1][0]
-        });
+            shipment: shipment
+        })
 
-    }).catch(function(err) {
-        console.log(err)
-            res.status(500).send({
-            success: false,
-            error: {
-                message: 'An error has occurred, please try again',
-                hideMessage: false,
-                debug: {
-                    message: 'Catch handler',
-                    errorObject: err
-                }
-            }
-        });
-    });
+    }).catch(error => { API_ERROR_HANDLER(error, req, res, next) });
 
-});
+})
 
 router.put('/create', function(req, res, next) {
 
@@ -195,6 +201,12 @@ router.post('/edit', function(req, res, next) {
                 throw error
             }
 
+            if (shipment.hasArrived) {
+                let error = new Error('You cannot edit a shipment that has been inventorised.')
+                error.status = 400
+                throw error
+            }
+
             let updateKeys = [
                 'actualShipOut',
                 'estimatedShipOut',
@@ -255,6 +267,8 @@ router.post('/edit', function(req, res, next) {
 router.delete('/delete', function(req, res, next) {
 
     debug(req.body);
+
+    // i think we ought to record this in inventory movement as well.
 
     DB.Shipment.destroy({
         where: { ShipmentID: req.body.ShipmentID },

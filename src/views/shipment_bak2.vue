@@ -6,10 +6,6 @@
 .content{
     padding-left: 5px;
 }
-.inventoriseTableInputs {
-    margin-left:-90px;
-    width: 50px;
-}
 </style>
 
 <template>
@@ -206,66 +202,44 @@
                     :data="inventoriseModal.form.products"
                     style="width: 100%">
                     <el-table-column
-                        type="index"
-                        label="No"
-                        width="50"
+                        v-for="column in inventoriseColumns"
+                        :prop="column.key"
+                        :label="column.title"
                     >
                     </el-table-column>
 
                     <el-table-column
-                        label="Product"
+                        v-for="storageLocation in storageLocations"
+                        :label="storageLocation.name"
                     >
+
                         <template slot-scope="scope">
-                            <p>{{ scope.row.name }}</p>
-                            <i>{{ scope.row.sku }}</i>
+                            <FormItem style="margin-left:-90px;" prop="storageQuantities">
+                                <InputNumber
+                                    v-model="scope.row.toInventorise.stores[storageLocation.name].quantity"
+                                    @on-change="inventoriseModal.countQuantities(scope.row)"
+                                ></InputNumber>
+                            </FormItem>
                         </template>
 
                     </el-table-column>
 
+
                     <el-table-column
-                        label="Qty Shipped"
-                        width="80"
-                        prop="quantity"
-                    ></el-table-column>
-
-                    <el-table-column label="Inventorise">
-                        <el-table-column
-                            v-for="storageLocation in storageLocations"
-                            :label="storageLocation.name"
-                            :key="storageLocation.StorageLocationID"
-                            width="80"
-                        >
-
-                            <template slot-scope="scope">
-                                <FormItem prop="storageQuantities">
-                                    <InputNumber
-                                        class="inventoriseTableInputs"
-                                        :min="0" :max="parseInt(scope.row.quantity)"
-                                        v-model="scope.row.toInventorise.stores[storageLocation.name].quantity"
-                                        @on-change="inventoriseModal.countQuantities(scope.row, scope.row.toInventorise.stores[storageLocation.name])"
-                                    ></InputNumber>
-                                </FormItem>
-                            </template>
-
-                        </el-table-column>
-
-                        <el-table-column width="80" label="Inventorise Total">
-                            <template slot-scope="scope">
-
-                                <FormItem :key="scope.row.InventoryID">
-                                    <Input
-                                        class="inventoriseTableInputs"
-                                        disabled
-                                        type="text"
-                                        :ref="'totalFor' + scope.row.InventoryID"
-                                        v-model="scope.row.toInventorise.total"
-                                    ></Input>
-                                </FormItem>
-                            </template>
-                        </el-table-column>
+                        label="Inventorise Total"
+                    >
+                        <template slot-scope="scope">
+                            <FormItem style="margin-left:-90px;">
+                                <InputNumber :ref="'totalFor' + scope.row.InventoryID" v-model="scope.row.toInventorise.total"></InputNumber>
+                            </FormItem>
+                        </template>
                     </el-table-column>
 
+
                 </el-table>
+
+
+                <Table :columns="inventoriseColumns" :data="inventoriseModal.form.products"></Table>
 
             </Form>
 
@@ -284,6 +258,10 @@ import Vue from 'vue'
 const domain = process.env.API_DOMAIN
 
 export default {
+    components: {
+        'i-form-item': FormItem,
+        'i-input-number': InputNumber
+    },
     data () {
         return {
 
@@ -291,7 +269,11 @@ export default {
 
             productColumns: [{
                 title: 'No.',
-                key: 'ShipmentID'
+                key: 'ShipmentID',
+                width: 65,
+                render: (h, params) => {
+                    return h('p', params.index + 1)
+                }
             }, {
                 title: 'Product',
                 key: 'sku',
@@ -306,6 +288,46 @@ export default {
                 key: 'quantity',
                 width: 65,
             }],
+
+            inventoriseColumns: [{
+                title: 'No.',
+                key: 'ShipmentID',
+                width: 65,
+                render: (h, params) => {
+                    return <p>{(params.index + 1)}</p>
+                }
+            }, {
+                title: 'Product',
+                key: 'sku',
+                render: (h, params) => {
+                    return (
+                        <div>
+                            <p>{params.row.name}</p>
+                            <p><i>{params.row.sku}</i></p>
+                        </div>
+                    )
+                }
+            }, {
+                title: 'Shipped Qty',
+                key: 'quantity',
+                width: 65,
+            }, {
+                title: 'Inv Qty',
+                key: 'invQuantity',
+                width: 65,
+                render: (h, params) => {
+
+                    let productIndex = _.findIndex(this.inventoriseModal.form.products, { InventoryID: params.row.InventoryID })
+                    let product = this.inventoriseModal.form.products[productIndex]
+
+                    return (
+                        <FormItem style="margin-left:-90px;">
+                            <InputNumber v-model={product.toInventorise.total}></InputNumber>
+                        </FormItem>
+                    )
+                }
+            }],
+
             shipments: [{
                 ShipmentID: '',
                 name:'',
@@ -418,22 +440,38 @@ export default {
                 formRules: {
                     actualArrival: [
                         { required: true, type: 'date', message: 'Please select the date', trigger: 'change' }
+                    ],
+                    storageQuantities: [
+                        { min: 0, max: 999, trigger: 'change', validator (rule, value, callback, source) {
+
+                            // let quantity =
+                            //
+                            // let ids = _.map(value, product => {
+                            //     if(!isNaN(parseInt(product.InventoryID))) return product.InventoryID
+                            // }).
+                            //
+                            // // take out all the non-truthy items
+                            // ids = _.filter(ids)
+                            //
+                            // if (ids.length === 0) return callback(new Error('You have to select at least 1 product.'))
+                            // if (_.uniq(ids).length !== ids.length) return callback(new Error('You have selected a duplicated product.'))
+                            // return callback()
+
+                        }}
                     ]
                 },
-                countQuantities(product, location) {
+                countQuantities(product) {
+                    console.log(1111)
+                    console.log(product)
                     let keys = Object.keys(product.toInventorise.stores)
                     let count = 0
                     for(let i=0; i<keys.length; i++) {
                         let qty = product.toInventorise.stores[keys[i]].quantity
                         count += parseInt(qty)
                     }
+                    
                     product.toInventorise.total = count
                     V.$refs['totalFor' + product.InventoryID].currentValue = count
-                    product.quantityRemaining = parseInt(product.quantity) - count
-
-                    if (product.quantityRemaining < 0) {
-                        V.$Message.error('Quantity larger than what is shipped. Check your input.')
-                    }
                 }
             }
 
@@ -642,64 +680,8 @@ export default {
             if (!D.get(shipment, 'products[0].toInventorise')) {
                 shipment.products.forEach(product => {
                     product.toInventorise = _.cloneDeep(this.storageLocationTemplate)
-                    product.quantityRemaining = parseInt(product.quantity)
                 })
             }
-        },
-        inventoriseOK() {
-            let self = this
-            this.$refs['inventoriseForm'].validate(valid => {
-                if(!valid) {
-                    this.inventoriseModal.loading = false
-                    setTimeout(() => { self.inventoriseModal.loading = true }, 1)
-                    this.$Message.error('Check your entry!');
-                    return
-                }
-
-                let products = this.inventoriseModal.form.products
-                var qtyErrFlag = false
-                for(let i=0; i<products.length; i++) {
-                    let product = products[i]
-                    if (product.toInventorise.quantityRemaining !== 0) {
-                        qtyErrFlag = true
-                        this.$Message.error('Quantity does not match for ' + product.name +'!')
-                    }
-                }
-                if (qtyErrFlag) {
-                    this.inventoriseModal.loading = false
-                    setTimeout(() => { self.inventoriseModal.loading = true }, 1)
-                    return
-                }
-
-                let payload = _.cloneDeep(this.inventoriseModal.form)
-
-                payload.actualArrival = moment.utc(moment(payload.actualArrival).startOf('day').format('LL')).valueOf();
-
-                axios.put(domain + '/api/v2/shipment/arrive', payload).then(response => {
-
-                    // if success: false
-                    if (!response.data.success) {
-
-                        let error = new Error('API operation not successful.')
-                        error.reponse = response
-                        throw error
-
-                    }
-
-                    this.$Message.success('Successfully inventorised shipment!')
-                    this.inventoriseModal.show = false
-
-                }).catch(error => {
-
-                    this.$Message.error('Failed request!');
-                    CATCH_ERR_HANDLER(error)
-
-                }).then(() => {
-                    this.inventoriseModal.loading = false
-                    setTimeout(() => { self.inventoriseModal.loading = true }, 1)
-                })
-            })
-
         }
     },
     filters: {},
@@ -749,9 +731,39 @@ export default {
             }
 
             this.storageLocations.forEach(storageLocation => {
+                this.inventoriseColumns.push({
+                    title: storageLocation.name,
+                    key: 'toInventorise.' + storageLocation.name,
+                    render: (h, params) => {
+
+                        let productIndex = _.findIndex(this.inventoriseModal.form.products, { InventoryID: params.row.InventoryID })
+                        let product = this.inventoriseModal.form.products[productIndex]
+                        let productStore = product.toInventorise.stores[storageLocation.name]
+
+                        let count = (function(V, product) {
+                            return function() { V.$data.inventoriseModal.countQuantities(product) }
+                        })(this, product)
+
+                        return (
+                            <FormItem style="margin-left:-90px;" prop="storageQuantities">
+                                <InputNumber
+                                    v-model={productStore.quantity}
+                                    onInput={count}
+                                ></InputNumber>
+                            </FormItem>
+                        )
+
+                    }
+                })
+
+
+
+
                 this.storageLocationTemplate.stores[storageLocation.name] = storageLocation
                 this.storageLocationTemplate.stores[storageLocation.name].quantity = 0
+
             })
+
 
         }).catch(CATCH_ERR_HANDLER)
     }
