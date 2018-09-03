@@ -1,6 +1,7 @@
-var express = require('express');
-var router = express.Router();
-var debug = require('debug')('nn:api:shipment')
+const express = require('express');
+const router = express.Router();
+const debug = require('debug')('nn:api:shipment')
+const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -286,161 +287,184 @@ router.post('/arrive', function(req, res, next) {
 
     debug(req.body);
 
-    return DB.sequelize.transaction(function(t) {
 
-        return DB.Shipment.findOne({
-            where: { ShipmentID: req.body.ShipmentID },
-            include: [{
+    let products = D.get(req, 'body.products')
+    if (!products) {
+        let error = new Error('`products` missing from request')
+        error.status = 400
+        throw error
+    }
+    for(let i=0; i<products.length; i++) {
+        if (parseInt(products[i].quantityRemaining) !== 0) {
+            let error = new Error('There seems to be error in inventorising ' + products[i].name + '. Please check your inputs.')
+            error.status = 400
+            throw error
+        }
+    }
 
-                    model: DB.TransitInventory,
-                    attributes: [
-                        'TransitInventoryID',
-                        'Shipment_shipmentID',
-                        'Inventory_inventoryID',
-                        'quantity',
-                        'isInventorised'
-                    ]
+    var _SHIPMENT
+    return DB.Shipment.findOne({
+        where: { ShipmentID: req.body.ShipmentID },
+        include: [{
 
-            }]
-        }).then(function(shipment) {
+            model: DB.TransitInventory,
+            attributes: [
+                'TransitInventoryID',
+                'Shipment_shipmentID',
+                'Inventory_inventoryID',
+                'quantity',
+                'isInventorised'
+            ]
 
-            // shipment cannot me found, possibly race condition where the shipment was deleted by someone
-            // or user is accessing an outdated view.
-            if (!shipment) {
-                res.status(400).send({
-                    success: false,
-                    error: {
-                        message: 'The shipment record could not be found. It might have been deleted. Please try again.',
-                        hideMessage: false,
-                        debug: {
-                            message: 'after DB.Shipment.findOne'
-                        }
+        }]
+    }).then(function(shipment) {
+
+        _SHIPMENT = shipment
+
+        // shipment cannot be found, possibly race condition where the shipment was deleted by someone
+        // or user is accessing an outdated view.
+        if (!shipment) {
+            let error = new Error('The shipment record could not be found. It might have been deleted. Please try again.')
+            error.status = 400
+            throw error
+        }
+
+        // shipment already inventorised.
+        if (shipment.hasArrived) {
+            let error = new Error('The shipment has already been inventorise.')
+            error.status = 400
+            throw error
+        }
+
+        shipment.hasArrived =  true;
+        shipment.actualArrival = req.body.actualArrival;
+        shipment.arrivalDetails = req.body.arrivalDetails;
+        shipment.data.inventorised = req.body.products;
+
+        let transitObj = {}
+
+        return DB.sequelize.transaction(function(t) {
+
+            return PROMISE.resolve().then(() => {
+                let promises = []
+
+                let saveShipment = shipment.save({
+                    fields: (shipment.changed() || []).concat(['data']),
+                    returning: true,
+                    transaction: t
+                })
+                return saveShipment
+            })
+            .then(() => {
+
+                let promises = []
+
+                // create a transit dictionary for use later
+                //let transitObj = {};
+
+                for(let i=0; i<shipment.TransitInventories.length; i++) {
+                    let transit = shipment.TransitInventories[i]
+                    transitObj[transit.Inventory_inventoryID] = transit
+
+                    // also set all isInventorised bool to true
+                    transit.isInventorised = true
+                    promises.push( transit.save({ transaction: t }) )
+                }
+
+                return promises
+
+            }).spread(() => {
+
+                let promises = []
+
+                // for each product, find its inventory status
+                for(let i=0; i<req.body.products.length; i++) {
+                    let product = req.body.products[i]
+
+                    let productShipmentQty = parseInt(transitObj[product.InventoryID].quantity);
+                    let inventoriseQty = 0;
+
+                    // for each for the toInventorise, inventory and then do an update.
+                    if ( typeof D.get(product, 'toInventorise.stores') !== 'object' ) {
+                        let error = new Error('`toInventorise` is not valid.')
+                        error.status = 400
+                        throw error
                     }
-                });
-                throw new Error('responded');
-            }
 
-            // shipment already inventorised.
-            if (shipment.hasArrived) {
-                res.status(400).send({
-                    success: false,
-                    error: {
-                        message: 'The shipment has already been inventorise.',
-                        hideMessage: false,
-                        debug: {
-                            message: 'after DB.Shipment.findOne'
+                    let stores = product.toInventorise.stores
+                    let storeKeys = Object.keys(stores)
+                    for(let i=0; i<storeKeys.length; i++) {
+                        let inventorise = stores[ storeKeys[i] ]
+
+                        // if inventorise quantity is zero, we ignore
+                        let qty = parseInt(inventorise.quantity);
+                        if(isNaN(qty) || qty === 0) continue
+
+                        inventoriseQty += qty;
+
+                        let where = {
+                            StorageLocation_storageLocationID: inventorise.StorageLocationID,
+                            Inventory_inventoryID: product.InventoryID
                         }
-                    }
-                });
-                throw new Error('responded');
-            }
 
-            shipment.hasArrived =  true;
-            shipment.actualArrival = req.body.actualArrival;
-            shipment.arrivalDetails = req.body.arrivalDetails;
-            shipment.data.inventorised = req.body.products;
-
-            var promises = [
-                shipment.save({ fields: (shipment.changed() || []).concat(['data']) })
-            ];
-
-            // create a transit dictionary for use later
-            let transitObj = {};
-
-
-            shipment.TransitInventories.forEach(transit => {
-                transitObj[transit.Inventory_inventoryID] = transit;
-
-                // also set all isInventorised bool to true
-                transit.isInventorised = true;
-                promises.push(transit.save());
-            });
-
-            // for each product, find its inventory status
-            req.body.products.forEach(product => {
-
-                let productShipmentQty = parseInt(transitObj[product.InventoryID].quantity);
-                let inventoriseQty = 0;
-                let findCreateOrUpdateInventoryFunctions = [];
-
-                // for each for the toInventorise, inventory and then do an update.
-                product.toInventorise.forEach(inventorise => {
-
-                    // if inventorise quantity is zero, we ignore
-                    let qty = parseInt(inventorise.quantity);
-                    if(isNaN(qty) || qty === 0) return;
-
-                    inventoriseQty += qty;
-
-                    let where = {
-                        StorageLocation_storageLocationID: inventorise.StorageLocationID,
-                        Inventory_inventoryID: product.InventoryID
-                    };
-
-                    let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
-                        where: where,
-                        defaults: {
+                        // as it may be the first time this inventory is inventorised at a particular location
+                        // this is to attempt to create it if so
+                        let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
+                            where: where,
+                            defaults: {
                                 quantity: inventorise.quantity
-                        },
-                        limit: 1
-                    }).spread(function(inventory, created) {
-                        if (created) return created;
+                            },
+                            transaction: t
+                        }).spread(function(inventory, created) {
 
-                        return DB.Inventory_Storage.update({
-                            quantity: DB.sequelize.literal('quantity + ' + inventorise.quantity )
-                        }, { where: where });
+                            if (created) return created;
 
-                    });
+                            // if it is not create, means the inventory already exist in a particular location
+                            // hence just add to it.
+                            return DB.Inventory_Storage.update({
+                                quantity: DB.sequelize.literal('quantity + ' + inventorise.quantity )
+                            }, {
+                                where: where,
+                                transaction: t
+                            })
 
-                    promises.push(findCreateOrUpdateInventory);
-                });
+                        })
+                        promises.push(findCreateOrUpdateInventory);
+                    }
 
-                // check if the quantity adds up.
-                if(inventoriseQty !== productShipmentQty) {
-                    res.send({
-                        success: false,
-                        error: {
-                            message: 'The total quantity shipped does not match with the quantity you wish to inventorise for "' + product.InventoryID + '"',
-                            hideMessage: false,
-                            debug: {
-                                message: 'Failed "inventoriseQty !== productShipmentQty" check.'
-                            }
-                        }
-                    });
-                    throw new Error('responded');
-                }
-            });
-
-            return promises;
-
-        }).spread(function(inventorise, shipment) {
-
-            res.send({
-                success: true
-            });
-
-        }).catch(function(err) {
-            console.log(err)
-
-            if (err.message === 'responded') return;
-
-            res.status(500).send({
-                success: false,
-                error: {
-                    message: 'An error has occurred, please try again',
-                    hideMessage: false,
-                    debug: {
-                        message: 'Catch handler',
-                        errorObject: err.msg
+                    // check if the quantity adds up.
+                    if(inventoriseQty !== productShipmentQty) {
+                        let error = new Error('The total quantity shipped does not match with the quantity you wish to inventorise for "' + product.InventoryID + '"')
+                        error.status = 400
+                        throw error
                     }
                 }
-            });
-        });
 
-    }); // end of transaction closing brackets
+                return promises
+
+            })
+            .spread(() => {
+
+                // create the record
+                return createInventoryRecord(t, 'shipment', _SHIPMENT, req.user)
+
+            })
+        })
+    })
+    .then(function() {
+
+        return getShipmentWithProducts({ShipmentID: _SHIPMENT.ShipmentID})
+
+    }).then(shipment => {
+
+        res.send({
+            success: true,
+            shipment: shipment
+        })
+
+    }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
+
 })
-
-
 
 /* Local functions */
 const shipmentInventoriesOrder = [ [ DB.Inventory, 'sku', 'ASC'] ]

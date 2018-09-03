@@ -1,3 +1,7 @@
+<style scoped>
+
+</style>
+
 <template>
     <div>
         <Spin size="large" fix v-if="spinShow"></Spin>
@@ -101,6 +105,82 @@
 
         </Modal>
 
+        <Modal
+            v-model="discrepancyModal.show"
+            title="Create Discrepancy Voucher"
+            :loading="discrepancyModal.loading"
+            @on-ok="discrepancyOK()">
+
+            <Form ref="discrepancyForm" :model="discrepancyModal.form" :rules="discrepancyModal.formRules">
+
+                <el-table
+                    :data="discrepancyModal.inventory.stock"
+                    style="width: 100%">
+                    <el-table-column
+                        type="index"
+                        label="No"
+                        width="50"
+                    >
+                    </el-table-column>
+
+                    <el-table-column
+                        label="Name"
+                        width="120"
+                    >
+                        <template slot-scope="scope">
+                            <p v-if="scope.row.StorageLocationID">{{ scope.row.name }}</p>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                        label="Qty"
+                        width="50"
+                        prop="quantity"
+                    >
+                    </el-table-column>
+
+                    <el-table-column
+                        label="Adjustment"
+                        width="100"
+                    >
+                        <template slot-scope="scope">
+                            <FormItem
+                                <InputNumber
+                                    class="discrepancyTableInputs"
+                                    :min="-999" :max="999"
+                                    v-model="scope.row.discrepancy"
+                                    @on-change="discrepancyModal.countQuantities(scope)"
+                                ></InputNumber>
+                            </FormItem>
+                        </template>
+
+                    </el-table-column>
+
+                    <el-table-column width="80" label="Final">
+                        <template slot-scope="scope">
+                            <FormItem>
+                                <Input
+                                    class="discrepancyTableInputs"
+                                    disabled
+                                    type="text"
+                                    :ref="'totalFor' + scope.InventoryID + '_' + scope.row.StorageLocationID"
+                                    v-model="scope.row.final"
+                                ></Input>
+                            </FormItem>
+                        </template>
+                    </el-table-column>
+
+
+                </el-table>
+
+                <FormItem label="Reason" prop="discrepancyReason">
+                    <Input :rules="{ required: true, message: 'Please add a reason.' }" v-model="discrepancyModal.inventory.discrepancyReason" type="textarea" :autosize="{minRows: 2,maxRows: 10}" placeholder="Any comment on damages, misplacement, error etc..."></Input>
+                </FormItem>
+
+            </Form>
+
+        </Modal>
+
 
     </div>
 </template>
@@ -132,10 +212,6 @@ export default {
                 filterMethod (value, row) {
                     return row.sku.indexOf(value) === 0
                 }
-            }, {
-                title: 'COGS',
-                key: 'cogs',
-                width: 40
             }, {
                 title: 'Stock',
                 render: (h, params) => {
@@ -182,9 +258,25 @@ export default {
 
                         // not sold or transit, just render plainly
                         stuff.push( h('p', stocking.name + ': ' + stocking.quantity) )
+
                     }
+                    stuff.push( h('Button', {
+                        props: {
+                            type: 'warning',
+                            size: 'small'
+                        },
+                        on: {
+                            click: () => {
+                                this.discrepancy(params.row)
+                            }
+                        }
+                    }, '+ Discrepancy') )
                     return stuff
                 }
+            }, {
+                title: 'COGS',
+                key: 'cogs',
+                width: 40
             }, {
                 title: 'Action',
                 width: 45,
@@ -281,12 +373,81 @@ export default {
             soldModal: {
                 show: false,
                 inventory: ''
+            },
+            discrepancyModal: {
+                show: false,
+                loading: true,
+                inventory: {
+                    stock: [],
+                    discrepancyReason: '',
+                    final: 0,
+                    quantity: 0
+                },
+                countQuantities(inventory) {
+                    let finalCount = parseInt(inventory.row.quantity) + parseInt(inventory.row.discrepancy)
+                    inventory.row.final = V.$refs['totalFor' + inventory.InventoryID + '_' + inventory.row.StorageLocationID].currentValue = finalCount
+                }
             }
         }
 
     },
     methods: {
+        discrepancyOK() {
+            let payload = this.discrepancyModal.inventory
+            let gotAdjustment = false
+            for(let i=0; i<payload.stock.length; i++) {
+                let stock = payload.stock[i]
+                if (parseInt(stock.discrepancy) !== 0) {
+                    gotAdjustment = true
+                    break
+                }
+            }
+            if (!gotAdjustment) {
+                this.discrepancyModal.show = false
+                this.$Message.error('No discrepancies to adjust.')
+                return
+            }
 
+            axios.post(domain + '/api/v2/inventory/discrepancy', payload).then(response => {
+                if (!response.data.success) {
+                    let error = new Error('API operation not successful.')
+                    error.reponse = response
+                    throw error
+                }
+
+                // set the new inventory data for view
+                let index = _.findIndex(this.inventories, ['InventoryID', response.data.inventory.InventoryID])
+                this.$set(this.inventories, index, response.data.inventory)
+
+                this.$Message.success('Success!');
+                this.discrepancyModal.show = false
+
+            }).catch(error => {
+
+                CATCH_ERR_HANDLER(error)
+                this.$Message.error('Failed request!');
+
+            }).then(() => {
+                let self = this
+                this.discrepancyModal.loading = false
+                setTimeout(() => { self.discrepancyModal.loading = true }, 1)
+            })
+
+        },
+        discrepancy(inventory) {
+
+            this.discrepancyModal.inventory = inventory
+            inventory.discrepancyReason = ''
+            //this.$refs["discrepancyForm"].resetFields()
+
+            for(let i=0; i<inventory.stock.length; i++) {
+                let stock = inventory.stock[i]
+                stock.discrepancy = 0
+                stock.final = stock.quantity
+            }
+
+            this.discrepancyModal.show = true
+        },
         deactivateInv(inventory) {
             let self = this
             this.editInventoryModal.deactivateInvSKU = ''

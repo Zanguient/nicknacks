@@ -660,7 +660,7 @@ export default {
                 var qtyErrFlag = false
                 for(let i=0; i<products.length; i++) {
                     let product = products[i]
-                    if (product.toInventorise.quantityRemaining !== 0) {
+                    if (product.quantityRemaining !== 0) {
                         qtyErrFlag = true
                         this.$Message.error('Quantity does not match for ' + product.name +'!')
                     }
@@ -673,9 +673,11 @@ export default {
 
                 let payload = _.cloneDeep(this.inventoriseModal.form)
 
+                console.log(payload)
+
                 payload.actualArrival = moment.utc(moment(payload.actualArrival).startOf('day').format('LL')).valueOf();
 
-                axios.put(domain + '/api/v2/shipment/arrive', payload).then(response => {
+                axios.post(domain + '/api/v2/shipment/arrive', payload).then(response => {
 
                     // if success: false
                     if (!response.data.success) {

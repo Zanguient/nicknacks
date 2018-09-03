@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const debug = require('debug')('nn:api:inventory')
 const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
+const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
 
 let inventoryIncludes = [{
 
@@ -246,7 +247,6 @@ router.delete('/delete', (req, res, next) => {
             let promises = []
 
             //record inventory movement
-            let createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
             // same for DB calls "required" from outside, it will be outside of this CLS scoping, need to manually pass `t`
             let recordMovement = createInventoryRecord(t, 'inventoryDeleted', inventory, req.user)
             promises.push(recordMovement)
@@ -395,6 +395,102 @@ router.delete('/sold/delete', (req, res, next) => {
         return res.send({ success: true })
 
     }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
+
+})
+
+router.post('/discrepancy', (req, res, next) => {
+
+    if (!req.body.discrepancyReason) {
+        let error = new Error('Please provide a reason for discrepancies.')
+        error.status = 400
+        return API_ERROR_HANDLER(error, req, res, next)
+    }
+    let _MOVEMENT = {
+        discrepancyReason: req.body.discrepancyReason,
+        adjustments: []
+    }
+
+    return DB.sequelize.transaction(function(t) {
+
+        return DB.Inventory.findOne({
+            where: { InventoryID: req.body.InventoryID }
+        }, {transaction: t}).then(inventory => {
+            if (!inventory) {
+                let error = new Error('Inventory is not found.')
+                error.status = 400
+                throw error
+            }
+
+            let promises = []
+
+            var inventory = req.body
+
+            for(let i=0; i<inventory.stock.length; i++) {
+                if(!inventory.InventoryID) continue
+                let stock = inventory.stock[i]
+                let discrepancy = parseInt(stock.discrepancy)
+                if (isNaN(discrepancy) || discrepancy === 0) continue
+
+                _MOVEMENT.adjustments.push({
+                    InventoryID: inventory.InventoryID,
+                    name: inventory.name,
+                    sku: inventory.sku,
+                    StorageLocationID: stock.StorageLocationID,
+                    storageLocationName: stock.name,
+                    adjustment: stock.discrepancy
+                })
+
+                var quantityLiteral = 'quantity '
+                if(discrepancy < 0) {
+                    quantityLiteral += discrepancy.toString()
+                } else {
+                    quantityLiteral += '+ ' + discrepancy.toString()
+                }
+
+                let updateDiscrepancy = DB.Inventory_Storage.update({
+                    quantity: DB.sequelize.literal(quantityLiteral)
+                }, {
+                    where: {
+                        StorageLocation_storageLocationID: stock.StorageLocationID,
+                        Inventory_inventoryID: inventory.InventoryID
+                    },
+                    transaction: t
+                })
+
+                promises.push(updateDiscrepancy)
+            }
+
+            return promises
+        }).spread(() => {
+            return createInventoryRecord(t, 'discrepancy', _MOVEMENT, req.user)
+        })
+
+    })
+    .then(() => {
+
+        return [
+            DB.Inventory.findById(req.body.InventoryID, {
+                include: inventoryIncludes
+            }),
+
+            DB.Inventory_Storage.findAll({
+                where: {
+                    Inventory_inventoryID: req.body.InventoryID
+                },
+                include: inventoryStorageIncludes
+            })
+        ]
+
+    }).spread( (inventory, soldInventories) => {
+
+        let processed = singleInventoryProcessor(inventory, soldInventories)
+
+        return res.send({
+            success: true,
+            inventory: processed
+        })
+
+    }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
 
 })
 
