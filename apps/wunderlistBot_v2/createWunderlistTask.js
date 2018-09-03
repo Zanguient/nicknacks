@@ -74,7 +74,9 @@ function createWunderlistTask(fromMagento, options) {
                 if (item.product_description && item.product_description.length > 0) {
                     itemBody += '\n(Description: ' + item.product_description + ')'
                 }
-                if (item.Options) let optionKeys = Object.keys(item.Options)
+
+                var optionKeys = []
+                if (item.Options) optionKeys = Object.keys(item.Options)
                 if (optionKeys.length > 0) {
                     for(let i=0; i<optionKeys.length; i++) {
                         let key = optionKeys[i]
