@@ -70,12 +70,9 @@ function prepareComments(fromMagento) {
         obj.docID = makeIDObject(fromMagento.increment_id)
 
         let body = '# ' + obj.salesOrderID.stub
-        body += ' Credit Memo (No. )' }
 
-        else if (type === 'shipment') {
-            body += ' Delivery Order (No.'
-            body += ' ' + obj.docID.withoutHex + ')'
-        }
+        body += ' Credit Memo (No.'
+        body += ' ' + obj.docID.withoutHex + ')'
 
         body += '\n\n\n # Comment'
         body += '\n ' + fromMagento.customer_note
