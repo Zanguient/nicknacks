@@ -65,7 +65,25 @@ function prepareComments(fromMagento) {
 
         return body
 
-    } else  {
+    } else if (type === "creditmemo") {
+
+        obj.docID = makeIDObject(fromMagento.increment_id)
+
+        let body = '# ' + obj.salesOrderID.stub
+        body += ' Credit Memo (No. )' }
+
+        else if (type === 'shipment') {
+            body += ' Delivery Order (No.'
+            body += ' ' + obj.docID.withoutHex + ')'
+        }
+
+        body += '\n\n\n # Comment'
+        body += '\n ' + fromMagento.customer_note
+
+        body += '\n\n\n # Refund'
+        body += '\n ' + fromMagento.all_data.grand_total
+
+    } else {
         // need to format the rest later
         return jsonFormat(fromMagento)
     }

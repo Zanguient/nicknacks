@@ -72,16 +72,34 @@ function createWunderlistTask(fromMagento, options) {
                 itemBody += '\n\n## ' + (i+1) + '. ' + item.name
 
                 if (item.product_description && item.product_description.length > 0) {
-                    itemBody += '\n(Description ' + item.product_description + ')'
+                    itemBody += '\n(Description: ' + item.product_description + ')'
+                }
+                if (item.Options) let optionKeys = Object.keys(item.Options)
+                if (optionKeys.length > 0) {
+                    for(let i=0; i<optionKeys.length; i++) {
+                        let key = optionKeys[i]
+                        let option = item.Options[key]
+                        itemBody += '\n' + key + ': ' + option
+                    }
                 }
 
-                itemBody += '\nSKU: ' + item.sku + ''
-                itemBody += '\nQty: ' + item['Ordered Qty'] + ''
-                itemBody += '\nPrice: ' + item.Price + ''
-                itemBody += '\nSubtotal: ' + parseFloat(item['Ordered Qty']) * parseFloat(item.Price) + ''
+                itemBody += '\nSKU: ' + item.sku
+                itemBody += '\nQty: ' + item['Ordered Qty']
+                itemBody += '\nPrice: ' + item.Price
+                itemBody += '\nSubtotal: ' + parseFloat(item['Ordered Qty']) * parseFloat(item.Price)
             }
             return itemBody
         })(fromMagento.items)
+
+        obj.comments = (function(comments) {
+            let commentBody = '\n\n\n# Comment'
+            for(let i=0; i<comments.length; i++) {
+                let comment = comment[i]
+                commentBody += '\n\n## ' + comment.created_at
+                commendBody += '\n' + comment.comment
+            }
+            return commentBody
+        })
 
         obj.totals = fromMagento.totals
 
@@ -146,9 +164,14 @@ function createWunderlistTask(fromMagento, options) {
         body += '\n\n## Subtotals'
         body += '\nWithout tax: ' + obj.totals.subtotal
         body += '\nWith tax: ' + obj.totals.subtotal_incl_tax
+        body += '\n\n## Shipment'
+        body += '\nWithout tax: ' + obj.totals.shipping_amount
+        body += '\nWith tax: ' + obj.totals.shipping_incl_tax
         body += '\n\n## Grand totals'
         body += '\nWithout tax: ' + obj.totals.grand_total
         body += '\nWith tax: ' +  obj.totals.grand_total_incl_tax
+
+        body += obj.comments
 
         var taskObject = {
             'list_id': parseInt(process.env.WL_LIST_ID_FOR_SALES_DELIVERY),
