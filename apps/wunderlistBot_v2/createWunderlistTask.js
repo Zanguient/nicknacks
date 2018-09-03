@@ -54,13 +54,13 @@ function createWunderlistTask(fromMagento, options) {
         obj.name = fromMagento.data.customer_firstname + ' ' + fromMagento.data.customer_lastname
         obj.email = fromMagento.data.customer_email
         obj.phone = fromMagento.data.customer_telephone
-        obj.dateOfOrder = fromMagento.order_created_at
+        obj.dateOfOrder = MOMENT.unix(fromMagento.order_created_at).format('Do MMMM YYYY, h:mm:ss a')
         obj.paymentMethod = fromMagento.data.payment_method
 
         obj.address = fromMagento.data.shipping_address
         if (fromMagento.data.delivery_date) {
             obj.deliveryDate = MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD')
-            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('Do MMMM YYYY dddd')
+            obj.deliveryDateFull = MOMENT.unix(fromMagento.data.delivery_date).format('Do MMMM YYYY, dddd')
         }
         obj.deliveryTime = fromMagento.data.delivery_time
         obj.deliveryComments = fromMagento.data.delivery_comments
