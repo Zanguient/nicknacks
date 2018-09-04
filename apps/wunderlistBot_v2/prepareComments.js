@@ -77,6 +77,8 @@ function prepareComments(fromMagento) {
 
         body += '\n\n\n # Refund'
         body += '\n ' + fromMagento.all_data.grand_total
+        
+        return body
 
     } else {
         // need to format the rest later
