@@ -5,13 +5,13 @@ const makeIDObject = require('./makeIDObject')
 function prepareComments(fromMagento) {
 
     let obj = {}
-
+    
+    obj.salesOrderID = makeIDObject(fromMagento.order_id)
+    obj.docID = makeIDObject(fromMagento.increment_id)
+    
     let type = fromMagento.type.toLowerCase()
 
     if (['ordercomment', 'shipment', 'shipmentcomment'].indexOf(type) !== -1) {
-
-        obj.salesOrderID = makeIDObject(fromMagento.order_id)
-        obj.docID = makeIDObject(fromMagento.increment_id)
 
         // keeping address as this can be changed
         obj.address = fromMagento.data.shipping_address
@@ -66,8 +66,6 @@ function prepareComments(fromMagento) {
         return body
 
     } else if (type === "creditmemo") {
-
-        obj.docID = makeIDObject(fromMagento.increment_id)
 
         let body = '# ' + obj.salesOrderID.stub
 
