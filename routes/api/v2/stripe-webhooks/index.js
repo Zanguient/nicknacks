@@ -84,7 +84,7 @@ router.post('/refunded', function (req, res, next) {
 
         if(D.get(req, 'body.livemode') === 'false') {
             console.log(req.body);
-            console.log(_TRANSACTIION)
+            console.log(_TRANSACTION)
             console.log('returning: ' + stripeCommissionReturned)
             console.log(stripeEvent)
             return res.send({ success: true });
@@ -92,9 +92,9 @@ router.post('/refunded', function (req, res, next) {
 
         // create a journal entry to reduce stripe commission
         return QBO.createJournalEntryAsync({
-            "DocNumber": _TRANSACTIION.salesOrderNumber + '-R',
+            "DocNumber": _TRANSACTION.salesOrderNumber + '-R',
             "TxnDate": MOMENT().format('YYYY-MM-DD'),
-            "PrivateNote": "Refund for " + _TRANSACTIION.details.salesOrderNumber,
+            "PrivateNote": "Refund for " + _TRANSACTION.details.salesOrderNumber,
             "Line": [{
                 // credit stripe transit cash for refund
                 "Id": "0",
