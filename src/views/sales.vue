@@ -199,6 +199,14 @@ export default {
                             throw error
                         }
 
+                        // re-compute the totalCOGS
+                        salesReceipt.totalCOGS = 0
+                        for(let i=0; i<salesReceipt.soldInventories.length; i++) {
+                            let soldInventory = salesReceipt.soldInventories[i]
+                            salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
+                        }
+                        salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+
                         salesReceipt.soldInventories.push(response.data.data)
 
                         this.$Message.success('Success!')

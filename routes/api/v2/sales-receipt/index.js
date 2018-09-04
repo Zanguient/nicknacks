@@ -8,7 +8,7 @@ router.get('/pending/all', (req, res, next) => {
         where: {
             status: 'pending'
         },
-        order: [ ['TransactionID', 'DESC'] ],
+        order: [ ['TransactionID', 'DESC'], [ DB.Inventory_Storage, DB.SoldInventory, 'SoldInventoryID', 'ASC' ] ],
         include: [{
             model: DB.Inventory_Storage,
             through: {

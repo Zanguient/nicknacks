@@ -138,7 +138,10 @@ function createWunderlistTask(fromMagento, options) {
         let titleLong = title + ', ' + obj.address
 
         /* BODY */
-        let body = '# ' + titleLong
+        let body = obj.items
+
+
+        body += '\n\n\n# ' + titleLong
 
         body += '\n\n\n# Info'
         body += '\nSales Order: ' + obj.ID.stub
@@ -159,8 +162,6 @@ function createWunderlistTask(fromMagento, options) {
             body += '\nTime: ' + (obj.deliveryTime || 'Not indicated')
             if (obj.delivery_comments && obj.delivery_comments.length > 0) body += '\nComment: ' + obj.delivery_comments
         }
-
-        body += obj.items
 
         body += '\n\n\n# Totals'
         body += '\n\n## Subtotals'
