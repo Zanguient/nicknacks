@@ -12,7 +12,7 @@ function apiErrorHandler(err, req, res, next, config) {
         })
     }
 
-    res.status(D.get(err, 'status') || 500);
+    res.status(D.get(err, 'status') || D.get(config, 'status') || 500);
 
     // use simple timestamps to mark 500 errors.
     let timestamp = (new Date()).getTime()
@@ -65,8 +65,13 @@ function apiErrorHandler(err, req, res, next, config) {
 
     // MODIFIERS
     if (toLog) responseObject.message += ' Please check console log. (' + timestamp + ')'
-    if (D.get(config, 'message')) responseObject.message = D.get(config, 'message')
-    if (D.get(config, 'message') && D.get(config, 'attachTimeStampToResponse') === true) responseObject.message += ' (TS:' + timestamp + ')'
+
+    if (D.get(config, 'message')) {
+
+        responseObject.message = D.get(config, 'message')
+        if (D.get(config, 'attachTimeStampToResponse') === true) responseObject.message += ' (TS:' + timestamp + ')'
+
+    }
 
     // if in development mode, we can attach the error in our reponse, on top of already printing it into the
     // server logs.

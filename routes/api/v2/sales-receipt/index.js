@@ -124,11 +124,18 @@ router.post('/create-sales-receipt', (req, res, next) => {
     DB.Transaction.findById(req.body.TransactionID).then(function(transaction) {
 
         if (!transaction) {
-            return API_ERROR_HANDLER(null, req, res, next, {
-                message: 'Unable to find transaction using `TransactionID` provided.',
-                attachTimeStampToResponse: true,
-                level: 'medium'
-            })
+            let error = new Error('Unable to find transaction using `TransactionID` provided.')
+            error.status = 400
+            error.level = 'medium'
+            throw error
+        }
+
+        if (transaction.status !== 'pending') {
+            let error = new Error('Sales receipt for transaction has been created.')
+            error.status = 400
+            error.level = 'low'
+            error.noLogging = true
+            throw error
         }
 
         _TRANSACTION = transaction
