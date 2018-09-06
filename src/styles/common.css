@@ -8,10 +8,15 @@
     margin: 5px;
 }
 
-@media all and (max-width: 640px) {
-    .ivu-table-cell {
-        padding-left: 4px !important;
-        padding-right: 4px !important;
+
+.ivu-table-cell {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}
+
+@media all and (max-width: 320px) {
+    .inventoryActionText {
+        display: none;
     }
 }
 

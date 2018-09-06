@@ -182,6 +182,8 @@
         </Modal>
 
 
+        <transfer-modal :stock="stockCache" :modalData="transferModal"></transfer-modal>
+
     </div>
 </template>
 <script>
@@ -189,31 +191,42 @@ import axios from 'axios'
 import D from 'dottie'
 import _ from 'lodash'
 import moment from 'moment'
+import transferModal from './components/inventory/transfer.vue'
+
 const domain = process.env.API_DOMAIN
 
 export default {
 
+    components: {
+        transferModal
+    },
+
     data () {
 
         return {
+
+            stockCache: [],
 
             spinShow: true,
 
             columns: [{
                 title: 'Name',
                 key: 'name',
-                sortable: true
+                sortable: true,
+                minWidth: 76
             }, {
                 title: 'sku',
                 key: 'sku',
                 sortable: true,
                 filters: [],
                 filterMultiple: true,
+                minWidth: 76,
                 filterMethod (value, row) {
                     return row.sku.indexOf(value) === 0
                 }
             }, {
                 title: 'Stock',
+                minWidth: 84,
                 render: (h, params) => {
                     let stuff = []
 
@@ -260,42 +273,75 @@ export default {
                         stuff.push( h('p', stocking.name + ': ' + stocking.quantity) )
 
                     }
-                    stuff.push( h('Button', {
-                        props: {
-                            type: 'warning',
-                            size: 'small'
-                        },
-                        on: {
-                            click: () => {
-                                this.discrepancy(params.row)
-                            }
-                        }
-                    }, '+ Discrepancy') )
                     return stuff
                 }
             }, {
                 title: 'COGS',
                 key: 'cogs',
-                width: 40
+                minWidth: 35
             }, {
                 title: 'Action',
-                width: 45,
+                minWidth: 38,
                 render: (h, params) => {
-                    return h('Button', {
-                        props: {
-                            type: 'primary',
-                            size: 'small'
-                        },
-                        on: {
-                            click: () => {
-                                this.editInventory(params.row)
+                    return [
+
+                        // edit button
+                        h('Button', {
+                            props: {
+                                type: 'primary',
+                                size: 'small'
+                            },
+                            on: {
+                                click: () => {
+                                    this.editInventory(params.row)
+                                }
                             }
-                        }
-                    }, 'Edit')
+                        }, [
+                            h('Icon', {props: {type: 'ios-create'}}),
+                            h('span', { class: 'inventoryActionText' }, 'Edit'),
+                            h('br')
+                        ]),
+
+                        // transfer button
+                        h('br'),
+                        h('Button', {
+                            props: {
+                                type: 'warning',
+                                size: 'small'
+                            },
+                            on: {
+                                click: () => {
+                                    this.transfer(params.row)
+                                }
+                            }
+                        }, [
+                            h('Icon', {props: {type: 'md-git-compare'}}),
+                            h('span', { class: 'inventoryActionText' }, 'Transfer')
+                        ]),
+
+                        // discrepancy button
+                        h('br'),
+                        h('Button', {
+                            props: {
+                                type: 'error',
+                                size: 'small'
+                            },
+                            on: {
+                                click: () => {
+                                    this.discrepancy(params.row)
+                                }
+                            }
+                        }, [
+                            h('Icon', {props: {type: 'ios-podium'}}),
+                            h('span', { class: 'inventoryActionText' }, 'Discrepancy')
+                        ])
+                    ]
                 }
             }],
 
             inventories: [],
+
+            storageLocations: [],
 
             // EDIT Inventory Form
             editInventoryModal: {
@@ -387,11 +433,52 @@ export default {
                     let finalCount = parseInt(inventory.row.quantity) + parseInt(inventory.row.discrepancy)
                     inventory.row.final = V.$refs['totalFor' + inventory.InventoryID + '_' + inventory.row.StorageLocationID].currentValue = finalCount
                 }
+            },
+            transferModal: {
+                show: false,
+                inventory: Object
             }
         }
 
     },
     methods: {
+
+        transfer(inventory) {
+
+            let self = this
+
+            this.stockCache = []
+
+            this.storageLocations.forEach(loc => {
+                let obj = {
+                    StorageLocationID: loc.StorageLocationID,
+                    name: loc.name,
+                    quantity: 0,
+                    transfer: 0,
+                    final: 0
+                }
+                let id = loc.StorageLocationID
+                let inventoryThatHasLocation = _.find(inventory.stock, { StorageLocationID: id })
+
+                if (inventoryThatHasLocation) {
+                    obj.quantity = obj.final = parseInt(inventoryThatHasLocation.quantity)
+                }
+                this.stockCache.push(obj)
+            })
+
+            // inventory.stock.forEach(stock => {
+            //     stock.final = parseInt(stock.quantity)
+            //     stock.transfer = 0
+            // })
+            //
+            // this.stock = _.cloneDeep(inventory.stock)
+            // for(let i=0; i<this.stock.length; i++) {
+            //     if (!this.stock[i].StorageLocationID) delete this.stock[i]
+            // }
+
+            this.transferModal.inventory = inventory
+            this.transferModal.show = true
+        },
         discrepancyOK() {
             let payload = this.discrepancyModal.inventory
             let gotAdjustment = false
@@ -746,6 +833,16 @@ export default {
             this.columns[1].filters = categoryFilters
 
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
+
+        // get all storage location info
+        axios.get(domain + '/api/v2/storage-location/all').then(response => {
+            if (!response.data.success) {
+                let error = new Error('API operation not successful.')
+                error.reponse = response
+                throw error
+            }
+            this.storageLocations = response.data.data
+        }).catch(CATCH_ERR_HANDLER)
     }
 }
 </script>

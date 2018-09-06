@@ -494,4 +494,165 @@ router.post('/discrepancy', (req, res, next) => {
 
 })
 
+router.post('/transfer', function(req, res, next) {
+
+    debug(req.body);
+
+    let stock = D.get(req, 'body.stock')
+    if (!stock || !Array.isArray(stock) || stock.length < 1) {
+        let error = new Error('`stock` format is incorrect')
+        error.status = 400; error.level = 'low'
+        throw error
+    }
+
+    // check the transfer numbers tally, which should add up to ZERO
+    // and if there is any transfer movement.
+
+    let transferCount = 0
+    let hasMovement = false
+
+    stock.forEach(stock => {
+        let transfer = parseInt(stock.transfer)
+
+        if (isNaN(transfer)) {
+            let error = new Error('`stock.transfer` is invalid.')
+            error.status = 400; error.level = 'low'; error.noLogging = true
+            throw error
+        }
+
+        transferCount += transfer
+        if (transfer !== 0) hasMovement = true
+    })
+
+    if (transferCount !== 0) {
+        let error = new Error('The transfers does not tally with the overall quantity. Please check your inputs.')
+        error.status = 400; error.level = 'low'; error.noLogging = true
+        throw error
+    }
+
+
+
+    var _INVENTORY
+    return DB.Inventory.findOne({
+        where: { InventoryID: req.body.InventoryID },
+        include: inventoryIncludes
+    }).then(function(inventory) {
+
+        _INVENTORY = inventory
+
+        console.log(inventory)
+        return console.log(inventory.StorageLocations)
+
+
+        return DB.sequelize.transaction(function(t) {
+
+            return PROMISE.resolve().then(() => {
+                let promises = []
+
+                let saveShipment = shipment.save({
+                    fields: (shipment.changed() || []).concat(['data']),
+                    returning: true,
+                    transaction: t
+                })
+                return saveShipment
+            })
+            .then(() => {
+
+                let promises = []
+
+                // create a transit dictionary for use later
+                //let transitObj = {};
+
+                for(let i=0; i<shipment.TransitInventories.length; i++) {
+                    let transit = shipment.TransitInventories[i]
+                    transitObj[transit.Inventory_inventoryID] = transit
+
+                    // also set all isInventorised bool to true
+                    transit.isInventorised = true
+                    promises.push( transit.save({ transaction: t }) )
+                }
+
+                return promises
+
+            }).spread(() => {
+
+                let promises = []
+
+                // for each product, find its inventory status
+                for(let i=0; i<req.body.products.length; i++) {
+                    let product = req.body.products[i]
+
+                    let productShipmentQty = parseInt(transitObj[product.InventoryID].quantity);
+                    let inventoriseQty = 0;
+
+                    // for each for the toInventorise, inventory and then do an update.
+                    if ( typeof D.get(product, 'toInventorise.stores') !== 'object' ) {
+                        let error = new Error('`toInventorise` is not valid.')
+                        error.status = 400
+                        throw error
+                    }
+
+                    let stores = product.toInventorise.stores
+                    let storeKeys = Object.keys(stores)
+                    for(let i=0; i<storeKeys.length; i++) {
+                        let inventorise = stores[ storeKeys[i] ]
+
+                        // if inventorise quantity is zero, we ignore
+                        let qty = parseInt(inventorise.quantity);
+                        if(isNaN(qty) || qty === 0) continue
+
+                        inventoriseQty += qty;
+
+                        let where = {
+                            StorageLocation_storageLocationID: inventorise.StorageLocationID,
+                            Inventory_inventoryID: product.InventoryID
+                        }
+
+                        // as it may be the first time this inventory is inventorised at a particular location
+                        // this is to attempt to create it if so
+                        let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
+                            where: where,
+                            defaults: {
+                                quantity: inventorise.quantity
+                            },
+                            transaction: t
+                        }).spread(function(inventory, created) {
+
+                            if (created) return created;
+
+                            // if it is not create, means the inventory already exist in a particular location
+                            // hence just add to it.
+                            return DB.Inventory_Storage.update({
+                                quantity: DB.sequelize.literal('quantity + ' + inventorise.quantity )
+                            }, {
+                                where: where,
+                                transaction: t
+                            })
+
+                        })
+                        promises.push(findCreateOrUpdateInventory);
+                    }
+
+                    // check if the quantity adds up.
+                    if(inventoriseQty !== productShipmentQty) {
+                        let error = new Error('The total quantity shipped does not match with the quantity you wish to inventorise for "' + product.InventoryID + '"')
+                        error.status = 400
+                        throw error
+                    }
+                }
+
+                return promises
+
+            })
+            .spread(() => {
+
+                // create the record
+                return createInventoryRecord(t, 'shipment', _SHIPMENT, req.user)
+
+            })
+        })
+    }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
+
+})
+
 module.exports = router;
