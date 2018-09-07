@@ -553,9 +553,9 @@ router.post('/transfer', function(req, res, next) {
         requestorStorage = _.orderBy(requestorStorage, ['quantity'], ['desc'] )
         
         let dbStorage = _.filter(inventory.StorageLocations, function(o) { 
-            return o.quantity) !== 0
+            return o.quantity !== 0
         })
-        let dbStorage = _.orderBy(dbStorage, ['quantity'], ['desc'])
+        dbStorage = _.orderBy(dbStorage, ['quantity'], ['desc'])
         
         // these 2 arrays should be identical, if not indicating that the requestor is not updating on the latest data.
         if (requestorStorage.length !== dbStorage.length) {
