@@ -3,6 +3,7 @@ const router = express.Router()
 const debug = require('debug')('nn:api:inventory')
 const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
 const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
+const _ = require('lodash')
 
 let inventoryIncludes = [{
 
@@ -542,115 +543,126 @@ router.post('/transfer', function(req, res, next) {
 
         console.log(inventory)
         return console.log(inventory.StorageLocations)
-
-
+        
+        
+        let requestorStorage = _.filter(req.body.stock, function(o) { 
+            // has valid InventoryID, quantity can be parse into Int, and quantity is not zero.
+            // we don't want to compare zeros, be will compare negatives which are significant
+            return (o.InventoryID && !isNaN( parseInt(o.quantity) ) && parseInt(o.quantity) !== 0) 
+        })
+        requestorStorage = _.orderBy(requestorStorage, ['quantity'], ['desc'] )
+        
+        let dbStorage = _.filter(inventory.StorageLocations, function(o) { 
+            return o.quantity) !== 0
+        })
+        let dbStorage = _.orderBy(dbStorage, ['quantity'], ['desc'])
+        
+        // these 2 arrays should be identical, if not indicating that the requestor is not updating on the latest data.
+        if (requestorStorage.length !== dbStorage.length) {
+            let error = new Error('You may be updating on outdated information. Please refresh and try again.')
+            error.level = "low"; error.noLogging = true; error.status = 400
+            throw error
+        }
+        
+        requestorStorage.forEach((requestor, index => {
+            if ( parseInt(requestor.quantity) !== dbStorage[index].quantity ) {
+                let error = new Error('You may be updating on outdated information. Please refresh and try again.')
+                error.level = "low"; error.noLogging = true; error.status = 400
+                error.data = {
+                    requestorStorage: reqestorStorage,
+                    dbStorage: dbStorage
+                }
+                throw error
+            }
+        })
+                                                         
+        // testing is good, do the transfer
         return DB.sequelize.transaction(function(t) {
-
-            return PROMISE.resolve().then(() => {
+            
+            return createInventoryRecord(t, 'inventoryTransfer', { 
+                
+                inventory: inventory, 
+                transfer: req.body.stock 
+                
+            }, req.user).then(() => {
+               
                 let promises = []
+                
+                stock.forEach(stock => {
 
-                let saveShipment = shipment.save({
-                    fields: (shipment.changed() || []).concat(['data']),
-                    returning: true,
-                    transaction: t
-                })
-                return saveShipment
-            })
-            .then(() => {
-
-                let promises = []
-
-                // create a transit dictionary for use later
-                //let transitObj = {};
-
-                for(let i=0; i<shipment.TransitInventories.length; i++) {
-                    let transit = shipment.TransitInventories[i]
-                    transitObj[transit.Inventory_inventoryID] = transit
-
-                    // also set all isInventorised bool to true
-                    transit.isInventorised = true
-                    promises.push( transit.save({ transaction: t }) )
-                }
-
-                return promises
-
-            }).spread(() => {
-
-                let promises = []
-
-                // for each product, find its inventory status
-                for(let i=0; i<req.body.products.length; i++) {
-                    let product = req.body.products[i]
-
-                    let productShipmentQty = parseInt(transitObj[product.InventoryID].quantity);
-                    let inventoriseQty = 0;
-
-                    // for each for the toInventorise, inventory and then do an update.
-                    if ( typeof D.get(product, 'toInventorise.stores') !== 'object' ) {
-                        let error = new Error('`toInventorise` is not valid.')
-                        error.status = 400
-                        throw error
+                    let newQty = parseInt(stock.quantity) 
+                    let transfer = parseInt(stock.transfer)
+                    
+                    // nothing to transfer
+                    if (transfer === 0) return
+                    
+                    let transferLiteral = 'quantity '
+                    if(transfer < 0) {
+                        transferLiteral += transfer.toString()
+                    } else {
+                        transferLiteral += '+ ' + transfer.toString()
+                    }
+                
+                    let where = {
+                        StorageLocation_storageLocationID: inventorise.StorageLocationID,
+                        Inventory_inventoryID: product.InventoryID
                     }
 
-                    let stores = product.toInventorise.stores
-                    let storeKeys = Object.keys(stores)
-                    for(let i=0; i<storeKeys.length; i++) {
-                        let inventorise = stores[ storeKeys[i] ]
+                    // as it may be the first time this inventory is inventorised at a particular location
+                    // this is to attempt to create if it is so
+                    let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
+                        where: where,
+                        defaults: {
+                            quantity: newQty
+                        },
+                        transaction: t
+                    }).spread(function(inventory, created) {
 
-                        // if inventorise quantity is zero, we ignore
-                        let qty = parseInt(inventorise.quantity);
-                        if(isNaN(qty) || qty === 0) continue
+                        if (created) return created;
 
-                        inventoriseQty += qty;
-
-                        let where = {
-                            StorageLocation_storageLocationID: inventorise.StorageLocationID,
-                            Inventory_inventoryID: product.InventoryID
-                        }
-
-                        // as it may be the first time this inventory is inventorised at a particular location
-                        // this is to attempt to create it if so
-                        let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
+                        // if it is not create, means the inventory already exist in a particular location
+                        // hence just add to it.
+                        return DB.Inventory_Storage.update({
+                            quantity: DB.sequelize.literal('quantity + ' + transferLiteral )
+                        }, {
                             where: where,
-                            defaults: {
-                                quantity: inventorise.quantity
-                            },
                             transaction: t
-                        }).spread(function(inventory, created) {
-
-                            if (created) return created;
-
-                            // if it is not create, means the inventory already exist in a particular location
-                            // hence just add to it.
-                            return DB.Inventory_Storage.update({
-                                quantity: DB.sequelize.literal('quantity + ' + inventorise.quantity )
-                            }, {
-                                where: where,
-                                transaction: t
-                            })
-
                         })
-                        promises.push(findCreateOrUpdateInventory);
-                    }
 
-                    // check if the quantity adds up.
-                    if(inventoriseQty !== productShipmentQty) {
-                        let error = new Error('The total quantity shipped does not match with the quantity you wish to inventorise for "' + product.InventoryID + '"')
-                        error.status = 400
-                        throw error
-                    }
-                }
+                    })
+                    promises.push(findCreateOrUpdateInventory);
+                
+                })
 
-                return promises
-
-            })
-            .spread(() => {
-
-                // create the record
-                return createInventoryRecord(t, 'shipment', _SHIPMENT, req.user)
+                return PROMISE.all(promises)
 
             })
         })
+    }).then(() => {
+    
+        return [
+            DB.Inventory.findById(_INVENTORY.InventoryID, {
+                include: inventoryIncludes
+            }),
+
+            DB.Inventory_Storage.findAll({
+                where: {
+                    Inventory_inventoryID: _INVENTORY.InventoryID
+                },
+                include: inventoryStorageIncludes
+            })
+        ]
+
+    }).spread( (inventory, soldInventories) => {
+
+        let processed = singleInventoryProcessor(inventory, soldInventories)
+
+        return res.send({
+            success: true,
+            inventory: processed
+        })
+
+    
     }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
 
 })
