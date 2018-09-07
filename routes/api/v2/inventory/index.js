@@ -548,7 +548,7 @@ router.post('/transfer', function(req, res, next) {
         let requestorStorage = _.filter(req.body.stock, function(o) { 
             // has valid InventoryID, quantity can be parse into Int, and quantity is not zero.
             // we don't want to compare zeros, be will compare negatives which are significant
-            return (o.InventoryID && !isNaN( parseInt(o.quantity) ) && parseInt(o.quantity) !== 0) 
+            return (o.StorageLocationID && !isNaN( parseInt(o.quantity) ) && parseInt(o.quantity) !== 0) 
         })
         requestorStorage = _.orderBy(requestorStorage, ['quantity'], ['desc'] )
         
