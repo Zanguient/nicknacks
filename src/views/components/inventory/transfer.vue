@@ -217,6 +217,7 @@ module.exports = {
                 if (!valid) {
                     this.loading = false
                     setTimeout(() => { self.loading = true }, 1)
+                    return false
                 }
 
                 // cannot find any transfer that is not zero
@@ -224,6 +225,7 @@ module.exports = {
                     this.$Message.error('There are no transfers made.')
                     this.loading = false
                     setTimeout(() => { self.loading = true }, 1)
+                    return false
                 }
 
 
@@ -242,11 +244,14 @@ module.exports = {
                         throw error
                     }
 
+                    this.$Message.success('Success!')
+                    self.$emit('transfer-complete', response.data.data)
+                    self.modalData.show = false
+
                     // // set the new inventory data for view
-                    // let index = _.findIndex(this.inventories, ['InventoryID', inventory.InventoryID])
-                    // this.$set(this.inventories, index, response.data.inventory)
                     //
-                    // this.$Message.success('Success!');
+                    //
+                    //
                     // this.editInventoryModal.show = false
 
                 }).catch(error => {

@@ -409,6 +409,7 @@ router.post('/arrive', function(req, res, next) {
 
                         // as it may be the first time this inventory is inventorised at a particular location
                         // this is to attempt to create it if so
+                        // TODO!! : this may not be reliable 
                         let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
                             where: where,
                             defaults: {

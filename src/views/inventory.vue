@@ -182,7 +182,10 @@
         </Modal>
 
 
-        <transfer-modal :stock="stockCache" :modalData="transferModal"></transfer-modal>
+        <transfer-modal
+            v-on:transfer-complete="lineRefresh"
+            :stock="stockCache"
+            :modalData="transferModal"></transfer-modal>
 
     </div>
 </template>
@@ -442,6 +445,11 @@ export default {
 
     },
     methods: {
+
+        lineRefresh(inventory) {
+            let index = _.findIndex(this.inventories, ['InventoryID', inventory.InventoryID])
+            this.$set(this.inventories, index, inventory)
+        },
 
         transfer(inventory) {
 

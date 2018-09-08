@@ -530,6 +530,8 @@ router.post('/transfer', function(req, res, next) {
         error.status = 400; error.level = 'low'; error.noLogging = true
         throw error
     }
+    // at a later stage #compareStock will do a tally of stock with the db record.
+    // with this two checks passed, the user is updating on the latest stock level, and also with correct inputs.
 
 
 
@@ -541,15 +543,14 @@ router.post('/transfer', function(req, res, next) {
 
         _INVENTORY = inventory
 
-        console.log(inventory)
-        return console.log(inventory.StorageLocations)
-
         // this fella will throw errors if the stock don't match
         let compareStock = require(__appsDir + '/inventory/compareStock.js')
         compareStock(req.body.stock, inventory.StorageLocations)
 
         // testing is good, do the transfer
         return DB.sequelize.transaction(function(t) {
+
+            let thingsToCreate = []
 
             return createInventoryRecord(t, 'inventoryTransfer', {
 
@@ -560,50 +561,73 @@ router.post('/transfer', function(req, res, next) {
 
                 let promises = []
 
-                stock.forEach(stock => {
+                req.body.stock.forEach(stock => {
 
-                    let newQty = parseInt(stock.quantity)
+                    let newQty = parseInt(stock.final)
                     let transfer = parseInt(stock.transfer)
 
                     // nothing to transfer
-                    if (transfer === 0) return
+                    console.log(stock)
 
-                    let transferLiteral = 'quantity '
-                    if(transfer < 0) {
-                        transferLiteral += transfer.toString()
+                    if ([undefined, null, false].indexOf(stock.StorageLocationID) !== -1) return
+                    if ([0, undefined, null, false].indexOf(transfer) !== -1) return
+
+                    let productExistInLocation = _.find(_INVENTORY.StorageLocations, { StorageLocationID: stock.StorageLocationID })
+
+                    if (productExistInLocation) {
+                        productExistInLocation.Inventory_Storage.quantity = newQty
+                        promises.push(productExistInLocation.Inventory_Storage.save({ transaction: t }) )
                     } else {
-                        transferLiteral += '+ ' + transfer.toString()
+                        thingsToCreate.push({
+                            StorageLocation_storageLocationID: stock.StorageLocationID,
+                            Inventory_inventoryID: _INVENTORY.InventoryID,
+                            quantity: newQty
+                        })
                     }
 
-                    let where = {
-                        StorageLocation_storageLocationID: inventorise.StorageLocationID,
-                        Inventory_inventoryID: product.InventoryID
-                    }
+                    // let transferLiteral = 'quantity '
+                    // if(transfer < 0) {
+                    //     transferLiteral += transfer.toString()
+                    // } else {
+                    //     transferLiteral += '+ ' + transfer.toString()
+                    // }
+
+                    // let where = {
+                    //     StorageLocation_storageLocationID: stock.StorageLocationID,
+                    //     Inventory_inventoryID: _INVENTORY.InventoryID
+                    // }
 
                     // as it may be the first time this inventory is inventorised at a particular location
                     // this is to attempt to create if it is so
-                    let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
-                        where: where,
-                        defaults: {
-                            quantity: newQty
-                        },
-                        transaction: t
-                    }).spread(function(inventory, created) {
+                    // let findCreateOrUpdateInventory = DB.Inventory_Storage.upsert({
+                    //     StorageLocation_storageLocationID: stock.StorageLocationID,
+                    //     Inventory_inventoryID: _INVENTORY.InventoryID,
+                    //     quantity: newQty
+                    // }, { transaction: t })
+                    // promises.push(findCreateOrUpdateInventory);
 
-                        if (created) return created;
+                })
 
-                        // if it is not create, means the inventory already exist in a particular location
-                        // hence just add to it.
-                        return DB.Inventory_Storage.update({
-                            quantity: DB.sequelize.literal('quantity + ' + transferLiteral )
-                        }, {
-                            where: where,
-                            transaction: t
-                        })
+                //return promises
 
-                    })
-                    promises.push(findCreateOrUpdateInventory);
+                // if (promises.length === 0) {
+                //     let error = new Error('Unusual error where upsert promises is empty after checks.')
+                //     error.requestBody = req.body.stock
+                //     throw error
+                // }
 
+                return PROMISE.all(promises)
+
+            }).then(() => {
+
+                console.log(thingsToCreate)
+
+                if (thingsToCreate.length < 1) return false
+
+                let promises = []
+
+                thingsToCreate.forEach(creation => {
+                    promises.push(DB.Inventory_Storage.create(creation, { transaction: t }))
                 })
 
                 return PROMISE.all(promises)
@@ -631,7 +655,7 @@ router.post('/transfer', function(req, res, next) {
 
         return res.send({
             success: true,
-            inventory: processed
+            data: processed
         })
 
 
