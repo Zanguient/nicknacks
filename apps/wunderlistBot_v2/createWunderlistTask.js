@@ -66,7 +66,7 @@ function createWunderlistTask(fromMagento, options) {
         obj.deliveryComments = fromMagento.data.delivery_comments
 
         obj.items = (function(items) {
-            let itemBody = '\n\n\n# Purchase'
+            let itemBody = '# Purchase'
             for(let i=0; i<items.length; i++) {
                 let item = items[i]
                 itemBody += '\n\n## ' + (i+1) + '. ' + item.name
@@ -101,7 +101,7 @@ function createWunderlistTask(fromMagento, options) {
                 commendBody += '\n' + comment.comment
             }
             return commentBody
-        })
+        })(fromMagento.order_comments)
 
         obj.totals = fromMagento.totals
 

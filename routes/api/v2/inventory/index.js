@@ -543,66 +543,38 @@ router.post('/transfer', function(req, res, next) {
 
         console.log(inventory)
         return console.log(inventory.StorageLocations)
-        
-        
-        let requestorStorage = _.filter(req.body.stock, function(o) { 
-            // has valid InventoryID, quantity can be parse into Int, and quantity is not zero.
-            // we don't want to compare zeros, be will compare negatives which are significant
-            return (o.StorageLocationID && !isNaN( parseInt(o.quantity) ) && parseInt(o.quantity) !== 0) 
-        })
-        requestorStorage = _.orderBy(requestorStorage, ['quantity'], ['desc'] )
-        
-        let dbStorage = _.filter(inventory.StorageLocations, function(o) { 
-            return o.quantity !== 0
-        })
-        dbStorage = _.orderBy(dbStorage, ['quantity'], ['desc'])
-        
-        // these 2 arrays should be identical, if not indicating that the requestor is not updating on the latest data.
-        if (requestorStorage.length !== dbStorage.length) {
-            let error = new Error('You may be updating on outdated information. Please refresh and try again.')
-            error.level = "low"; error.noLogging = true; error.status = 400
-            throw error
-        }
-        
-        requestorStorage.forEach((requestor, index => {
-            if ( parseInt(requestor.quantity) !== dbStorage[index].quantity ) {
-                let error = new Error('You may be updating on outdated information. Please refresh and try again.')
-                error.level = "low"; error.noLogging = true; error.status = 400
-                error.data = {
-                    requestorStorage: reqestorStorage,
-                    dbStorage: dbStorage
-                }
-                throw error
-            }
-        })
-                                                         
+
+        // this fella will throw errors if the stock don't match
+        let compareStock = require(__appsDir + '/inventory/compareStock.js')
+        compareStock(req.body.stock, inventory.StorageLocations)
+
         // testing is good, do the transfer
         return DB.sequelize.transaction(function(t) {
-            
-            return createInventoryRecord(t, 'inventoryTransfer', { 
-                
-                inventory: inventory, 
-                transfer: req.body.stock 
-                
+
+            return createInventoryRecord(t, 'inventoryTransfer', {
+
+                inventory: inventory,
+                transfer: req.body.stock
+
             }, req.user).then(() => {
-               
+
                 let promises = []
-                
+
                 stock.forEach(stock => {
 
-                    let newQty = parseInt(stock.quantity) 
+                    let newQty = parseInt(stock.quantity)
                     let transfer = parseInt(stock.transfer)
-                    
+
                     // nothing to transfer
                     if (transfer === 0) return
-                    
+
                     let transferLiteral = 'quantity '
                     if(transfer < 0) {
                         transferLiteral += transfer.toString()
                     } else {
                         transferLiteral += '+ ' + transfer.toString()
                     }
-                
+
                     let where = {
                         StorageLocation_storageLocationID: inventorise.StorageLocationID,
                         Inventory_inventoryID: product.InventoryID
@@ -631,7 +603,7 @@ router.post('/transfer', function(req, res, next) {
 
                     })
                     promises.push(findCreateOrUpdateInventory);
-                
+
                 })
 
                 return PROMISE.all(promises)
@@ -639,7 +611,7 @@ router.post('/transfer', function(req, res, next) {
             })
         })
     }).then(() => {
-    
+
         return [
             DB.Inventory.findById(_INVENTORY.InventoryID, {
                 include: inventoryIncludes
@@ -662,7 +634,7 @@ router.post('/transfer', function(req, res, next) {
             inventory: processed
         })
 
-    
+
     }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
 
 })
