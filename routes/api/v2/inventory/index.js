@@ -403,9 +403,36 @@ router.post('/discrepancy', (req, res, next) => {
 
     if (!req.body.discrepancyReason) {
         let error = new Error('Please provide a reason for discrepancies.')
-        error.status = 400
+    }
+
+    let gotAdjustment = false
+    let netChangeToInventory = 0
+
+    for(let i=0; i<req.body.stock.length; i++) {
+        let stock = req.body.stock[i]
+        let discrepancy = parseInt(stock.discrepancy)
+        if (discrepancy !== 0) {
+            netChangeToInventory += discrepancy
+            gotAdjustment = true
+            break
+        }
+    }
+    if (!gotAdjustment) {
+        let error = new Error('There is no adjustment to be made.')
+    }
+    if (netChangeToInventory === 0) {
+        let error = new Error('No net change to inventory. Should use transfer voucher instead!')
+    }
+
+    if(error) {
+        Object.assign(error, {
+            status: 400,
+            noLogging: true,
+            level: 'low'
+        })
         return API_ERROR_HANDLER(error, req, res, next)
     }
+
     let _MOVEMENT = {
         discrepancyReason: req.body.discrepancyReason,
         adjustments: []

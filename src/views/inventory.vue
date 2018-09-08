@@ -490,9 +490,12 @@ export default {
         discrepancyOK() {
             let payload = this.discrepancyModal.inventory
             let gotAdjustment = false
+            let netChangeToInventory = 0
             for(let i=0; i<payload.stock.length; i++) {
                 let stock = payload.stock[i]
-                if (parseInt(stock.discrepancy) !== 0) {
+                let discrepancy = parseInt(stock.discrepancy)
+                if (discrepancy !== 0) {
+                    netChangeToInventory += discrepancy
                     gotAdjustment = true
                     break
                 }
@@ -500,6 +503,10 @@ export default {
             if (!gotAdjustment) {
                 this.discrepancyModal.show = false
                 this.$Message.error('No discrepancies to adjust.')
+                return
+            }
+            if (netChangeToInventory === 0) {
+                this.$Message.error('Net change is ZERO. Please use transfer voucher instead!')
                 return
             }
 
