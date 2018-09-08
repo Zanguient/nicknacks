@@ -19,24 +19,12 @@ global.WL = new WunderlistSDK({
   'clientID': process.env.WL_CLIENT_ID
 });
 
-function WLConnection() {
-
-    WL.initialized.done(function () {
-        WL.http.lists.all().done(function (lists) {
-            // all is good
-            console.log('Wunderlist connection good.');
-            setTimeout(WLConnection, 30000);
-            return;
-        }).fail(function () {
-            console.error('CRITICAL: Wunderlist connection failed.');
-            throw new Error('CRITICAL: Wunderlist connection failed.');
-        });
-    }).fail(function () {
-        console.error('CRITICAL: Wunderlist connection failed.');
-        throw new Error('CRITICAL: Wunderlist connection failed.');
-    });
+let WLOptions = {
+    retryLimit: 3,
+    testInterval: 0.125 //in minutes
 }
-WLConnection();
+const WLConnectionTest = require(__appsDir + '/wunderlistBot_v2/connectionTest.js')
+WLConnectionTest(WLOptions);
 
 var express = require('express');
 var path = require('path');
