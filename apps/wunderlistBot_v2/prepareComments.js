@@ -42,7 +42,7 @@ function prepareComments(fromMagento) {
         }
 
         // if there are comments
-        if (obj.comment && obj.comment.length > 0) body += '\n\n\n# Comments\n\n' + obj.order_comment
+        if (obj.comment && obj.comment.length > 0) body += '\n\n\n# Comments\n\n' + obj.comment
 
         // there can be non-deliverable products. So if have address will put
         if (obj.address && obj.address.length > 0) {
