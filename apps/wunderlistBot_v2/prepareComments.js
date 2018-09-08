@@ -5,10 +5,10 @@ const makeIDObject = require('./makeIDObject')
 function prepareComments(fromMagento) {
 
     let obj = {}
-    
+
     obj.salesOrderID = makeIDObject(fromMagento.order_id)
     obj.docID = makeIDObject(fromMagento.increment_id)
-    
+
     let type = fromMagento.type.toLowerCase()
 
     if (['ordercomment', 'shipment', 'shipmentcomment'].indexOf(type) !== -1) {
@@ -42,7 +42,7 @@ function prepareComments(fromMagento) {
         }
 
         // if there are comments
-        if (obj.order_comment && obj.order_comment.length > 0) body += '\n\n\n# Comments\n\n' + obj.order_comment
+        if (obj.comment && obj.comment.length > 0) body += '\n\n\n# Comments\n\n' + obj.order_comment
 
         // there can be non-deliverable products. So if have address will put
         if (obj.address && obj.address.length > 0) {
@@ -77,7 +77,7 @@ function prepareComments(fromMagento) {
 
         body += '\n\n\n # Refund'
         body += '\n ' + fromMagento.all_data.grand_total
-        
+
         return body
 
     } else {
