@@ -94,13 +94,18 @@ function createWunderlistTask(fromMagento, options) {
         })(fromMagento.items)
 
         obj.comments = (function(comments) {
+
+            if (comments.length < 1) return ''
+
             let commentBody = '\n\n\n# Comment'
             for(let i=0; i<comments.length; i++) {
                 let comment = comment[i]
                 commentBody += '\n\n## ' + comment.created_at
-                commendBody += '\n' + comment.comment
+                commentBody += '\n' + comment.comment
             }
+
             return commentBody
+
         })(fromMagento.order_comments)
 
         obj.totals = fromMagento.totals
@@ -152,7 +157,7 @@ function createWunderlistTask(fromMagento, options) {
         body += '\nMethod: ' + obj.paymentMethod
 
         // if there are comments
-        if (obj.order_comment && obj.order_comment.length > 0) body += '\n\n\n# Comments\n\n' + obj.order_comment
+        if (obj.order_comment && obj.order_comment.length > 0) body += obj.order_comment
 
         // there can be non-deliverable products. So if have address will put
         if (obj.address && obj.address.length > 0) {
