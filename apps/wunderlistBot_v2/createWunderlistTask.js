@@ -99,7 +99,7 @@ function createWunderlistTask(fromMagento, options) {
 
             let commentBody = '\n\n\n# Comment'
             for(let i=0; i<comments.length; i++) {
-                let comment = comment[i]
+                let comment = comments[i]
                 commentBody += '\n\n## ' + comment.created_at
                 commentBody += '\n' + comment.comment
             }
