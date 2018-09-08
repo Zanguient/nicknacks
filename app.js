@@ -20,8 +20,9 @@ global.WL = new WunderlistSDK({
 });
 
 let WLOptions = {
-    retryLimit: 3,
-    testInterval: 0.125 //in minutes
+    retryLimit: 10,
+    testInterval: 10,
+    retryInterval: 1 //in minutes
 }
 const WLConnectionTest = require(__appsDir + '/wunderlistBot_v2/connectionTest.js')
 WLConnectionTest(WLOptions);

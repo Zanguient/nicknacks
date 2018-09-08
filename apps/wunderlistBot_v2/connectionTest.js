@@ -34,7 +34,7 @@ function connectionTest(options) {
             retries += 1
 
             // retry.
-            setTimeout(() => { WLConnectionTest(options, retries) }, options.testInterval * 60 * 100);
+            setTimeout(() => { WLConnectionTest(options, retries) }, options.retryInterval * 60 * 100);
 
         })
     }
