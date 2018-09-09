@@ -13,39 +13,23 @@
 
         <Table no-data-text="No inventories..." disabled-hover size="small" stripe border :columns="columns" :data="inventories"></Table>
 
-        <Modal
-            v-model="editInventoryModal.show"
-            title="Edit product"
-            :loading="editInventoryModal.loading"
-            @on-ok="editInventoryOK('editInventoryForm', editInventoryModal.inventory)">
+        <add-inventory-modal
+            v-on:inventory:added="lineAdd"
+            :modalData="addInventoryModal"></add-inventory-modal>
 
-            <Form label-position="right" :label-width="80" ref="editInventoryForm" :model="editInventoryModal.form" :rules="editInventoryModal.formRules">
+        <edit-inventory-modal
+            v-on:inventory:edited="lineRefresh"
+            v-on:inventory:deactivatedOrDeleted="lineRemove"
+            :modalData="editInventoryModal"></edit-inventory-modal>
 
-                <FormItem label="Name" prop="name">
-                    <Input v-model="editInventoryModal.form.name"></Input>
-                </FormItem>
-                <FormItem label="SKU" prop="sku">
-                    <Input v-model="editInventoryModal.form.sku"></Input>
-                </FormItem>
-                <FormItem prop="cogs" label="COGS">
-                    <Input type="text" number v-model="editInventoryModal.form.cogs"></Input>
-                </FormItem>
+        <discrepancy-modal
+            v-on:inventory:discrepancy-complete="lineRefresh"
+            :modalData="discrepancyModal"></discrepancy-modal>
 
-            </Form>
-
-            <Collapse>
-                <Panel>
-                    Advanced
-                    <p slot="content">
-                        <Button type="warning" @click="deactivateInv(editInventoryModal.inventory)">Deactivate</Button>
-                        <Button type="error" @click="deleteInv(editInventoryModal.inventory)">Delete</Button>
-                    </p>
-                </Panel>
-            </Collapse>
-
-            <p>InventoryID: {{ editInventoryModal.inventory.InventoryID }}</p>
-
-        </Modal>
+        <transfer-inventory-modal
+            v-on:inventory:transferred="lineRefresh"
+            :stock="stockCache"
+            :modalData="transferModal"></transfer-inventory-modal>
 
         <Modal
             v-model="transitModal.show"
@@ -83,110 +67,6 @@
 
         </Modal>
 
-        <Modal
-            v-model="addInventoryModal.show"
-            title="Add product"
-            :loading="addInventoryModal.loading"
-            @on-ok="addInventoryOK('addInventoryForm')">
-
-            <Form label-position="right" :label-width="80" ref="addInventoryForm" :model="addInventoryModal.form" :rules="addInventoryModal.formRules">
-
-                <FormItem label="Name" prop="name">
-                    <Input v-model="addInventoryModal.form.name"></Input>
-                </FormItem>
-                <FormItem label="SKU" prop="sku">
-                    <Input v-model="addInventoryModal.form.sku"></Input>
-                </FormItem>
-                <FormItem prop="cogs" label="COGS">
-                    <Input type="text" number v-model="addInventoryModal.form.cogs"></Input>
-                </FormItem>
-
-            </Form>
-
-        </Modal>
-
-        <Modal
-            v-model="discrepancyModal.show"
-            title="Create Discrepancy Voucher"
-            :loading="discrepancyModal.loading"
-            @on-ok="discrepancyOK()">
-
-            <Form ref="discrepancyForm" :model="discrepancyModal.form" :rules="discrepancyModal.formRules">
-
-                <el-table
-                    :data="discrepancyModal.inventory.stock"
-                    style="width: 100%">
-                    <el-table-column
-                        type="index"
-                        label="No"
-                        width="50"
-                    >
-                    </el-table-column>
-
-                    <el-table-column
-                        label="Name"
-                        width="120"
-                    >
-                        <template slot-scope="scope">
-                            <p v-if="scope.row.StorageLocationID">{{ scope.row.name }}</p>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column
-                        label="Qty"
-                        width="50"
-                        prop="quantity"
-                    >
-                    </el-table-column>
-
-                    <el-table-column
-                        label="Adjustment"
-                        width="100"
-                    >
-                        <template slot-scope="scope">
-                            <FormItem
-                                <InputNumber
-                                    class="discrepancyTableInputs"
-                                    :min="-999" :max="999"
-                                    v-model="scope.row.discrepancy"
-                                    @on-change="discrepancyModal.countQuantities(scope)"
-                                ></InputNumber>
-                            </FormItem>
-                        </template>
-
-                    </el-table-column>
-
-                    <el-table-column width="80" label="Final">
-                        <template slot-scope="scope">
-                            <FormItem>
-                                <Input
-                                    class="discrepancyTableInputs"
-                                    disabled
-                                    type="text"
-                                    :ref="'totalFor' + scope.InventoryID + '_' + scope.row.StorageLocationID"
-                                    v-model="scope.row.final"
-                                ></Input>
-                            </FormItem>
-                        </template>
-                    </el-table-column>
-
-
-                </el-table>
-
-                <FormItem label="Reason" prop="discrepancyReason">
-                    <Input :rules="{ required: true, message: 'Please add a reason.' }" v-model="discrepancyModal.inventory.discrepancyReason" type="textarea" :autosize="{minRows: 2,maxRows: 10}" placeholder="Any comment on damages, misplacement, error etc..."></Input>
-                </FormItem>
-
-            </Form>
-
-        </Modal>
-
-
-        <transfer-modal
-            v-on:transfer-complete="lineRefresh"
-            :stock="stockCache"
-            :modalData="transferModal"></transfer-modal>
-
     </div>
 </template>
 <script>
@@ -194,14 +74,20 @@ import axios from 'axios'
 import D from 'dottie'
 import _ from 'lodash'
 import moment from 'moment'
-import transferModal from './components/inventory/transfer.vue'
+import transferInventoryModal from './components/inventory/transfer.vue'
+import editInventoryModal from './components/inventory/edit.vue'
+import addInventoryModal from './components/inventory/add.vue'
+import discrepancyModal from './components/inventory/discrepancy.vue'
 
 const domain = process.env.API_DOMAIN
 
 export default {
 
     components: {
-        transferModal
+        transferInventoryModal,
+        editInventoryModal,
+        addInventoryModal,
+        discrepancyModal
     },
 
     data () {
@@ -348,70 +234,22 @@ export default {
 
             // EDIT Inventory Form
             editInventoryModal: {
-                deactivateInvSKU: '',
-                deleteInvSKU: '',
                 show: false,
-                loading: true,
-                inventory: '',
+                inventory: Object,
                 form: {
                     name: '',
                     sku: '',
                     cogs: 0
-                },
-                formRules: {
-                    name: [
-                        { required: true, message: 'The name cannot be empty', trigger: 'blur' }
-                    ],
-                    sku: [
-                        { required: true, message: 'The sku cannot be empty', trigger: 'blur' }
-                    ],
-                    cogs: [{
-                        required: true,
-                        validator (rule, value, callback) {
-
-                            // check regex
-                            let regex = /^\d{1,6}(\.\d{1,2})?$/
-                            if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
-
-                            // everything passed
-                            return callback()
-
-                        },
-                        trigger: 'blur'
-                    }]
                 }
             },
 
             // ADD Inventory Form
             addInventoryModal: {
                 show: false,
-                loading: true,
                 form: {
                     name: '',
                     sku: '',
                     cogs: 0
-                },
-                formRules: {
-                    name: [
-                        { required: true, message: 'The name cannot be empty', trigger: 'blur' }
-                    ],
-                    sku: [
-                        { required: true, message: 'The sku cannot be empty', trigger: 'blur' }
-                    ],
-                    cogs: [{
-                        required: true,
-                        validator (rule, value, callback) {
-
-                            // check regex
-                            let regex = /^\d{1,6}(\.\d{1,2})?$/
-                            if (!regex.test(value.toString())) return callback( new Error('Please the value in the correct format.') )
-
-                            // everything passed
-                            return callback()
-
-                        },
-                        trigger: 'blur'
-                    }]
                 }
             },
 
@@ -425,16 +263,11 @@ export default {
             },
             discrepancyModal: {
                 show: false,
-                loading: true,
                 inventory: {
                     stock: [],
                     discrepancyReason: '',
                     final: 0,
                     quantity: 0
-                },
-                countQuantities(inventory) {
-                    let finalCount = parseInt(inventory.row.quantity) + parseInt(inventory.row.discrepancy)
-                    inventory.row.final = V.$refs['totalFor' + inventory.InventoryID + '_' + inventory.row.StorageLocationID].currentValue = finalCount
                 }
             },
             transferModal: {
@@ -446,9 +279,16 @@ export default {
     },
     methods: {
 
+        lineAdd(inventory) {
+            this.inventories.unshift(inventory)
+        },
         lineRefresh(inventory) {
             let index = _.findIndex(this.inventories, ['InventoryID', inventory.InventoryID])
             this.$set(this.inventories, index, inventory)
+        },
+        lineRemove(inventoryID) {
+            let index = _.findIndex(this.inventories, ['InventoryID', inventoryID])
+            this.inventories.splice(index, 1)
         },
 
         transfer(inventory) {
@@ -474,201 +314,31 @@ export default {
                 this.stockCache.push(obj)
             })
 
-            // inventory.stock.forEach(stock => {
-            //     stock.final = parseInt(stock.quantity)
-            //     stock.transfer = 0
-            // })
-            //
-            // this.stock = _.cloneDeep(inventory.stock)
-            // for(let i=0; i<this.stock.length; i++) {
-            //     if (!this.stock[i].StorageLocationID) delete this.stock[i]
-            // }
-
             this.transferModal.inventory = inventory
             this.transferModal.show = true
         },
-        discrepancyOK() {
-            let payload = this.discrepancyModal.inventory
-            let gotAdjustment = false
-            let netChangeToInventory = 0
-            for(let i=0; i<payload.stock.length; i++) {
-                let stock = payload.stock[i]
-                let discrepancy = parseInt(stock.discrepancy)
-                if (discrepancy !== 0) {
-                    netChangeToInventory += discrepancy
-                    gotAdjustment = true
-                    break
-                }
-            }
-            if (!gotAdjustment) {
-                this.discrepancyModal.show = false
-                this.$Message.error('No discrepancies to adjust.')
-                return
-            }
-            if (netChangeToInventory === 0) {
-                this.$Message.error('Net change is ZERO. Please use transfer voucher instead!')
-                return
-            }
-
-            axios.post(domain + '/api/v2/inventory/discrepancy', payload).then(response => {
-                if (!response.data.success) {
-                    let error = new Error('API operation not successful.')
-                    error.reponse = response
-                    throw error
-                }
-
-                // set the new inventory data for view
-                let index = _.findIndex(this.inventories, ['InventoryID', response.data.inventory.InventoryID])
-                this.$set(this.inventories, index, response.data.inventory)
-
-                this.$Message.success('Success!');
-                this.discrepancyModal.show = false
-
-            }).catch(error => {
-
-                CATCH_ERR_HANDLER(error)
-                this.$Message.error('Failed request!');
-
-            }).then(() => {
-                let self = this
-                this.discrepancyModal.loading = false
-                setTimeout(() => { self.discrepancyModal.loading = true }, 1)
-            })
-
-        },
         discrepancy(inventory) {
 
-            this.discrepancyModal.inventory = inventory
-            inventory.discrepancyReason = ''
-            //this.$refs["discrepancyForm"].resetFields()
+            var inventory  = _.cloneDeep(inventory)
 
+            // filter away the stock that are not actual storage
+            inventory.stock = _.filter(inventory.stock, s => {
+                return (  !isNaN( parseInt(s.StorageLocationID) )  )
+            })
+
+            // add stuff to it.
             for(let i=0; i<inventory.stock.length; i++) {
                 let stock = inventory.stock[i]
                 stock.discrepancy = 0
                 stock.final = stock.quantity
             }
 
+            inventory.discrepancyReason = ''
+
+            this.discrepancyModal.inventory = inventory
+
             this.discrepancyModal.show = true
         },
-        deactivateInv(inventory) {
-            let self = this
-            this.editInventoryModal.deactivateInvSKU = ''
-
-            this.$Modal.confirm({
-                render: (h) => {
-
-                    return h('Input', {
-                        props: {
-                            value: this.editInventoryModal.deactivateInvSKU,
-                            autofocus: true,
-                            placeholder: 'To confirm, please type the product sku'
-                        },
-                        on: {
-                            input: (val) => {
-                                this.editInventoryModal.deactivateInvSKU = val;
-                            }
-                        }
-                    })
-                },
-                onOk() {
-
-                    if(self.editInventoryModal.deactivateInvSKU.toLowerCase() !== inventory.sku.toLowerCase()) {
-                        alert('Your sku entered does not match.')
-                        this.$Modal.remove()
-                        return
-                    }
-
-                    // do delete
-                    axios.post(domain + '/api/v2/inventory/deactivate', { InventoryID: inventory.InventoryID }).then(response => {
-                        if (!response.data.success) {
-                            let error = new Error('API operation not successful.')
-                            error.reponse = response
-                            throw error
-                        }
-
-                        // remove the inventory from view
-                        let index = _.findIndex(self.inventories, ['InventoryID', inventory.InventoryID])
-                        self.inventories.splice(index, 1)
-
-                        self.$Message.success('Success!');
-                        self.$Modal.remove()
-                        self.editInventoryModal.show = false
-
-                    }).catch(error => {
-
-                        CATCH_ERR_HANDLER(error)
-
-                        self.$Modal.loading = false
-                        self.$Message.error('Failed request!');
-                    })
-
-                },
-                loading: true
-            })
-        },
-
-        deleteInv(inventory) {
-
-            let self = this
-            this.editInventoryModal.deleteInvSKU = ''
-
-            this.$Modal.confirm({
-                render: (h) => {
-
-                    return h('p', [
-                        'DANGER: This process is irreversible. Only delete an inventory if you made a mistake in creating it.',
-                        h('Input', {
-                            props: {
-                                value: this.editInventoryModal.deleteInvSKU,
-                                autofocus: true,
-                                placeholder: 'To confirm, please type the product sku'
-                            },
-                            on: {
-                                input: (val) => {
-                                    this.editInventoryModal.deleteInvSKU = val;
-                                }
-                            }
-                        })
-                    ])
-
-                },
-                onOk() {
-
-                    if(self.editInventoryModal.deleteInvSKU.toLowerCase() !== inventory.sku.toLowerCase()) {
-                        alert('Your sku entered does not match.')
-                        this.$Modal.remove()
-                        return
-                    }
-
-                    // do delete
-                    axios.delete(domain + '/api/v2/inventory/delete', { data: {InventoryID: inventory.InventoryID} }).then(response => {
-                        if (!response.data.success) {
-                            let error = new Error('API operation not successful.')
-                            error.reponse = response
-                            throw error
-                        }
-
-                        // remove the inventory from view
-                        let index = _.findIndex(self.inventories, ['InventoryID', inventory.InventoryID])
-                        self.inventories.splice(index, 1)
-
-                        self.$Message.success('Success!');
-                        self.$Modal.remove()
-                        self.editInventoryModal.show = false
-
-                    }).catch(error => {
-
-                        CATCH_ERR_HANDLER(error)
-
-                        self.$Modal.loading = false
-                        self.$Message.error('Failed request!');
-                    })
-
-                },
-                loading: true
-            })
-        },
-
         editInventory (inventory) {
 
             this.editInventoryModal.form.name = inventory.name
@@ -689,112 +359,8 @@ export default {
             this.soldModal.show = true
         },
 
-        editInventoryOK (formName, inventory) {
-
-            let newVal = this.editInventoryModal.form
-            if (newVal.name === inventory.name && newVal.sku === inventory.sku && newVal.cogs === inventory.cogs) {
-                //no changes.
-
-                this.$Message.success('There are no changes made.');
-
-                this.editInventoryModal.show = false
-
-                return
-            }
-
-            this.$refs[formName].validate(valid => {
-
-                if (valid) {
-
-                    let payload = {
-                        InventoryID: this.editInventoryModal.inventory.InventoryID,
-                        name: this.editInventoryModal.form.name,
-                        sku: this.editInventoryModal.form.sku,
-                        cogs: this.editInventoryModal.form.cogs
-                    }
-
-                    axios.post(domain + '/api/v2/inventory/update', payload).then(response => {
-                        if (!response.data.success) {
-                            let error = new Error('API operation not successful.')
-                            error.reponse = response
-                            throw error
-                        }
-
-                        // set the new inventory data for view
-                        let index = _.findIndex(this.inventories, ['InventoryID', inventory.InventoryID])
-                        this.$set(this.inventories, index, response.data.inventory)
-
-                        this.$Message.success('Success!');
-                        this.editInventoryModal.show = false
-
-                    }).catch(error => {
-
-                        CATCH_ERR_HANDLER(error)
-                        this.$Message.error('Failed request!');
-
-                    }).then(() => {
-                        let self = this
-                        this.editInventoryModal.loading = false
-                        setTimeout(() => { self.editInventoryModal.loading = true }, 1)
-                    })
-
-                } else {
-                    let self = this
-                    this.editInventoryModal.loading = false
-                    setTimeout(() => { self.editInventoryModal.loading = true }, 1)
-                    this.$Message.error('Check your entry!');
-                }
-            })
-        },
-
         addProduct() {
             this.addInventoryModal.show = true
-        },
-
-        addInventoryOK (formName) {
-
-            this.$refs[formName].validate(valid => {
-
-                if (valid) {
-
-                    let payload = {
-                        name: this.addInventoryModal.form.name,
-                        sku: this.addInventoryModal.form.sku,
-                        cogs: this.addInventoryModal.form.cogs
-                    }
-
-                    axios.put(domain + '/api/v2/inventory/add', payload).then(response => {
-                        if (!response.data.success) {
-                            let error = new Error('API operation not successful.')
-                            error.reponse = response
-                            throw error
-                        }
-                        console.log(response.data)
-
-                        // push the new inventory into view
-                        this.inventories.unshift(response.data.inventory)
-
-                        this.$Message.success('Success!');
-                        this.addInventoryModal.show = false
-
-                    }).catch(error => {
-
-                        CATCH_ERR_HANDLER(error)
-                        this.$Message.error('Failed request!')
-
-                    }).then(() => {
-                        let self = this
-                        this.addInventoryModal.loading = false
-                        setTimeout(() => { self.addInventoryModal.loading = true }, 1)
-                    })
-
-                } else {
-                    let self = this
-                    this.addInventoryModal.loading = false
-                    setTimeout(() => { self.addInventoryModal.loading = true }, 1)
-                    this.$Message.error('Check your entry!');
-                }
-            })
         }
     },
     filters: {

@@ -33,7 +33,7 @@ router.get('/all', (req, res, next) => {
 
         res.send({
             success: true,
-            shipments: shipments
+            data: shipments
         });
 
     }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
@@ -131,7 +131,7 @@ router.post('/shipout', function(req, res, next) {
 
         res.send({
             success: true,
-            shipment: shipment
+            data: shipment
         })
 
     }).catch(error => { API_ERROR_HANDLER(error, req, res, next) });
@@ -177,7 +177,7 @@ router.put('/create', function(req, res, next) {
 
         res.send({
             success: true,
-            shipment: shipment
+            data: shipment
         });
 
     }).catch(error => { API_ERROR_HANDLER(error, req, res, next) });
@@ -259,7 +259,7 @@ router.post('/edit', function(req, res, next) {
     .then(shipment => {
         res.send({
             success: true,
-            shipment: shipment
+            data: shipment
         })
     })
     .catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
@@ -287,19 +287,30 @@ router.post('/arrive', function(req, res, next) {
 
     debug(req.body);
 
+    var error
 
     let products = D.get(req, 'body.products')
     if (!products) {
-        let error = new Error('`products` missing from request')
-        error.status = 400
-        throw error
+        error = new Error('`products` missing from request')
+
+
     }
     for(let i=0; i<products.length; i++) {
         if (parseInt(products[i].quantityRemaining) !== 0) {
-            let error = new Error('There seems to be error in inventorising ' + products[i].name + '. Please check your inputs.')
-            error.status = 400
-            throw error
+            error = new Error('There seems to be error in inventorising ' + products[i].name + '. Please check your inputs.')
+            break
         }
+    }
+
+    if (error) {
+        Object.assign(error, {
+            status: 400,
+            noLogging: true,
+            requestBody: req.body,
+            level: 'low'
+        })
+
+        return API_ERROR_HANDLER(error, req, res, next)
     }
 
     var _SHIPMENT
@@ -345,8 +356,9 @@ router.post('/arrive', function(req, res, next) {
 
         return DB.sequelize.transaction(function(t) {
 
+            let thingsToCreate = []
+
             return PROMISE.resolve().then(() => {
-                let promises = []
 
                 let saveShipment = shipment.save({
                     fields: (shipment.changed() || []).concat(['data']),
@@ -409,7 +421,9 @@ router.post('/arrive', function(req, res, next) {
 
                         // as it may be the first time this inventory is inventorised at a particular location
                         // this is to attempt to create it if so
-                        // TODO!! : this may not be reliable 
+                        // NOTE : in a similar concept for inventory/transfer route, the
+                        //        findOrCreate was refactor as doesn't seem to respect the transaction.
+                        //        however, this is test and is rolling back correctly.
                         let findCreateOrUpdateInventory = DB.Inventory_Storage.findOrCreate({
                             where: where,
                             defaults: {
@@ -460,7 +474,7 @@ router.post('/arrive', function(req, res, next) {
 
         res.send({
             success: true,
-            shipment: shipment
+            data: shipment
         })
 
     }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });

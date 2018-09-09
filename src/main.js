@@ -18,6 +18,15 @@ Vue.use(Element)
 Vue.filter('unixToDate', value => {
     return moment(parseInt(value)).format('DD MMM YYYY');
 })
+Vue.mixin({
+   data: function() {
+      return {
+       get DOMAIN() {
+         return process.env.API_DOMAIN
+       }
+     }
+   }
+})
 
 // 路由配置
 const RouterConfig = {
@@ -26,6 +35,8 @@ const RouterConfig = {
     base: '/admin_' + process.env.ADMIN_URL_SUFFIX + '/'
 }
 const router = new VueRouter(RouterConfig)
+
+
 
 router.beforeEach((to, from, next) => {
     iView.LoadingBar.start()

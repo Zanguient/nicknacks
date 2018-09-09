@@ -187,7 +187,7 @@ router.put('/add', (req, res, next) => {
 
         return res.send({
             success: true,
-            inventory: processed
+            data: processed
         })
 
     }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
@@ -221,7 +221,7 @@ router.post('/update', (req, res, next) => {
 
         return res.send({
             success: true,
-            inventory: processed
+            data: processed
         })
 
     }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
@@ -401,8 +401,10 @@ router.delete('/sold/delete', (req, res, next) => {
 
 router.post('/discrepancy', (req, res, next) => {
 
+    var error
+
     if (!req.body.discrepancyReason) {
-        let error = new Error('Please provide a reason for discrepancies.')
+        error = new Error('Please provide a reason for discrepancies.')
     }
 
     let gotAdjustment = false
@@ -414,14 +416,14 @@ router.post('/discrepancy', (req, res, next) => {
         if (discrepancy !== 0) {
             netChangeToInventory += discrepancy
             gotAdjustment = true
-            break
         }
     }
+
     if (!gotAdjustment) {
-        let error = new Error('There is no adjustment to be made.')
+        error = new Error('There is no adjustment to be made.')
     }
     if (netChangeToInventory === 0) {
-        let error = new Error('No net change to inventory. Should use transfer voucher instead!')
+        error = new Error('No net change to inventory. Should use transfer voucher instead!')
     }
 
     if(error) {
@@ -515,7 +517,7 @@ router.post('/discrepancy', (req, res, next) => {
 
         return res.send({
             success: true,
-            inventory: processed
+            data: processed
         })
 
     }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
@@ -594,8 +596,6 @@ router.post('/transfer', function(req, res, next) {
                     let transfer = parseInt(stock.transfer)
 
                     // nothing to transfer
-                    console.log(stock)
-
                     if ([undefined, null, false].indexOf(stock.StorageLocationID) !== -1) return
                     if ([0, undefined, null, false].indexOf(transfer) !== -1) return
 
@@ -612,42 +612,11 @@ router.post('/transfer', function(req, res, next) {
                         })
                     }
 
-                    // let transferLiteral = 'quantity '
-                    // if(transfer < 0) {
-                    //     transferLiteral += transfer.toString()
-                    // } else {
-                    //     transferLiteral += '+ ' + transfer.toString()
-                    // }
-
-                    // let where = {
-                    //     StorageLocation_storageLocationID: stock.StorageLocationID,
-                    //     Inventory_inventoryID: _INVENTORY.InventoryID
-                    // }
-
-                    // as it may be the first time this inventory is inventorised at a particular location
-                    // this is to attempt to create if it is so
-                    // let findCreateOrUpdateInventory = DB.Inventory_Storage.upsert({
-                    //     StorageLocation_storageLocationID: stock.StorageLocationID,
-                    //     Inventory_inventoryID: _INVENTORY.InventoryID,
-                    //     quantity: newQty
-                    // }, { transaction: t })
-                    // promises.push(findCreateOrUpdateInventory);
-
                 })
-
-                //return promises
-
-                // if (promises.length === 0) {
-                //     let error = new Error('Unusual error where upsert promises is empty after checks.')
-                //     error.requestBody = req.body.stock
-                //     throw error
-                // }
 
                 return PROMISE.all(promises)
 
             }).then(() => {
-
-                console.log(thingsToCreate)
 
                 if (thingsToCreate.length < 1) return false
 

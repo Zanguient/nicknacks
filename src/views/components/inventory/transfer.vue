@@ -1,127 +1,125 @@
 <template>
-<Modal
-    v-model="modalData.show"
-    title="Transfer voucher"
-    @on-ok="transferOK()"
-    :loading="loading"
->
+    <Modal
+        v-model="modalData.show"
+        title="Transfer voucher"
+        @on-ok="transferOK()"
+        :loading="loading"
+    >
 
-    <h1>{{ modalData.inventory.name }}</h1>
-    <p><i>{{ modalData.inventory.sku }}</i></p>
+        <h1>{{ modalData.inventory.name }}</h1>
+        <p><i>{{ modalData.inventory.sku }}</i></p>
 
-    <Form ref="transferForm" v-model="stock" :rules="formRules">
+        <Form ref="transferForm" v-model="stock" :rules="formRules">
 
-        <el-table
-            :data="stock"
-            style="width: 100%"
-        >
-            <el-table-column
-                type="index"
-                label="No"
-                width="50"
+            <el-table
+                :data="stock"
+                style="width: 100%"
             >
-            </el-table-column>
+                <el-table-column
+                    type="index"
+                    label="No"
+                    width="50"
+                >
+                </el-table-column>
 
-            <el-table-column
-                label="Name"
-                width="120"
+                <el-table-column
+                    label="Name"
+                    width="120"
+                >
+                    <template slot-scope="scope">
+                        <p v-if="scope.row.StorageLocationID">{{ scope.row.name }}</p>
+                    </template>
+                </el-table-column>
+
+                <el-table-column
+                    label="Qty"
+                    width="50"
+                    prop="quantity"
+                >
+                </el-table-column>
+
+                <el-table-column
+                    label="Transfer"
+                    width="100"
+                >
+                    <template slot-scope="scope">
+                        <FormItem
+                            <InputNumber
+                                class="transferTableInputs"
+                                :min="-scope.row.quantity" :max="scope.row.transfer + remaining"
+                                v-model="scope.row.transfer"
+                                @on-change="updateFinal(scope.row)"
+                            ></InputNumber>
+                        </FormItem>
+                    </template>
+
+                </el-table-column>
+
+                <el-table-column width="80" label="Final">
+                    <template slot-scope="scope">
+                        <FormItem style="margin-bottom: 0px;">
+                            <Input
+                                class="transferTableInputs"
+                                disabled
+                                type="text"
+                                v-model="scope.row.final"
+                            ></Input>
+                        </FormItem>
+                    </template>
+                </el-table-column>
+
+            </el-table>
+
+            <el-table
+                :data="summaryRow"
+                style="width: 100%"
+                :show-header="false"
             >
-                <template slot-scope="scope">
-                    <p v-if="scope.row.StorageLocationID">{{ scope.row.name }}</p>
-                </template>
-            </el-table-column>
+                <el-table-column width="50"></el-table-column>
 
-            <el-table-column
-                label="Qty"
-                width="50"
-                prop="quantity"
-            >
-            </el-table-column>
+                <el-table-column width="120">
+                    <template slot-scope="scope">
+                        <strong>Totals</strong>
+                    </template>
+                </el-table-column>
 
-            <el-table-column
-                label="Transfer"
-                width="100"
-            >
-                <template slot-scope="scope">
-                    <FormItem
-                        <InputNumber
-                            class="transferTableInputs"
-                            :min="-scope.row.quantity" :max="scope.row.transfer + remaining"
-                            v-model="scope.row.transfer"
-                            @on-change="updateFinal(scope.row)"
-                        ></InputNumber>
-                    </FormItem>
-                </template>
+                <el-table-column prop="currentGrand" width="50"></el-table-column>
 
-            </el-table-column>
+                <el-table-column
+                    label="Transfer"
+                    width="100"
+                ></el-table-column>
 
-            <el-table-column width="80" label="Final">
-                <template slot-scope="scope">
-                    <FormItem style="margin-bottom: 0px;">
-                        <Input
-                            class="transferTableInputs"
-                            disabled
-                            type="text"
-                            v-model="scope.row.final"
-                        ></Input>
-                    </FormItem>
-                </template>
-            </el-table-column>
+                <el-table-column width="80" label="Final">
+                    <template slot-scope="scope">
+                        <FormItem style="margin-bottom: 0px;" prop="transferredGrand">
+                            <Input
+                                class="transferTableInputs"
+                                disabled
+                                type="text"
+                                v-model="scope.row.transferredGrand"
+                            ></Input>
+                        </FormItem>
+                    </template>
+                </el-table-column>
 
-        </el-table>
+            </el-table>
 
-        <el-table
-            :data="summaryRow"
-            style="width: 100%"
-            :show-header="false"
-        >
-            <el-table-column width="50"></el-table-column>
+            <FormItem
+                label="Reason"
+                prop="transferReason">
 
-            <el-table-column width="120">
-                <template slot-scope="scope">
-                    <strong>Totals</strong>
-                </template>
-            </el-table-column>
+                <Input
+                    v-model="transferReason"
+                    type="textarea"
+                    :autosize="{minRows: 2,maxRows: 10}"
+                    placeholder="Any comment on movement or errors etc...">
+                </Input>
+            </FormItem>
 
-            <el-table-column prop="currentGrand" width="50"></el-table-column>
+        </Form>
+    </Modal>
 
-            <el-table-column
-                label="Transfer"
-                width="100"
-            ></el-table-column>
-
-            <el-table-column width="80" label="Final">
-                <template slot-scope="scope">
-                    <FormItem style="margin-bottom: 0px;" prop="transferredGrand">
-                        <Input
-                            class="transferTableInputs"
-                            disabled
-                            type="text"
-                            v-model="scope.row.transferredGrand"
-                        ></Input>
-                    </FormItem>
-                </template>
-            </el-table-column>
-
-        </el-table>
-
-        <FormItem
-            label="Reason"
-            prop="transferReason">
-
-            <Input
-                v-model="transferReason"
-                type="textarea"
-                :autosize="{minRows: 2,maxRows: 10}"
-                placeholder="Any comment on movement or errors etc...">
-            </Input>
-        </FormItem>
-
-    </Form>
-
-
-
-</Modal>
 </template>
 <script>
 import axios from 'axios'
@@ -131,7 +129,6 @@ import _ from 'lodash'
 const domain = process.env.API_DOMAIN
 
 module.exports = {
-    name: 'modalData',
     data() {
 
         const validateTransferQty = (rule, value, callback, source) => {
@@ -163,7 +160,7 @@ module.exports = {
                     validator: validateTransferQty
                 }]
                 ,
-                transferReason: [{ trigger: 'blur', validator:validateReason }]
+                transferReason: [{ trigger: 'blur', validator: validateReason }]
             }
         }
     },
@@ -245,14 +242,8 @@ module.exports = {
                     }
 
                     this.$Message.success('Success!')
-                    self.$emit('transfer-complete', response.data.data)
+                    self.$emit('inventory:transferred', response.data.data)
                     self.modalData.show = false
-
-                    // // set the new inventory data for view
-                    //
-                    //
-                    //
-                    // this.editInventoryModal.show = false
 
                 }).catch(error => {
 

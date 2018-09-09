@@ -6,10 +6,6 @@
 .content{
     padding-left: 5px;
 }
-.inventoriseTableInputs {
-    margin-left:-90px;
-    width: 50px;
-}
 </style>
 
 <template>
@@ -41,7 +37,8 @@
                 <Tag v-else=" shipment.status === 'Not shipped' " color="default">{{ shipment.status }}</Tag>
 
                 <span v-if="!shipment.hasArrived">
-                    <span v-if="(shipment.actualShipOut && parseInt(shipment.expectedArrival) < (new Date()).getTime()) || (parseInt(shipment.estimatedShipOut) < (new Date()).getTime())">
+                    <!-- if shipped out and expected arrival is past today, OR if NOT shipped out and estimated ship out is past today -->
+                    <span v-if="(shipment.actualShipOut && parseInt(shipment.expectedArrival) < (new Date()).getTime()) || ( !shipment.actualShipOut && ( parseInt(shipment.estimatedShipOut) < (new Date()).getTime()) )">
                         <Tag color="error">Delayed</Tag>
                     </span>
                 </span>
@@ -93,183 +90,26 @@
             </Card>
         </span>
 
-        <Modal
-            v-model="addShipmentModal.show"
-            title="Add Shipment"
-            :loading="addShipmentModal.loading"
-            @on-ok="addShipmentOK()"
-            >
 
-            <Form label-position="right" :label-width="90" ref="addShipmentForm" :model="addShipmentModal.form" :rules="addShipmentModal.formRules">
+        <add-or-edit-shipment-modal
+            v-on:shipment:added="lineAdd"
+            v-on:shipment:edited="lineRefresh"
+            v-on:shipment:deleted="lineRemove"
+            :modalData="addOrEditShipmentModal"
+            :inventories="inventories"
+            ref="addOrEditShipmentModal"></add-or-edit-shipment-modal>
 
-                <FormItem label="Name" prop="name">
-                    <Input v-model="addShipmentModal.form.name"></Input>
-                </FormItem>
-                <FormItem label="Est. Ship Out" prop="estimatedShipOut">
-                    <DatePicker format="dd-MMM-yyyy" type="date" placeholder="Select date" v-model="addShipmentModal.form.estimatedShipOut"></DatePicker>
-                </FormItem>
-                <FormItem label="Est. Arrival" prop="expectedArrival">
-                    <DatePicker format="dd-MMM-yyyy" type="date" placeholder="Select date" v-model="addShipmentModal.form.expectedArrival"></DatePicker>
-                </FormItem>
-                <FormItem label="Remarks" prop="remarks">
-                    <Input v-model="addShipmentModal.form.remarks" type="textarea" :autosize="{minRows: 2,maxRows: 10}" placeholder="Any factory/shipping instructions or information..."></Input>
-                </FormItem>
+        <ship-out-modal
+            v-on:shipment:shipped="lineRefresh"
+            :modalData="shipOutModal"
+            ></ship-out-modal>
 
-                <Row
-                v-for="(product, index) in addShipmentModal.form.products"
-                :key="product.unique">
-                    <FormItem :label="'Item ' + (index+1)">
-                        <Col span="16">
-                            <FormItem prop="products">
-                                <Select placeholder="Select product" v-model="product.InventoryID" filterable>
-                                    <Option v-for="(inventory, index) in inventories" :value="inventory.InventoryID" :key="index">{{ inventory.name }} <br> <i>{{ inventory.sku }}</i></Option>
-                                </Select>
-                            </FormItem>
-                        </Col>
 
-                        <Col span="5">
-                            <FormItem :prop="'products.' + index + '.quantity'" :rules="{ type: 'number', min: 1, message: 'Quantity cannot be less than 1', trigger: 'blur' }">
-                                <InputNumber :max="999" :min="1" v-model="product.quantity"></InputNumber>
-                            </FormItem>
-                        </Col>
-
-                        <Col span="2">
-                            <FormItem>
-                                <Button type="info" @click="removeShipmentProductLine(index)"><Icon type="md-close" /></Button>
-                            </FormItem>
-                        </Col>
-                    </FormItem>
-                </Row>
-                <FormItem>
-                    <Button type="dashed" long @click="addShipmentProductLine()" icon="md-add">Add item</Button>
-                </FormItem>
-
-            </Form>
-
-            <div v-if="addShipmentModal.form.mode === 'edit'">
-                <Divider>⚠️ DANGER</Divider>
-
-                <div style="width: 100%; text-align: center;">
-                    <Button  type="error" @click="deleteShipment(addShipmentModal.form)">
-                        <Icon type="ios-trash" /> Delete Shipment
-                    </Button>
-                </div>
-            </div>
-
-        </Modal>
-
-        <Modal
-            v-model="shipOutModal.show"
-            title="Ship Out"
-            :loading="shipOutModal.loading"
-            @on-ok="shipOutOK()"
-            >
-
-            <h1 style="text-align: center; margin-bottom: 10px;">{{ shipOutModal.name }}</h1>
-
-            <Form label-position="right" :label-width="90" ref="shipOutForm" :model="shipOutModal.form" :rules="shipOutModal.formRules">
-
-                <FormItem label="Ship Out" prop="actualShipOut">
-                    <DatePicker format="dd-MMM-yyyy" type="date" placeholder="Select date" v-model="shipOutModal.form.actualShipOut"></DatePicker>
-                </FormItem>
-                <FormItem label="Est. Arrival" prop="expectedArrival">
-                    <DatePicker format="dd-MMM-yyyy" type="date" placeholder="Select date" v-model="shipOutModal.form.expectedArrival"></DatePicker>
-                </FormItem>
-                <FormItem label="Shipping details" prop="shipOutDetails">
-                    <Input v-model="shipOutModal.form.shipOutDetails" type="textarea" :autosize="{minRows: 2,maxRows: 10}" placeholder="Vessel, voyage, BOL..."></Input>
-                </FormItem>
-
-            </Form>
-
-        </Modal>
-
-        <Modal
-            v-model="inventoriseModal.show"
-            title="Inventorise"
-            :loading="inventoriseModal.loading"
-            @on-ok="inventoriseOK()"
-            width="80%"
-            >
-
-            <h1 style="text-align: center; margin-bottom: 10px;">{{ inventoriseModal.name }}</h1>
-
-            <Form label-position="right" :label-width="90" ref="inventoriseForm" :model="inventoriseModal.form" :rules="inventoriseModal.formRules">
-
-                <FormItem label="Act. Arrival" prop="actualArrival">
-                    <DatePicker format="dd-MMM-yyyy" type="date" placeholder="Select date" v-model="inventoriseModal.form.actualArrival"></DatePicker>
-                </FormItem>
-                <FormItem label="Arrival details" prop="arrivalDetails">
-                    <Input v-model="inventoriseModal.form.arrivalDetails" type="textarea" :autosize="{minRows: 2,maxRows: 10}" placeholder="Any comment shipment, storage, damages etc..."></Input>
-                </FormItem>
-
-                <el-table
-                    :data="inventoriseModal.form.products"
-                    style="width: 100%">
-                    <el-table-column
-                        type="index"
-                        label="No"
-                        width="50"
-                    >
-                    </el-table-column>
-
-                    <el-table-column
-                        label="Product"
-                    >
-                        <template slot-scope="scope">
-                            <p>{{ scope.row.name }}</p>
-                            <i>{{ scope.row.sku }}</i>
-                        </template>
-
-                    </el-table-column>
-
-                    <el-table-column
-                        label="Qty Shipped"
-                        width="80"
-                        prop="quantity"
-                    ></el-table-column>
-
-                    <el-table-column label="Inventorise">
-                        <el-table-column
-                            v-for="storageLocation in storageLocations"
-                            :label="storageLocation.name"
-                            :key="storageLocation.StorageLocationID"
-                            width="80"
-                        >
-
-                            <template slot-scope="scope">
-                                <FormItem prop="storageQuantities">
-                                    <InputNumber
-                                        class="inventoriseTableInputs"
-                                        :min="0" :max="parseInt(scope.row.quantity)"
-                                        v-model="scope.row.toInventorise.stores[storageLocation.name].quantity"
-                                        @on-change="inventoriseModal.countQuantities(scope.row, scope.row.toInventorise.stores[storageLocation.name])"
-                                    ></InputNumber>
-                                </FormItem>
-                            </template>
-
-                        </el-table-column>
-
-                        <el-table-column width="80" label="Inventorise Total">
-                            <template slot-scope="scope">
-
-                                <FormItem :key="scope.row.InventoryID">
-                                    <Input
-                                        class="inventoriseTableInputs"
-                                        disabled
-                                        type="text"
-                                        :ref="'totalFor' + scope.row.InventoryID"
-                                        v-model="scope.row.toInventorise.total"
-                                    ></Input>
-                                </FormItem>
-                            </template>
-                        </el-table-column>
-                    </el-table-column>
-
-                </el-table>
-
-            </Form>
-
-        </Modal>
+        <inventorise-modal
+            v-on:shipment:inventorised="lineRemove"
+            :modalData="inventoriseModal"
+            :storageLocations="storageLocations"
+            ></inventorise-modal>
 
     </div>
 </template>
@@ -280,10 +120,20 @@ import _ from 'lodash'
 import moment from 'moment'
 import { FormItem, InputNumber, Input } from 'iview'
 import Vue from 'vue'
+import addOrEditShipmentModal from './components/shipment/add-or-edit.vue'
+import shipOutModal from './components/shipment/ship-out.vue'
+import inventoriseModal from './components/shipment/inventorise.vue'
 
 const domain = process.env.API_DOMAIN
 
 export default {
+
+    components: {
+        addOrEditShipmentModal,
+        shipOutModal,
+        inventoriseModal
+    },
+
     data () {
         return {
 
@@ -291,7 +141,8 @@ export default {
 
             productColumns: [{
                 title: 'No.',
-                key: 'ShipmentID'
+                key: 'ShipmentID',
+                width: 30
             }, {
                 title: 'Product',
                 key: 'sku',
@@ -318,11 +169,10 @@ export default {
             inventories: [],
             storageLocations: [],
 
-            // addShipment Form
-            addShipmentModal: {
+            // addShipment
+            addOrEditShipmentModal: {
                 mode: '',
                 show: false,
-                loading: true,
                 form: {
                     ShipmentID: '',
                     name: '',
@@ -333,74 +183,20 @@ export default {
                         quantity: 1
                     }],
                     remarks: ''
-                },
-                formRules: {
-                    name: [
-                        { required: true, message: 'The name cannot be empty', trigger: 'blur' }
-                    ],
-                    estimatedShipOut: [
-                        { required: true, type: 'date', message: 'Please select the date', trigger: 'change' }
-                    ],
-                    expectedArrival: [
-                        { required: true, trigger: 'change', validator (rule, value, callback, source) {
-
-                            if (!(value instanceof Date)) return callback( new Error('Please select the date') )
-
-                            if (value < V.addShipmentModal.form.estimatedShipOut) return callback( new Error('Expected arrival cannot be earlier than estimated ship out.') )
-
-                            // everything passed
-                            return callback()
-
-                        }}
-                    ],
-                    products: [
-                        { required: true, trigger: 'change', validator (rule, value, callback) {
-                            let ids = _.map(value, product => {
-                                if(!isNaN(parseInt(product.InventoryID))) return product.InventoryID
-                            })
-
-                            // take out all the non-truthy items
-                            ids = _.filter(ids)
-
-                            if (ids.length === 0) return callback(new Error('You have to select at least 1 product.'))
-                            if (_.uniq(ids).length !== ids.length) return callback(new Error('You have selected a duplicated product.'))
-                            return callback()
-                        }}
-                    ]
                 }
             },
+            // used by edit shipment
             shipmentCache: {},
 
             // shipout Form
             shipOutModal: {
                 name: '',
                 show: false,
-                loading: true,
                 form: {
                     ShipmentID: '',
                     actualShipOut: '',
                     expectedArrival: '',
                     shipOutDetails: ''
-                },
-                formRules: {
-                    actualShipOut: [
-                        { required: true, type: 'date', message: 'Please select the date', trigger: 'change' }
-                    ],
-                    expectedArrival: [
-                        { required: true, trigger: 'change', validator (rule, value, callback, source) {
-
-                            if (!(value instanceof Date)) return callback( new Error('Please select the date') )
-
-                            if (value < V.shipOutModal.form.actualShipOut) return callback( new Error('Expected arrival cannot be earlier than actual ship out.') )
-
-                            // everything passed
-                            return callback()
-
-                        }}
-                    ],
-                    shipOutDetails: [
-                        { required: true, message: 'Please fill in shipping details.', trigger: 'change' }
-                    ]
                 }
             },
 
@@ -408,32 +204,11 @@ export default {
             inventoriseModal: {
                 name: '',
                 show: false,
-                loading: true,
                 form: {
                     ShipmentID: '',
                     actualArrival: '',
                     arrivalDetails: '',
                     products: []
-                },
-                formRules: {
-                    actualArrival: [
-                        { required: true, type: 'date', message: 'Please select the date', trigger: 'change' }
-                    ]
-                },
-                countQuantities(product, location) {
-                    let keys = Object.keys(product.toInventorise.stores)
-                    let count = 0
-                    for(let i=0; i<keys.length; i++) {
-                        let qty = product.toInventorise.stores[keys[i]].quantity
-                        count += parseInt(qty)
-                    }
-                    product.toInventorise.total = count
-                    V.$refs['totalFor' + product.InventoryID].currentValue = count
-                    product.quantityRemaining = parseInt(product.quantity) - count
-
-                    if (product.quantityRemaining < 0) {
-                        V.$Message.error('Quantity larger than what is shipped. Check your input.')
-                    }
                 }
             }
 
@@ -441,201 +216,61 @@ export default {
 
     },
     methods: {
-        addShipmentOK() {
+
+        lineAdd(shipment) {
+            this.shipments.unshift(shipment)
+        },
+        lineRefresh(shipment) {
+            // find the shipment ID and update it.
             let self = this
-            this.$refs['addShipmentForm'].validate(valid => {
-                if(!valid) {
-                    this.addShipmentModal.loading = false
-                    setTimeout(() => { self.addShipmentModal.loading = true }, 1)
-                    this.$Message.error('Check your entry!');
-                    return
-                }
-
-                let payload = _.cloneDeep(this.addShipmentModal.form)
-
-                payload.estimatedShipOut = moment.utc(moment(payload.estimatedShipOut).startOf('day').format('LL')).valueOf()
-                payload.expectedArrival = moment.utc(moment(payload.expectedArrival).startOf('day').format('LL')).valueOf();
-
-                var ajax
-                if (this.addShipmentModal.mode === 'add') {
-                    ajax = axios.put(domain + '/api/v2/shipment/create', payload)
-                } else if (this.addShipmentModal.mode === 'edit') {
-                    ajax = axios.post(domain + '/api/v2/shipment/edit', payload)
-                } else {
-                    throw new Error('addShipmentModal `mode` not defined.')
-                }
-
-                ajax.then(response => {
-
-                    // if success: false
-                    if (!response.data.success) {
-
-                        let error = new Error('API operation not successful.')
-                        error.reponse = response
-                        throw error
-                    }
-
-                    if (this.addShipmentModal.mode === 'add') {
-                        this.shipments.unshift(response.data.shipment)
-                        this.$Message.success('Successfully added shipment!')
-                    } else if (this.addShipmentModal.mode === 'edit') {
-                        // find the shipment ID and update it.
-                        let self = this
-                        let shipmentIndex = _.findIndex(self.shipments, { ShipmentID: response.data.shipment.ShipmentID})
-                        this.shipments[shipmentIndex] = response.data.shipment
-                    }
-
-                    this.addShipmentModal.show = false
-
-                }).catch(error => {
-
-                    this.$Message.error('Failed request!');
-                    CATCH_ERR_HANDLER(error)
-
-                }).then(() => {
-                    this.addShipmentModal.loading = false
-                    setTimeout(() => { self.addShipmentModal.loading = true }, 1)
-                })
-            })
+            let index = _.findIndex(self.shipments, { ShipmentID: shipment.ShipmentID})
+            this.$set(this.shipments, index, shipment)
+        },
+        lineRemove(shipmentID) {
+            let self = this
+            let index = _.findIndex(self.shipments, { ShipmentID: shipmentID })
+            self.shipments.splice(index, 1)
         },
         addShipment() {
-            this.$refs['addShipmentForm'].resetFields()
-            this.addShipmentModal.form.products.length = 0
-            this.addShipmentModal.form.products.push({
+            this.$refs['addOrEditShipmentModal'].$refs['addOrEditShipmentForm'].resetFields()
+            this.addOrEditShipmentModal.form.products.length = 0
+            this.addOrEditShipmentModal.form.products.push({
                 unique: (new Date()).getTime(),
                 InventoryID: '',
                 quantity: 1
             })
-            this.addShipmentModal.mode = 'add'
-            this.addShipmentModal.show = true
-        },
-        addShipmentProductLine () {
-            // this.index++;
-            this.addShipmentModal.form.products.push({
-                unique: (new Date()).getTime(),
-                InventoryID: '',
-                quantity: 1
-            });
-        },
-        removeShipmentProductLine (index) {
-            let self = this
-            this.addShipmentModal.form.products.splice(index, 1)
+            this.addOrEditShipmentModal.mode = 'add'
+            this.addOrEditShipmentModal.show = true
         },
         editShipment(shipment) {
-            this.$refs['addShipmentForm'].resetFields()
+            this.$refs['addOrEditShipmentModal'].$refs['addOrEditShipmentForm'].resetFields()
 
             this.shipmentCache = _.cloneDeep(shipment)
 
-            this.addShipmentModal.form = this.shipmentCache
+            this.addOrEditShipmentModal.form = this.shipmentCache
 
             let self = this
 
-            this.addShipmentModal.form.estimatedShipOut = new Date(parseInt(self.addShipmentModal.form.estimatedShipOut))
-            this.addShipmentModal.form.expectedArrival = new Date(parseInt(self.addShipmentModal.form.expectedArrival))
-            this.addShipmentModal.form.products.forEach(el => {
+            this.addOrEditShipmentModal.form.estimatedShipOut = new Date(parseInt(self.addOrEditShipmentModal.form.estimatedShipOut))
+            this.addOrEditShipmentModal.form.expectedArrival = new Date(parseInt(self.addOrEditShipmentModal.form.expectedArrival))
+            this.addOrEditShipmentModal.form.products.forEach(el => {
                 el.quantity = parseInt(el.quantity)
             })
 
-            this.addShipmentModal.mode = 'edit'
-            this.addShipmentModal.show = true
+            this.addOrEditShipmentModal.mode = 'edit'
+            this.addOrEditShipmentModal.show = true
         },
         shipOut(shipment) {
-
-            this.$refs['shipOutForm'].resetFields()
 
             this.shipOutModal.name = shipment.name
             this.shipOutModal.form.ShipmentID = shipment.ShipmentID
             this.shipOutModal.form.expectedArrival = new Date(parseInt(shipment.expectedArrival))
-
             this.shipOutModal.show = true
 
         },
-        shipOutOK() {
-
-            let self = this
-            this.$refs['shipOutForm'].validate(valid => {
-                if(!valid) {
-                    this.shipOutModal.loading = false
-                    setTimeout(() => { self.shipOutModal.loading = true }, 1)
-                    this.$Message.error('Check your entry!');
-                    return
-                }
-
-                let payload = _.cloneDeep(this.shipOutModal.form)
-
-                payload.actualShipOut = moment.utc(moment(payload.actualShipOut).startOf('day').format('LL')).valueOf()
-                payload.expectedArrival = moment.utc(moment(payload.expectedArrival).startOf('day').format('LL')).valueOf();
-
-                axios.post(domain + '/api/v2/shipment/shipout', payload).then(response => {
-
-                    // if success: false
-                    if (!response.data.success) {
-                        let error = new Error('API operation not successful.')
-                        error.reponse = response
-                        throw error
-                    }
-
-                        // find the shipment ID and update it.
-                        let shipmentIndex = _.findIndex(self.shipments, { ShipmentID: response.data.shipment.ShipmentID})
-                        this.shipments[shipmentIndex] = response.data.shipment
-
-                    this.shipOutModal.show = false
-
-                }).catch(error => {
-                    this.$Message.error('Failed request!');
-                    CATCH_ERR_HANDLER(error)
-
-                }).then(() => {
-                    this.shipOutModal.loading = false
-                    setTimeout(() => { self.shipOutModal.loading = true }, 1)
-                })
-            })
-        },
-        deleteShipment(shipment) {
-
-            // how did you get a delete button when you are in 'add' mode?
-            if (this.addShipmentModal.form.mode === 'add') this.addShipmentModal.show = false
-
-            let self = this
-            let ShipmentID = shipment.ShipmentID
-
-            this.$Modal.confirm({
-                title: 'Delete Shipment',
-                content: '<p>Confirm delete shipment <strong>' + shipment.name + '</strong>?</p>',
-                loading: true,
-                onOk: () => {
-                    axios.delete(domain + '/api/v2/shipment/delete', { data: { ShipmentID: ShipmentID }}).then(response => {
-                        if (!response.data.success) {
-                            let error = new Error('API operation not successful.')
-                            error.reponse = response
-                            throw error
-                        }
-
-                        let deletedIndex = _.find(self.shipments, { ShipmentID: ShipmentID })
-
-                        // remove the deleted entry
-                        self.shipments.splice(self.shipments.indexOf(deletedIndex), 1)
-
-                        this.$Message.info('Succesfully deleted shipment!')
-                        addShipmentModal.show = false
-
-                    }).catch(error => {
-
-                        CATCH_ERR_HANDLER(error)
-                        this.$Message.error('Failed request!')
-
-                    }).then(() => {
-                        this.$Modal.remove()
-                    })
-
-                }
-            })
-        },
         inventorise(shipment) {
+
             let self = this
-            this.$refs['inventoriseForm'].resetFields()
-            this.inventoriseModal.form = shipment
-            this.inventoriseModal.show = true
 
             // if it is the first time opening a form for a shipment,
             // attach the template.
@@ -645,63 +280,9 @@ export default {
                     product.quantityRemaining = parseInt(product.quantity)
                 })
             }
-        },
-        inventoriseOK() {
-            let self = this
-            this.$refs['inventoriseForm'].validate(valid => {
-                if(!valid) {
-                    this.inventoriseModal.loading = false
-                    setTimeout(() => { self.inventoriseModal.loading = true }, 1)
-                    this.$Message.error('Check your entry!');
-                    return
-                }
-
-                let products = this.inventoriseModal.form.products
-                var qtyErrFlag = false
-                for(let i=0; i<products.length; i++) {
-                    let product = products[i]
-                    if (product.quantityRemaining !== 0) {
-                        qtyErrFlag = true
-                        this.$Message.error('Quantity does not match for ' + product.name +'!')
-                    }
-                }
-                if (qtyErrFlag) {
-                    this.inventoriseModal.loading = false
-                    setTimeout(() => { self.inventoriseModal.loading = true }, 1)
-                    return
-                }
-
-                let payload = _.cloneDeep(this.inventoriseModal.form)
-
-                console.log(payload)
-
-                payload.actualArrival = moment.utc(moment(payload.actualArrival).startOf('day').format('LL')).valueOf();
-
-                axios.post(domain + '/api/v2/shipment/arrive', payload).then(response => {
-
-                    // if success: false
-                    if (!response.data.success) {
-
-                        let error = new Error('API operation not successful.')
-                        error.reponse = response
-                        throw error
-
-                    }
-
-                    this.$Message.success('Successfully inventorised shipment!')
-                    this.inventoriseModal.show = false
-
-                }).catch(error => {
-
-                    this.$Message.error('Failed request!');
-                    CATCH_ERR_HANDLER(error)
-
-                }).then(() => {
-                    this.inventoriseModal.loading = false
-                    setTimeout(() => { self.inventoriseModal.loading = true }, 1)
-                })
-            })
-
+            // needs cloneDeep if not model will be reactive.
+            this.inventoriseModal.form = _.cloneDeep(shipment)
+            this.inventoriseModal.show = true
         }
     },
     filters: {},
@@ -718,9 +299,9 @@ export default {
                 throw error
             }
 
-            console.log(response.data.shipments)
+            console.log(response.data.data)
 
-            this.shipments = response.data.shipments
+            this.shipments = response.data.data
 
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 

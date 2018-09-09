@@ -6,6 +6,9 @@ const routers = [
             path: '',
             title: 'Sales',
             name: 'Sales',
+            meta: {
+                title: 'Sales'
+            },
             component: (resolve) => require(['./views/sales.vue'], resolve)
         },{
             path: '/delivery',
