@@ -35,11 +35,23 @@
                     </Panel>
                     <Panel name="productsSold">
                         <Icon type="ios-cube" />
-                        Product(s) sold (<b>{{ salesReceipt.soldInventories.length }}</b>)
+                        Product(s) sold (<b>{{ salesReceipt.data.items.length }}</b>)
                         <p slot="content">
-
-
-
+                            <Card v-for="(cartItem, index) in salesReceipt.data.items" :key="cartItem.id + '_' + index">
+                                <p slot="title">{{ cartItem.name }} <br></p>
+                                <p><b>SKU:</b> {{ cartItem.sku }}</p>
+                                <p><b>Qty:</b> {{ cartItem["Ordered Qty"] }}</p>
+                                <p><b>Price:</b> {{ cartItem.Price }} </p>
+                                <span v-if="cartItem.Options" v-for="(option, label) in cartItem.Options">
+                                    <p><b>{{ label }}:</b> {{ option }}</p>
+                                </span>
+                            </Card>
+                        </p>
+                    </Panel>
+                    <Panel name="productsTagged">
+                        <Icon type="md-done-all" />
+                        Product(s) tagged (<b>{{ salesReceipt.soldInventories.length }}</b>)
+                        <p slot="content">
                             <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
                                 <p slot="title">{{ soldInventory.name }} <br></p>
                                 <a href="javascript:void(0);" slot="extra" type="primary" @click="removeSoldInventory(soldInventory, salesReceipt)">
@@ -113,7 +125,9 @@ export default {
                     TransactionID: '',
                     quantity: ''
                 }],
-
+                data: {
+                    items: []
+                },
                 // view properties
                 submitLoading: false
             }],
