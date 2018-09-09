@@ -16,7 +16,20 @@ Vue.use(Element)
 
 //filters
 Vue.filter('unixToDate', value => {
-    return moment(parseInt(value)).format('DD MMM YYYY');
+    var str
+    if (typeof value === 'number') {
+        str = value.toString()
+    } else {
+        str = value
+    }
+
+    if (str.length === 10) {
+        str += '000'
+    } else if (str.length !== 13) {
+        return undefined
+    }
+
+    return moment(parseInt(str)).format('DD MMM YYYY');
 })
 Vue.mixin({
    data: function() {

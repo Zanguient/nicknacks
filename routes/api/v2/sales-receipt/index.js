@@ -60,7 +60,7 @@ router.get('/pending-delivery/all', (req, res, next) => {
                 { eventType: 'charge-succeeded'}
             ]
         },
-        order: [ ['TransactionID', 'DESC'] ],
+        order: [ ['TransactionID', 'DESC'], [ DB.Inventory_Storage, DB.SoldInventory, 'SoldInventoryID', 'ASC' ] ],
         include: [{
             model: DB.Inventory_Storage,
             through: {

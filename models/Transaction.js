@@ -64,6 +64,15 @@ function Transaction(sequelize, DataTypes) {
         eventId: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        deliveryDate: {
+            type: DataTypes.BIGINT,
+            allowNull: true
+        },
+        deliveryConfirmed: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true,
+            default: false
         }
     }, {
         timestamps: true,

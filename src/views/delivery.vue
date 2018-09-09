@@ -29,11 +29,19 @@
                         <p slot="content">
                             <Icon type="ios-person" /> {{ salesReceipt.details.customerName }}<br>
                             <Icon type="ios-mail" /> {{ salesReceipt.details.customerEmail }}<br>
-                            <Icon type="ios-phone-portrait" /> {{ salesReceipt.customer_telephone }}<br>
+                            <Icon type="ios-phone-portrait" /> {{ salesReceipt.details.customerPhone }}<br>
                             <Icon type="ios-card" /> {{ salesReceipt.paymentMethod }}<br>
+                            <Icon type="ios-calendar-outline" /> {{ salesReceipt.details.transactionDateTime }}<br>
+                            <Icon type="logo-usd" /> {{ salesReceipt.details.totalAmount }} <br>
+                            <Icon type="ios-open" />
+                            <span v-if="salesReceipt.deliveryDate">
+                                {{ salesReceipt.deliveryDate | unixToDate }}
+                                <Tag v-if="(  parseInt(salesReceipt.deliveryDate) < ( new Date() ).getTime()  )" color="error">Past due</Tag>
+                            </span>
+                            <span else><Tag color="warning">Not scheduled</Tag></span>
                         </p>
                     </Panel>
-                    <Panel name="productsSold">
+                    <Panel v-if="salesReceipt.data.items" name="productsSold">
                         <Icon type="ios-cube" />
                         Product(s) sold (<b>{{ salesReceipt.data.items.length }}</b>)
                         <p slot="content">

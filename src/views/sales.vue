@@ -32,7 +32,14 @@
                             <Icon type="ios-phone-portrait" /> {{ salesReceipt.details.customerPhone }}<br>
                             <Icon type="ios-card" /> {{ salesReceipt.paymentMethod }}<br>
                             <Icon type="ios-calendar-outline" /> {{ salesReceipt.details.transactionDateTime }}<br>
-                            <Icon type="logo-usd" /> {{ salesReceipt.details.totalAmount }}
+                            <Icon type="logo-usd" /> {{ salesReceipt.details.totalAmount }} <br>
+                            <Icon type="ios-open" />
+                            <span v-if="salesReceipt.deliveryDate">
+                                {{ salesReceipt.deliveryDate | unixToDate }}
+                                <Tag v-if="(  parseInt(salesReceipt.deliveryDate) < ( new Date() ).getTime()  )" color="error">Past due</Tag>
+                            </span>
+                            <span else><Tag color="warning">Not scheduled</Tag></span>
+
                         </p>
                     </Panel>
                     <Panel name="productsSold">
@@ -114,6 +121,7 @@
 import axios from 'axios'
 import D from 'dottie'
 const domain = process.env.API_DOMAIN
+import M from 'moment'
 
 export default {
     data () {
@@ -361,6 +369,7 @@ export default {
     created () {
 
         window.V = this
+        window.M = M
 
         axios.get(domain + '/api/v2/sales-receipt/pending/all').then(response => {
 

@@ -52,6 +52,9 @@ router.post('/sales-order', (req, res, next) => {
 
             let promises = []
 
+            var date = D.get(req, 'body.data.delivery_date')
+            date = convertToUnixMS(date)
+
             // if transaction doesn't exist, create it.
             if(!txn) {
                 let createTransaction = DB.Transaction.create({
@@ -59,7 +62,8 @@ router.post('/sales-order', (req, res, next) => {
                     status: 'pending',
                     eventType: 'checkout',
                     salesOrderNumber: salesOrderNumber,
-                    paymentMethod: paymentMethod.toLowerCase()
+                    paymentMethod: paymentMethod.toLowerCase(),
+                    deliveryDate: date
 
                 }, {transaction: t})
                 promises.push(createTransaction)
@@ -117,6 +121,7 @@ router.post('/sales-order/comment', (req, res, next) => {
     req.body.order_id = salesOrderNumber
 
     // find if transaction already exist
+    var _TXN
     DB.Transaction.findOne({
         where: {
             salesOrderNumber: salesOrderNumber
@@ -128,10 +133,22 @@ router.post('/sales-order/comment', (req, res, next) => {
             error.status = 400
             throw error
         }
+        _TXN = txn
 
         return wunderlistBot(req.body)
 
     }).then(() => {
+
+        var date = D.get(req, 'body.data.delivery_date')
+        date = convertToUnixMS(date)
+
+        // sequelize knows if there is a change and will not hit the DB if there isn't
+        _TXN.deliveryDate = date
+        _TXN.deliveryConfirmed = false
+        return _TXN.save()
+
+    }).then(() => {
+
         // send success
         return res.send({
             success: true
@@ -175,6 +192,23 @@ router.post('/others', (req, res, next) => {
         return wunderlistBot(req.body)
 
     }).then(() => {
+
+        if (['shipment', 'shipmentcomment'].indexOf(req.body.type) !== -1) {
+            var date = D.get(req, 'body.data.delivery_date')
+            date = convertToUnixMS(date)
+
+            // sequelize knows if there is a change and will not hit the DB if there isn't
+            _TXN.deliveryDate = date
+
+            // it will be weird if a delivery order is sent out without a date....
+            if(date) _TXN.deliveryConfirmed = true
+
+            return _TXN.save()
+
+        } else { return false }
+
+    }).then(() => {
+
         // send success
         return res.send({
             success: true
@@ -184,6 +218,15 @@ router.post('/others', (req, res, next) => {
 
 })
 
+function convertToUnixMS(date) {
+    if (!date) return date
+    if (typeof date === 'number') date = date.toString()
+    if (date.length < 10) date += '000'
 
+    if (date.length !== 13) {
+        throw new Error('Date format is invalid.')
+    }
+    return date
+}
 
 module.exports = router;
