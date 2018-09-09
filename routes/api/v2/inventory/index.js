@@ -4,7 +4,7 @@ const debug = require('debug')('nn:api:inventory')
 const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
 const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
 const _ = require('lodash')
-const inventoryTimeLineFilter = require(__appsDir + '/inventory/timeLineFilter')
+const inventoryTimeLineFilter = require(__appsDir + '/inventory/timelineFilter')
 
 let inventoryIncludes = [{
 
