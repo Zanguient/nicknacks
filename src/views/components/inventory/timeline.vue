@@ -25,10 +25,13 @@
                     (line.stockAvailableAtCurrentDate > 0) ? 'yellow' : 'red'
                 )">
 
+                <!-- stock -->
                 <span v-if="line.date === 0">
                     <p class="time">Now</p>
                     <p class="content">Stock: {{ line.stockAvailableAtCurrentDate }}</p>
                 </span>
+
+                <!-- unscheduled deliveries -->
                 <span v-else-if="line.date === 9999999999999">
                     <p class="time">Not scheduled</p>
                     <p class="content">
@@ -40,6 +43,8 @@
                             {{ line.info.display }}
                     </p>
                 </span>
+
+                <!-- scheduled -->
                 <span v-else>
                     <p class="time">{{ line.date | unixToDate }}
                         <Tag v-if="line.isConfirmed" color="green">
@@ -52,7 +57,7 @@
                         Stock: {{ line.stockAvailableAtCurrentDate }},
                         Info:
                             <span v-if="line.type==='sales'"><Icon type="ios-cart" /></span>
-                            <span v-else-if="line.type==='transint'"><Icon type="ios-boat" /></span>
+                            <span v-else-if="line.type==='transit'"><Icon type="ios-boat" /></span>
                             {{ line.info.display }}
                     </p>
                 </span>

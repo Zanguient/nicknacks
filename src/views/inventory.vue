@@ -313,7 +313,6 @@ export default {
             this.addInventoryModal.show = true
         },
         showTimeline(inventory) {
-            console.log(111)
             this.timelineModal.inventory = inventory
             this.timelineModal.show = true
         }
