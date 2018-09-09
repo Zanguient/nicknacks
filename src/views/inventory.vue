@@ -1,7 +1,3 @@
-<style scoped>
-
-</style>
-
 <template>
     <div>
         <Spin size="large" fix v-if="spinShow"></Spin>
@@ -9,9 +5,81 @@
             <BreadcrumbItem>Inventory</BreadcrumbItem>
         </Breadcrumb>
 
-        <Button type="primary" @click="addProduct()">Add product</Button>
+        <Button width="200" type="primary" @click="addProduct()">Add product</Button>
 
-        <Table no-data-text="No inventories..." disabled-hover size="small" stripe border :columns="columns" :data="inventories"></Table>
+        <el-table :data="inventories" style="width:100%;">
+            <el-table-column
+                prop="name"
+                label="Name"
+                sortable
+            >
+
+                <template slot-scope="scope">
+                    <p>{{ scope.row.name }}</p>
+                    <div>
+                        <Button size="small" @click="showTimeline(scope.row)" :type="(scope.row.timeline.hasShortFall ? 'error' : 'success' )">Timeline</Button>
+                        <Tag v-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 5" color="orange">Low stock</Tag>
+                    </div>
+                </template>
+
+
+        </el-table-column>
+
+            <el-table-column
+                prop="sku"
+                label="sku"
+                sortable
+                :filters="categoryFilters"
+                :filter-method="filterHandler"
+            ></el-table-column>
+
+            <el-table-column label="Stock">
+                <template slot-scope="scope">
+
+                    <span style="font-size:11px; line-height: 12px;" v-for="location in scope.row.stock">
+
+                        <span v-if="location.name.toLowerCase() === 'sold' && location.quantity > 0">
+                            <a href="javascript:void(0);" @click="showSoldDetails(scope.row)">
+                                <p>{{ location.name }}: {{ location.quantity }}</p>
+                            </a>
+                        </span>
+                        <span v-else-if="location.name.toLowerCase() === 'transit' && location.quantity > 0">
+                            <a href="javascript:void(0);" @click="showTransitDetails(scope.row)">
+                                <p>{{ location.name }}: {{ location.quantity }}</p>
+                            </a>
+                        </span>
+                        <span v-else><p>{{ location.name }}: {{ location.quantity }}</p></span>
+
+                    </span>
+                </template>
+            </el-table-column>
+
+            <el-table-column
+                prop="cogs"
+                label="COGS"
+                sortable
+            ></el-table-column>
+
+            <el-table-column
+                label="Action"
+                sortable
+            >
+                <template slot-scope="scope">
+                    <Button type="primary" size="small" @click="editInventory(scope.row)">
+                        <Icon type="ios-create" /><span class="inventoryActionText">Edit</span>
+                    </Button>
+                    <br>
+                    <Button type="warning" size="small" @click="transfer(scope.row)">
+                        <Icon type="md-git-compare" /><span class="inventoryActionText">Transfer</span>
+                    </Button>
+                    <br>
+                    <Button type="error" size="small" @click="discrepancy(scope.row)">
+                        <Icon type="ios-podium" /><span class="inventoryActionText">Discrepancy</span>
+                    </Button>
+                </template>
+            </el-table-column>
+        </el-table>
+
 
         <add-inventory-modal
             v-on:inventory:added="lineAdd"
@@ -31,6 +99,9 @@
             :stock="stockCache"
             :modalData="transferModal"></transfer-inventory-modal>
 
+
+        <timeline-modal :modalData="timelineModal"></timeline-modal>
+
         <Modal
             v-model="transitModal.show"
             title="Transit Info">
@@ -45,7 +116,6 @@
                 <p>Quantity: {{transitInv.quantity}}</p>
                 <p>Est. Shipout: {{ transitInv.Shipment.estimatedShipOut | momentUnix }}</p>
             </Card>
-
         </Modal>
 
         <Modal
@@ -64,7 +134,6 @@
                     <p>Qty: {{ txn.SoldInventory.quantity }}</p>
                 </Card>
             </span>
-
         </Modal>
 
     </div>
@@ -78,156 +147,24 @@ import transferInventoryModal from './components/inventory/transfer.vue'
 import editInventoryModal from './components/inventory/edit.vue'
 import addInventoryModal from './components/inventory/add.vue'
 import discrepancyModal from './components/inventory/discrepancy.vue'
+import timelineModal from './components/inventory/timeline.vue'
 
 const domain = process.env.API_DOMAIN
 
 export default {
-
     components: {
         transferInventoryModal,
         editInventoryModal,
         addInventoryModal,
-        discrepancyModal
+        discrepancyModal,
+        timelineModal
     },
-
     data () {
 
         return {
-
             stockCache: [],
-
             spinShow: true,
-
-            columns: [{
-                title: 'Name',
-                key: 'name',
-                sortable: true,
-                minWidth: 76
-            }, {
-                title: 'sku',
-                key: 'sku',
-                sortable: true,
-                filters: [],
-                filterMultiple: true,
-                minWidth: 76,
-                filterMethod (value, row) {
-                    return row.sku.indexOf(value) === 0
-                }
-            }, {
-                title: 'Stock',
-                minWidth: 84,
-                render: (h, params) => {
-                    let stuff = []
-
-                    for(let i=0; i<params.row.stock.length; i++) {
-                        let stocking = params.row.stock[i]
-
-                        // create link for sold
-                        if(stocking.name.toLowerCase() === 'sold' && stocking.quantity > 0) {
-                            let dom = h('a', {
-                                props: {
-                                    href: 'javascript:void(0);'
-                                },
-                                on: {
-                                    click: () => {
-                                        this.showSoldDetails(params.row)
-                                    }
-                                }
-                            }, [
-                                h('p', stocking.name + ': ' + stocking.quantity)
-                            ])
-                            stuff.push(dom)
-                            continue
-                        }
-
-                        // create link for transit
-                        if(stocking.name.toLowerCase() === 'transit' && stocking.quantity > 0) {
-                            let dom = h('a', {
-                                props: {
-                                    href: 'javascript:void(0);'
-                                },
-                                on: {
-                                    click: () => {
-                                        this.showTransitDetails(params.row)
-                                    }
-                                }
-                            }, [
-                                h('p', stocking.name + ': ' + stocking.quantity)
-                            ])
-                            stuff.push(dom)
-                            continue
-                        }
-
-                        // not sold or transit, just render plainly
-                        stuff.push( h('p', stocking.name + ': ' + stocking.quantity) )
-
-                    }
-                    return stuff
-                }
-            }, {
-                title: 'COGS',
-                key: 'cogs',
-                minWidth: 35
-            }, {
-                title: 'Action',
-                minWidth: 38,
-                render: (h, params) => {
-                    return [
-
-                        // edit button
-                        h('Button', {
-                            props: {
-                                type: 'primary',
-                                size: 'small'
-                            },
-                            on: {
-                                click: () => {
-                                    this.editInventory(params.row)
-                                }
-                            }
-                        }, [
-                            h('Icon', {props: {type: 'ios-create'}}),
-                            h('span', { class: 'inventoryActionText' }, 'Edit'),
-                            h('br')
-                        ]),
-
-                        // transfer button
-                        h('br'),
-                        h('Button', {
-                            props: {
-                                type: 'warning',
-                                size: 'small'
-                            },
-                            on: {
-                                click: () => {
-                                    this.transfer(params.row)
-                                }
-                            }
-                        }, [
-                            h('Icon', {props: {type: 'md-git-compare'}}),
-                            h('span', { class: 'inventoryActionText' }, 'Transfer')
-                        ]),
-
-                        // discrepancy button
-                        h('br'),
-                        h('Button', {
-                            props: {
-                                type: 'error',
-                                size: 'small'
-                            },
-                            on: {
-                                click: () => {
-                                    this.discrepancy(params.row)
-                                }
-                            }
-                        }, [
-                            h('Icon', {props: {type: 'ios-podium'}}),
-                            h('span', { class: 'inventoryActionText' }, 'Discrepancy')
-                        ])
-                    ]
-                }
-            }],
-
+            categoryFilters: [],
             inventories: [],
 
             storageLocations: [],
@@ -252,7 +189,6 @@ export default {
                     cogs: 0
                 }
             },
-
             transitModal: {
                 show: false,
                 inventory: ''
@@ -273,12 +209,26 @@ export default {
             transferModal: {
                 show: false,
                 inventory: Object
+            },
+            timelineModal: {
+                show: false,
+                inventory: {
+                    name: String,
+                    sku: String,
+                    InventoryID: String,
+                    timeline: {
+                        list: Array,
+                        hasShortFall: Boolean
+                    }
+                }
             }
         }
 
     },
     methods: {
-
+        filterHandler (value, row) {
+            return row.sku.indexOf(value) === 0
+        },
         lineAdd(inventory) {
             this.inventories.unshift(inventory)
         },
@@ -361,6 +311,11 @@ export default {
 
         addProduct() {
             this.addInventoryModal.show = true
+        },
+        showTimeline(inventory) {
+            console.log(111)
+            this.timelineModal.inventory = inventory
+            this.timelineModal.show = true
         }
     },
     filters: {
@@ -368,7 +323,6 @@ export default {
             return moment(parseInt(date)).format('DD MMM YYYY');
         }
     },
-
     created () {
 
         window.V = this
@@ -382,6 +336,7 @@ export default {
             }
 
             console.log(response.data.data)
+
             this.inventories = response.data.data
 
             let categoryArray = []
@@ -405,13 +360,12 @@ export default {
                 let cat = categoryArray[i]
 
                 categoryFilters.push({
-                    label: cat,
+                    text: cat,
                     value: cat
                 })
 
             }
-
-            this.columns[1].filters = categoryFilters
+            this.categoryFilters = categoryFilters
 
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 

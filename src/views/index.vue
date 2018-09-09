@@ -41,8 +41,7 @@
                     Inventory
                 </template>
                 <MenuItem name="3-1" to="./inventory">List</MenuItem>
-                <MenuItem name="3-2">Transfer</MenuItem>
-                <MenuItem name="3-3">Discrepancy</MenuItem>
+                <MenuItem name="3-2">Log</MenuItem>
             </Submenu>
 
             <MenuItem class="menuItem" name="4"  to="./shipment">

@@ -9,10 +9,12 @@ import locale from 'iview/dist/locale/en-US'
 import D from 'dottie'
 import moment from 'moment'
 import Element from 'element-ui'
+import El_locale from 'element-ui/lib/locale/lang/en'
 
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
-Vue.use(Element)
+
+Vue.use(Element, { El_locale })
 
 //filters
 Vue.filter('unixToDate', value => {
