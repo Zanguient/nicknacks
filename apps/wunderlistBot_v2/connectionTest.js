@@ -19,7 +19,7 @@ function connectionTest(options) {
             // all is good
             debug('Wunderlist connection good.');
 
-            setTimeout(() => { _getAllLists(options) }, options.testInterval * 60 * 100)
+            setTimeout(() => { _getAllLists(options, retries) }, options.testInterval * 60 * 100)
 
             return;
         }).fail(function () {
@@ -34,7 +34,7 @@ function connectionTest(options) {
             retries += 1
 
             // retry.
-            setTimeout(() => { WLConnectionTest(options, retries) }, options.retryInterval * 60 * 100);
+            setTimeout(() => { connectionTest(options, retries) }, options.retryInterval * 60 * 100);
 
         })
     }
