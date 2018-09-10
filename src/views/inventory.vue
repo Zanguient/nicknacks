@@ -5,35 +5,46 @@
             <BreadcrumbItem>Inventory</BreadcrumbItem>
         </Breadcrumb>
 
-        <Button width="200" type="primary" @click="addProduct()">Add product</Button>
+        <Button style="width:400;" type="primary" @click="addProduct()">Add product</Button>
 
-        <el-table :data="inventories" style="width:100%;">
+        <el-table :data="inventories">
             <el-table-column
+                min-width="140"
                 prop="name"
                 label="Name"
                 sortable
+                :filters="categoryFilters"
+                :filter-method="categoryFilterHandler"
             >
 
                 <template slot-scope="scope">
                     <p>{{ scope.row.name }}</p>
-                    <div>
-                        <Button size="small" @click="showTimeline(scope.row)" :type="(scope.row.timeline.hasShortFall ? 'error' : 'success' )">Timeline</Button>
-                        <Tag v-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 5" color="orange">Low stock</Tag>
-                    </div>
+                    <p style="font-size: 10px;"><i>{{ scope.row.sku }}</i></p>
                 </template>
-
-
-        </el-table-column>
+            </el-table-column>
 
             <el-table-column
-                prop="sku"
-                label="sku"
+                min-width="97"
+                prop="list[0].stockAvailableAtCurrentDate"
+                label="Status"
                 sortable
-                :filters="categoryFilters"
-                :filter-method="filterHandler"
-            ></el-table-column>
+                :filters="stockLevelFilters"
+                :filter-method="stockLevelFilterHandler"
+            >
+                <template slot-scope="scope">
+                    <Tag v-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 1" color="red">OOS</Tag>
+                    <Tag v-else-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 6" color="orange">Low stock</Tag>
+                    <Tag v-else-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 11" color="lime">Re-order</Tag>
+                    <Tag v-else color="green">In stock</Tag>
 
-            <el-table-column label="Stock">
+                    <div>
+                        <Button size="small" @click="showTimeline(scope.row)" :type="(scope.row.timeline.hasShortFall ? 'error' : 'success' )">Timeline</Button>
+                    </div>
+
+                </template>
+            </el-table-column>
+
+            <el-table-column min-width="100" label="Stock">
                 <template slot-scope="scope">
 
                     <span style="font-size:11px; line-height: 12px;" v-for="location in scope.row.stock">
@@ -55,14 +66,15 @@
             </el-table-column>
 
             <el-table-column
+                min-width="84"
                 prop="cogs"
                 label="COGS"
                 sortable
             ></el-table-column>
 
             <el-table-column
+                min-width="62"
                 label="Action"
-                sortable
             >
                 <template slot-scope="scope">
                     <Button type="primary" size="small" @click="editInventory(scope.row)">
@@ -114,7 +126,7 @@
                     {{transitInv.Shipment.name}}
                 </p>
                 <p>Quantity: {{transitInv.quantity}}</p>
-                <p>Est. Shipout: {{ transitInv.Shipment.estimatedShipOut | momentUnix }}</p>
+                <p>Est. Shipout: {{ transitInv.Shipment.estimatedShipOut | unixToDate }}</p>
             </Card>
         </Modal>
 
@@ -221,12 +233,29 @@ export default {
                         hasShortFall: Boolean
                     }
                 }
-            }
+            },
+            stockLevelFilters: [{
+                text: 'In stock',
+                value: "10,9999999999999"
+            }, {
+                text: 'Re-order',
+                value: "5,10"
+            }, {
+                text: 'Low stock',
+                value: "0,5"
+            }, {
+                text: 'OOS',
+                value: "-9999999999,0"
+            }]
         }
 
     },
     methods: {
-        filterHandler (value, row) {
+        stockLevelFilterHandler (value, row) {
+            var value = value.split(',')
+            return (parseInt(row.timeline.list[0].stockAvailableAtCurrentDate) > parseInt(value[0])) && (parseInt(row.timeline.list[0].stockAvailableAtCurrentDate) < parseInt(value[1]))
+        },
+        categoryFilterHandler (value, row) {
             return row.sku.indexOf(value) === 0
         },
         lineAdd(inventory) {
@@ -315,11 +344,6 @@ export default {
         showTimeline(inventory) {
             this.timelineModal.inventory = inventory
             this.timelineModal.show = true
-        }
-    },
-    filters: {
-        momentUnix(date) {
-            return moment(parseInt(date)).format('DD MMM YYYY');
         }
     },
     created () {
