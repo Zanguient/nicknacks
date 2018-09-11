@@ -38,8 +38,8 @@
                                 {{ salesReceipt.deliveryDate | unixToDate }}
                                 <Tag v-if="(  parseInt(salesReceipt.deliveryDate) < ( new Date() ).getTime()  )" color="error">Past due</Tag>
                             </span>
-                            <span else><Tag color="warning">Not scheduled</Tag></span>
-
+                            <span v-else><Tag color="warning">Not scheduled</Tag></span>
+                            <span v-if="salesReceipt.deliveryConfirmed"><Tag color="success">Confirmed</Tag></span>
                         </p>
                     </Panel>
                     <Panel name="productsSold">
