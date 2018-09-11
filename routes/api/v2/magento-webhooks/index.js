@@ -193,7 +193,7 @@ router.post('/others', (req, res, next) => {
 
     }).then(() => {
 
-        if (['shipment', 'shipmentcomment'].indexOf(req.body.type) !== -1) {
+        if (['shipment', 'shipmentcomment'].indexOf(req.body.type.toLowerCase()) !== -1) {
             var date = D.get(req, 'body.data.delivery_date')
             date = convertToUnixMS(date)
 
