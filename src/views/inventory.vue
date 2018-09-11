@@ -256,7 +256,7 @@ export default {
             return (parseInt(row.timeline.list[0].stockAvailableAtCurrentDate) > parseInt(value[0])) && (parseInt(row.timeline.list[0].stockAvailableAtCurrentDate) < parseInt(value[1]))
         },
         categoryFilterHandler (value, row) {
-            return row.sku.indexOf(value) === 0
+            return row.sku.indexOf(value.toLowerCase()) === 0
         },
         lineAdd(inventory) {
             this.inventories.unshift(inventory)
