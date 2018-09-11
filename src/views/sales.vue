@@ -102,8 +102,20 @@
                     </Select>
                 </FormItem>
                 <FormItem prop="storageLocationID">
-                    <Select ref="addInventoryFormStorage" placeholder="Select location" v-model="addInventoryModal.form.storageLocationID" filterable>
-                        <Option v-for="(stockItem, index) in addInventoryModal.selectedInventory.stock" :value="stockItem.StorageLocationID || -1" :key="index" :disabled="!stockItem.StorageLocationID">{{ stockItem.name }} (Qty: {{ stockItem.quantity }})</Option>
+                    <Select
+                        ref="addInventoryFormStorage"
+                        placeholder="Select location"
+                        v-model="addInventoryModal.form.storageLocationID" filterable>
+
+                        <Option
+                            v-for="(stockItem, index) in addInventoryModal.selectedInventory.stock"
+                            :value="stockItem.StorageLocationID || -1"
+                            :key="index" :disabled="!stockItem.StorageLocationID">
+
+                            {{ stockItem.name }} (Qty: {{ stockItem.quantity }})
+
+                        </Option>
+
                     </Select>
                 </FormItem>
                 <FormItem label="Quantity" prop="quantity">
@@ -188,7 +200,7 @@ export default {
                     inventoryIndex: [
                         { type: 'number', min: 0, message: 'Please select inventory', trigger: 'blur' }
                     ],
-                    StorageLocationID: [
+                    storageLocationID: [
                         { required: true, message: 'Please select a storage location.', trigger: 'blur' }
                     ],
                     quantity: [
@@ -225,15 +237,16 @@ export default {
                             throw error
                         }
 
+                        salesReceipt.soldInventories.push(response.data.data)
+
                         // re-compute the totalCOGS
                         salesReceipt.totalCOGS = 0
                         for(let i=0; i<salesReceipt.soldInventories.length; i++) {
                             let soldInventory = salesReceipt.soldInventories[i]
+                            console.log(soldInventory.totalCOGS)
                             salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
                         }
                         salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
-
-                        salesReceipt.soldInventories.push(response.data.data)
 
                         this.$Message.success('Success!')
                         this.addInventoryModal.show = false
