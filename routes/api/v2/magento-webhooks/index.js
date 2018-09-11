@@ -221,7 +221,7 @@ router.post('/others', (req, res, next) => {
 function convertToUnixMS(date) {
     if (!date) return date
     if (typeof date === 'number') date = date.toString()
-    if (date.length < 10) date += '000'
+    if (date.length < 10.1) date += '000'
 
     if (date.length !== 13) {
         throw new Error('Date format is invalid.')
