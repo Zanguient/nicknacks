@@ -17,7 +17,7 @@ function connectionTest(options) {
 
         WL.http.lists.all().done(function (lists) {
             // all is good
-            debug('Wunderlist connection good.');
+            //debug('Wunderlist connection good.');
 
             setTimeout(() => { _getAllLists(options, retries) }, options.testInterval * 60 * 100)
 
