@@ -176,6 +176,8 @@ router.post('/others', (req, res, next) => {
         throw error
     }
 
+    var _TXN
+
     // find if transaction already exist
     DB.Transaction.findOne({
         where: {
@@ -188,6 +190,8 @@ router.post('/others', (req, res, next) => {
             error.status = 400
             throw error
         }
+
+        _TXN = txn
 
         return wunderlistBot(req.body)
 
