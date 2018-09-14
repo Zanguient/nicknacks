@@ -53,7 +53,7 @@ router.post('/sales-order', (req, res, next) => {
             let promises = []
 
             var date = D.get(req, 'body.data.delivery_date')
-            if (date) = convertToUnixMS(date)
+            if (date) date = convertToUnixMS(date)
 
             // if transaction doesn't exist, create it.
             if(!txn) {
