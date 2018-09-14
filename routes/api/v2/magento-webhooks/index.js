@@ -140,7 +140,7 @@ router.post('/sales-order/comment', (req, res, next) => {
     }).then(() => {
 
         var date = D.get(req, 'body.data.delivery_date')
-        if (date) = convertToUnixMS(date)
+        if (date) date = convertToUnixMS(date)
 
         // sequelize knows if there is a change and will not hit the DB if there isn't
         _TXN.deliveryDate = date
