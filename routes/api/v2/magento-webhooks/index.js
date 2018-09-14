@@ -53,7 +53,7 @@ router.post('/sales-order', (req, res, next) => {
             let promises = []
 
             var date = D.get(req, 'body.data.delivery_date')
-            date = convertToUnixMS(date)
+            if (date) = convertToUnixMS(date)
 
             // if transaction doesn't exist, create it.
             if(!txn) {
@@ -140,7 +140,7 @@ router.post('/sales-order/comment', (req, res, next) => {
     }).then(() => {
 
         var date = D.get(req, 'body.data.delivery_date')
-        date = convertToUnixMS(date)
+        if (date) = convertToUnixMS(date)
 
         // sequelize knows if there is a change and will not hit the DB if there isn't
         _TXN.deliveryDate = date
@@ -199,7 +199,7 @@ router.post('/others', (req, res, next) => {
 
         if (['shipment', 'shipmentcomment'].indexOf(req.body.type.toLowerCase()) !== -1) {
             var date = D.get(req, 'body.data.delivery_date')
-            date = convertToUnixMS(date)
+            if (date) date = convertToUnixMS(date)
 
             // sequelize knows if there is a change and will not hit the DB if there isn't
             _TXN.deliveryDate = date

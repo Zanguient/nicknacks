@@ -255,7 +255,7 @@ function createWunderlistTask(fromMagento, options) {
 
             return DB.WunderlistTask.create({
                 WunderlistTaskID: TASK_DATA.id,
-                salesOrderID: obj.ID.default
+                salesOrderID: parseInt(obj.ID.default)
             }, { transaction: D.get(options, 'transaction') }).then((listTask) => {
 
                 debug(obj.ID.withoutHex + ': Entry added successfully. WunderlistTaskID: ' + listTask.WunderlistTaskID + ' SalesOrderID: ' + listTask.salesOrderID);

@@ -45,8 +45,7 @@ function retrieveTokenAndRefresh() {
 
     }).catch(function (err) {
         // log the error
-        console.log(err);
-        global.serverStatus = err;
+        throw err
 
     });
 
