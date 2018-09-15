@@ -156,17 +156,7 @@ router.get('/all', (req, res, next) => {
             data: inventories
         })
 
-    }).catch(err => {
-        console.log(err)
-        res.status(500).send({
-            success: false,
-            message: 'Server error in retrieving sale receipts.',
-            debug: {
-                message: 'Server error',
-                error: err
-            }
-        })
-    })
+    }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
 })
 
@@ -223,6 +213,7 @@ router.post('/update', (req, res, next) => {
     }).spread( (inventory, soldInventories) => {
 
         let processed = singleInventoryProcessor(inventory, soldInventories)
+        processed.timeline = inventoryTimeLineFilter(processed)
 
         return res.send({
             success: true,
@@ -281,17 +272,48 @@ router.post('/deactivate', (req, res, next) => {
 
     let where = { InventoryID: req.body.InventoryID };
 
-    DB.Inventory.update({
-        notActive: true
-    }, {
-        where: where
+    debug(req.body)
+
+    DB.Inventory.findById(req.body.InventoryID, {
+        include: inventoryIncludes
     }).then(inventory => {
+
+        if (!inventory) {
+            //no inventory is found. don't care just respond that it is deleted.
+            return
+        }
+
+        // inventory is found
+        return DB.sequelize.transaction(t => {
+
+            let promises = []
+
+            //record inventory movement
+            // same for DB calls "required" from outside, it will be outside of this CLS scoping, need to manually pass `t`
+            let recordMovement = createInventoryRecord(t, 'inventoryDeactivated', inventory, req.user)
+            promises.push(recordMovement)
+
+            let update = DB.Inventory.update({
+                notActive: true
+            }, {
+                where: where
+            })
+            promises.push(update)
+
+            // don't need to call a spread. instead just call #all to wait for all before commiting.
+            return PROMISE.all(promises)
+
+        })
+
+    })
+    .then(() => {
 
         return res.send({
             success: true
         })
 
-    }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) })
+    })
+    .catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
 });
 
@@ -519,6 +541,7 @@ router.post('/discrepancy', (req, res, next) => {
     }).spread( (inventory, soldInventories) => {
 
         let processed = singleInventoryProcessor(inventory, soldInventories)
+        processed.timeline = inventoryTimeLineFilter(processed)
 
         return res.send({
             success: true,
@@ -653,6 +676,7 @@ router.post('/transfer', function(req, res, next) {
     }).spread( (inventory, soldInventories) => {
 
         let processed = singleInventoryProcessor(inventory, soldInventories)
+        processed.timeline = inventoryTimeLineFilter(processed)
 
         return res.send({
             success: true,

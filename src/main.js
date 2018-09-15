@@ -10,11 +10,14 @@ import D from 'dottie'
 import moment from 'moment'
 import Element from 'element-ui'
 import El_locale from 'element-ui/lib/locale/lang/en'
+import VueJsonPretty from 'vue-json-pretty'
 
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
-
 Vue.use(Element, { El_locale })
+Vue.use(VueJsonPretty)
+
+Vue.component('vue-json-pretty', VueJsonPretty)
 
 //filters
 Vue.filter('unixToDate', value => {
@@ -32,6 +35,10 @@ Vue.filter('unixToDate', value => {
     }
 
     return moment(parseInt(str)).format('DD MMM YYYY');
+})
+//filters
+Vue.filter('timestampToDate', value => {
+    return moment(value).format('DD MMM YYYY hh:mm')
 })
 Vue.mixin({
    data: function() {

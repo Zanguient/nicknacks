@@ -27,11 +27,11 @@
 
         <Menu mode="horizontal" theme="light" active-name="1">
 
-            <MenuItem class="menuItem" name="1" to="./">
+            <MenuItem class="menuItem" name="1" :to="{name: 'Sales'}">
                 <Icon class="menuIcon" type="ios-cart"/>
                 Sales
             </MenuItem>
-            <MenuItem class="menuItem" name="2" to="./delivery">
+            <MenuItem class="menuItem" name="2" :to="{name: 'Delivery'}">
                 <Icon class="menuIcon" type="ios-briefcase" />
                 Delivery
             </MenuItem>
@@ -40,11 +40,11 @@
                     <Icon class="menuIcon" type="ios-cube" />
                     Inventory
                 </template>
-                <MenuItem name="3-1" to="./inventory">List</MenuItem>
-                <MenuItem name="3-2">Log</MenuItem>
+                <MenuItem name="3-1" :to="{ name: 'Inventory' }">List</MenuItem>
+                <MenuItem name="3-2" :to="{ name: 'InventoryLog' }">Log</MenuItem>
             </Submenu>
 
-            <MenuItem class="menuItem" name="4"  to="./shipment">
+            <MenuItem class="menuItem" name="4"  :to="{ name: 'Shipment' }">
                 <Icon class="menuIcon" type="ios-boat" />
                 Shipment
             </MenuItem>

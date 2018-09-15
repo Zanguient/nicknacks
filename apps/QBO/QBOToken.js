@@ -1,4 +1,6 @@
 const QuickBooks = require('node-quickbooks')
+const rp = require('request-promise')
+const parseString = require('xml2js').parseString
 
 function retrieveTokenAndRefresh() {
     // get the token
@@ -6,7 +8,7 @@ function retrieveTokenAndRefresh() {
 
         // check validity of token data.
         if (!token || !token.data || !token.data.oauth_token || !token.data.oauth_token_secret) {
-            throw { message: 'CRITICAL: Obtaining token from database failed.' };
+            throw new Error('CRITICAL: Obtaining token from database failed.')
         }
 
         // save token to global variables
@@ -30,6 +32,8 @@ function retrieveTokenAndRefresh() {
         }
 
     }).then(function() {
+
+        console.log('QBO successfully initialised.')
 
         // initialise quickbooks
         global.QBO = new QuickBooks(
@@ -92,7 +96,7 @@ function retrieveTokenAndRefresh() {
             if (errorCode === 212) {
 
                 // token is not refreshed, return nothing, life goes on...
-                console.log('CRITICAL: Token refresh is attempted and failed due to current token still valid. Token invalidated, please re-auth to get new token.');
+                console.log('CRITICAL: Token refresh is attempted and failed due to current token still valid.');
 
                 // SEND EMAIL!!!!
                 return false;
@@ -124,10 +128,10 @@ function retrieveTokenAndRefresh() {
                 // SEND EMAIL!!!!
 
                 // any other errorCode, print out the error.
-                throw { message: 'Error code: ' + responseParsed.ErrorCode[0] + ' Message: ' + responseParsed.ErrorMessage[0] };
+                throw new Error('Error code: ' + responseParsed.ErrorCode[0] + ' Message: ' + responseParsed.ErrorMessage[0])
 
             }
-        });
+        })
     }
 
 

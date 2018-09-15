@@ -53,17 +53,20 @@
         </Form>
 
         <div v-if="(modalData.mode === 'edit')">
-            <Divider>⚠️ DANGER</Divider>
-
-            <div style="width: 100%; text-align: center;">
-                <Button  type="error" @click="deleteShipment(modalData.form)">
-                    <Icon type="ios-trash" /> Delete Shipment
-                </Button>
-            </div>
+            <Collapse>
+                <Panel>
+                    Advanced
+                    <p slot="content">
+                        <Divider>⚠️ DANGER</Divider>
+                        <Button long type="error" @click="deleteShipment(modalData.form)">
+                            <Icon type="ios-trash" /> Delete Shipment
+                        </Button>
+                    </p>
+                </Panel>
+            </Collapse>
         </div>
 
     </Modal>
-
 </template>
 <script>
 import axios from 'axios'

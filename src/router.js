@@ -10,20 +10,37 @@ const routers = [
                 title: 'Sales'
             },
             component: (resolve) => require(['./views/sales.vue'], resolve)
-        },{
+        }, {
             path: '/delivery',
             title: 'Delivery',
             name: 'Delivery',
+            meta: {
+                title: 'Delivery'
+            },
             component: (resolve) => require(['./views/delivery.vue'], resolve)
-        },{
+        }, {
             path: '/inventory',
             title: 'Inventory',
             name: 'Inventory',
+            meta: {
+                title: 'Inventory'
+            },
             component: (resolve) => require(['./views/inventory.vue'], resolve)
-        }, ,{
+        }, {
+            path: '/inventory/log',
+            title: 'Inventory Log',
+            name: 'InventoryLog',
+            meta: {
+                title: 'Inventory Log'
+            },
+            component: (resolve) => require(['./views/inventory-log.vue'], resolve)
+        }, {
             path: '/shipment',
             title: 'Shipment',
             name: 'Shipment',
+            meta: {
+                title: 'Shipment'
+            },
             component: (resolve) => require(['./views/shipment.vue'], resolve)
         }]
     }

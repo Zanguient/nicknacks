@@ -79,6 +79,7 @@ app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 app.use('/api/v2/magento-webhooks', require('./routes/api/v2/magento-webhooks'));
 app.use('/api/v2/sales-receipt', require('./routes/api/v2/sales-receipt'));
 app.use('/api/v2/inventory', require('./routes/api/v2/inventory'));
+    app.use('/api/v2/inventory/movement-record', require('./routes/api/v2/inventory/movement-record'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 app.use('/api/v2/stripe-webhooks', require('./routes/api/v2/stripe-webhooks'));
 app.use('/api/v2/storage-location', require('./routes/api/v2/storage-location'));

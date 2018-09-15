@@ -3,6 +3,7 @@
         <Spin size="large" fix v-if="spinShow"></Spin>
         <Breadcrumb class="mainBreadCrumb">
             <BreadcrumbItem>Inventory</BreadcrumbItem>
+            <BreadcrumbItem to="/inventory">List</BreadcrumbItem>
         </Breadcrumb>
 
         <Button style="width:400;" type="primary" @click="addProduct()">Add product</Button>

@@ -243,7 +243,6 @@ export default {
                         salesReceipt.totalCOGS = 0
                         for(let i=0; i<salesReceipt.soldInventories.length; i++) {
                             let soldInventory = salesReceipt.soldInventories[i]
-                            console.log(soldInventory.totalCOGS)
                             salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
                         }
                         salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
