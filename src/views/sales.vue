@@ -63,7 +63,7 @@
                         <p slot="content">
                             <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
                                 <p slot="title">
-                                    <router-link target="_blank" :to="{ name: 'InventoryInfo', params: { 'inventoryID': soldInventory.InventoryID } }">
+                                    <router-link v-if="['', undefined].indexOf(soldInventory.InventoryID) === -1" target="_blank" :to="{ name: 'InventoryInfo', params: { 'inventoryID': soldInventory.InventoryID } }">
                                         {{ soldInventory.name }}
                                     </router-link>
                                 </p>

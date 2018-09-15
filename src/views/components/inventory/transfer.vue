@@ -23,12 +23,10 @@
                 </el-table-column>
 
                 <el-table-column
+                    prop="name"
                     label="Name"
                     width="120"
                 >
-                    <template slot-scope="scope">
-                        <p v-if="scope.row.StorageLocationID">{{ scope.row.name }}</p>
-                    </template>
                 </el-table-column>
 
                 <el-table-column

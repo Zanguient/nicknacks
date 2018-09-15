@@ -9,18 +9,34 @@
         <h1>Stock level</h1>
 
         <el-table
-            :data="inventory.stock"
-            :summary-method="getSummaries"
+            v-if="inventory.stock"
+            :data="inventory.stock.filter(stock => typeof stock.StorageLocationID !== 'undefined')"
+            :summary-method="getPhysicalSummaries"
             show-summary>
             <el-table-column type="index" width="50"></el-table-column>
             <el-table-column prop="name" label="Location"></el-table-column>
             <el-table-column prop="quantity" label="Quantity"></el-table-column>
         </el-table>
+        <el-table
+            v-if="inventory.stock"
+            :data="inventory.stock.filter(stock => typeof stock.StorageLocationID === 'undefined')"
+            :summary-method="getNetSummaries"
+            show-summary
+            :show-header="false">
+            <el-table-column type="index" width="50"></el-table-column>
+            <el-table-column prop="name" label="Location"></el-table-column>
+            <el-table-column prop="quantity" label="Quantity">
+                <template slot-scope="scope">
+                    <p v-if="scope.row.name.toLowerCase() === 'sold'">{{parseInt(scope.row.quantity) * -1}}</p>
+                    <p v-else>{{scope.row.quantity}}</p>
+                </template>
+            </el-table-column>
+        </el-table>
 
 
         <h1 style="margin-top: 50px;">Timeline</h1>
 
-        <timeline-content :inventory="inventory"></timeline-content>
+        <timeline-content style="margin-left: 10px;" :inventory="inventory"></timeline-content>
 
         <h1 style="margin-top: 50px;">Movment Records</h1>
 
@@ -165,14 +181,15 @@ export default {
                 }
             },
             movementRecords: [],
-            categoryFilters: []
+            categoryFilters: [],
+            physicalSums: []
         }
     },
     methods: {
         categoryFilterHandler (value, row) {
             return row.source.indexOf(value.toLowerCase()) === 0
         },
-        getSummaries(param) {
+        getPhysicalSummaries(param) {
         const { columns, data } = param;
         const sums = [];
         columns.forEach((column, index) => {
@@ -181,7 +198,7 @@ export default {
             return;
           }
           if (index === 1) {
-            sums[index] = 'Total quantity';
+            sums[index] = 'Total physical';
             return;
           }
           const values = data.map(item => Number(item[column.property]));
@@ -199,8 +216,48 @@ export default {
           }
         });
 
+        this.physicalSums = sums
+
         return sums;
-      }
+      },
+      getNetSummaries(param) {
+      const { columns, data } = param;
+      const sums = [];
+      columns.forEach((column, index) => {
+        if (index === 0) {
+          sums[index] = '';
+          return;
+        }
+        if (index === 1) {
+          sums[index] = 'Total net';
+          return;
+        }
+        const values = data.map(item => {
+            if(item.name.toLowerCase() === 'sold') {
+                return -Number(item[column.property])
+            } else {
+                return Number(item[column.property])
+            }
+        });
+        if (!values.every(value => isNaN(value))) {
+          sums[index] = values.reduce((prev, curr) => {
+            const value = Number(curr);
+            if (!isNaN(value)) {
+              return prev + curr;
+            } else {
+              return prev;
+            }
+          }, 0);
+        } else {
+          sums[index] = 'N/A';
+        }
+      });
+
+      // add the phyiscal sums to net.
+      sums[2] += this.physicalSums[2]
+
+      return sums;
+    }
     },
     created () {
 
