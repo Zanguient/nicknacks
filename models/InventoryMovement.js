@@ -28,6 +28,11 @@ function InventoryMovement(sequelize, DataTypes) {
             type: DataTypes.JSON,
             allowNull: false,
             defaultValue: {}
+        },
+        involvedProductIDs: {
+            type: DataTypes.ARRAY(DataTypes.INTEGER),
+            allowNull: true,
+            defaultValue: []
         }
     }, {
         timestamps: true,

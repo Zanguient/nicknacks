@@ -35,6 +35,14 @@ const routers = [
             },
             component: (resolve) => require(['./views/inventory-log.vue'], resolve)
         }, {
+            path: '/inventory/one/:inventoryID',
+            title: 'Inventory Info',
+            name: 'InventoryInfo',
+            meta: {
+                title: 'Inventory Info'
+            },
+            component: (resolve) => require(['./views/inventory-info.vue'], resolve)
+        }, {
             path: '/shipment',
             title: 'Shipment',
             name: 'Shipment',

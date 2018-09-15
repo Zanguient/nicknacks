@@ -62,10 +62,20 @@
                         Product(s) tagged (<b>{{ salesReceipt.soldInventories.length }}</b>)
                         <p slot="content">
                             <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
-                                <p slot="title">{{ soldInventory.name }} <br></p>
+                                <p slot="title">
+                                    <router-link target="_blank" :to="{ name: 'InventoryInfo', params: { 'inventoryID': soldInventory.InventoryID } }">
+                                        {{ soldInventory.name }}
+                                    </router-link>
+                                </p>
                                 <a href="javascript:void(0);" slot="extra" type="primary" @click="removeSoldInventory(soldInventory, salesReceipt)">
                                     <Icon type="ios-trash" />
                                 </a>
+                                <inventory-status
+                                    v-for="inventory in inventories"
+                                    v-if="parseInt(inventory.InventoryID) === parseInt(soldInventory.InventoryID)"
+                                    :inventory="inventory"
+                                    :key="'inventory_status_for_' + soldInventory.InventoryID"
+                                ></inventory-status>
                                 <p><b>SKU:</b> {{ soldInventory.sku }}</p>
                                 <p><b>Qty:</b> {{ soldInventory.quantity }} (from <b>{{ soldInventory.StorageLocationName }}</b>)</p>
                                 <p><b>COGS/item:</b> {{ soldInventory.perItemCOGS }} </p>
@@ -134,8 +144,12 @@ import axios from 'axios'
 import D from 'dottie'
 const domain = process.env.API_DOMAIN
 import M from 'moment'
+import inventoryStatus from './components/inventory/inventory-status'
 
 export default {
+    components: {
+        inventoryStatus
+    },
     data () {
         return {
 
@@ -165,7 +179,12 @@ export default {
                 submitLoading: false
             }],
 
-            inventories: [],
+            inventories: [{
+                timeline: {
+                    hasShortFall: Boolean,
+                    list: []
+                }
+            }],
 
             // Sales Receipt form
             salesReceiptFormRules: {
@@ -237,7 +256,11 @@ export default {
                             throw error
                         }
 
-                        salesReceipt.soldInventories.push(response.data.data)
+                        salesReceipt.soldInventories.push(response.data.data.soldInventory)
+
+                        // refresh the inventory
+                        let index = _.findIndex(this.inventories, ['InventoryID', response.data.data.inventory.InventoryID])
+                        this.$set(this.inventories, index, response.data.data.inventory)
 
                         // re-compute the totalCOGS
                         salesReceipt.totalCOGS = 0
@@ -316,6 +339,10 @@ export default {
                             salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
                         }
                         salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+
+                        // refresh the inventory
+                        let index = _.findIndex(this.inventories, ['InventoryID', response.data.data.InventoryID])
+                        this.$set(this.inventories, index, response.data.data)
 
                         this.$Message.info('Succesfully removed sold inventory entry!')
 

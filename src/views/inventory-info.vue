@@ -3,8 +3,26 @@
         <Spin size="large" fix v-if="spinShow"></Spin>
         <Breadcrumb class="mainBreadCrumb">
             <BreadcrumbItem :to="{ name: 'Inventory' }">Inventory</BreadcrumbItem>
-            <BreadcrumbItem :to="{ name: 'InventoryLog' }">Log</BreadcrumbItem>
+            <BreadcrumbItem>{{ inventory.name }}</BreadcrumbItem>
         </Breadcrumb>
+
+        <h1>Stock level</h1>
+
+        <el-table
+            :data="inventory.stock"
+            :summary-method="getSummaries"
+            show-summary>
+            <el-table-column type="index" width="50"></el-table-column>
+            <el-table-column prop="name" label="Location"></el-table-column>
+            <el-table-column prop="quantity" label="Quantity"></el-table-column>
+        </el-table>
+
+
+        <h1 style="margin-top: 50px;">Timeline</h1>
+
+        <timeline-content :inventory="inventory"></timeline-content>
+
+        <h1 style="margin-top: 50px;">Movment Records</h1>
 
         <el-table :data="movementRecords">
 
@@ -23,11 +41,7 @@
                 <template slot-scope="scope">
                     <div v-if="scope.row.source === 'shipment'">
                         <div v-for="product in scope.row.sourceData.data.inventorised">
-                            <p><strong>
-                                    <router-link :to="{ name: 'InventoryInfo', params: { 'inventoryID': product.InventoryID } }">
-                                        {{ product.name }}
-                                    </router-link>
-                                </strong></p>
+                            <p><strong>{{ product.name }}</strong></p>
                             <p style="margin-left: 15px;" v-for="(value, key) in product.toInventorise.stores" v-if="parseInt(value.quantity) !== 0">
                                 {{ key }}: {{value.quantity}}
                             </p>
@@ -53,11 +67,30 @@
                         {{ scope.row.sourceData.name }}
                     </div>
                     <div v-else-if="scope.row.source === 'inventoryTransfer'">
-                        <strong>
-                            <router-link :to="{ name: 'InventoryInfo', params: { 'inventoryID': scope.row.sourceData.inventory.InventoryID } }">
-                                {{ scope.row.sourceData.inventory.name }}
-                            </router-link>
-                        </strong><br>
+                        {{ scope.row.sourceData.transferReason }}
+                    </div>
+                    <div v-else-if="scope.row.source === 'discrepancy'">
+                        {{ scope.row.sourceData.discrepancyReason }}
+                    </div>
+                    <div v-else-if="scope.row.source === 'delivery'">
+                        {{ scope.row.IDStub}} {{ scope.row.sourceData.details.customerName }}
+                    </div>
+                    <div v-else-if="scope.row.source === 'inventoryDeleted' || scope.row.source === 'inventoryDeactivated'">
+                    </div>
+                </template>
+
+            </el-table-column>
+
+            <el-table-column label="Movement">
+                <template slot-scope="scope">
+                    <div v-if="scope.row.source === 'shipment'">
+                        <div v-for="product in scope.row.sourceData.data.inventorised" v-if="parseInt(product.InventoryID) === parseInt(inventory.InventoryID)">
+                            <p v-for="(value, key) in product.toInventorise.stores" v-if="parseInt(value.quantity) !== 0">
+                                {{ key }} <span style="color: green"><Icon type="md-arrow-up" />{{value.quantity}}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div v-else-if="scope.row.source === 'inventoryTransfer'">
                         <span v-for="transfer in scope.row.sourceData.transfer" v-if="parseInt(transfer.transfer) !== 0">
                             {{transfer.name}}
                             <span v-if="parseInt(transfer.transfer) > 0">
@@ -69,11 +102,6 @@
                         </span>
                     </div>
                     <div v-else-if="scope.row.source === 'discrepancy'">
-                        <strong>
-                            <router-link :to="{ name: 'InventoryInfo', params: { 'inventoryID': scope.row.sourceData.adjustments[0].InventoryID } }">
-                                {{ scope.row.sourceData.adjustments[0].name }}
-                            </router-link>
-                        </strong><br>
                         <span v-for="adjustment in scope.row.sourceData.adjustments">
                             {{adjustment.storageLocationName}}
                             <span v-if="parseInt(adjustment.adjustment) > 0">
@@ -86,26 +114,16 @@
                         <Tag :color="( scope.row.net > 0 ) ? 'success' : 'error'">Net: {{ scope.row.net }}</Tag>
                     </div>
                     <div v-else-if="scope.row.source === 'delivery'">
-                        {{ scope.row.IDStub}} {{ scope.row.sourceData.details.customerName }}<br>
-                        <span v-for="inventory in scope.row.sourceData.soldInventories">
-                            <strong>
-                                <router-link :to="{ name: 'InventoryInfo', params: { 'inventoryID': inventory.InventoryID } }">
-                                    {{inventory.name}}
-                                </router-link>
-                            </strong>
-                            ({{inventory.StorageLocationName}}: {{inventory.quantity}})<br>
+                        <span v-for="soldInventory in scope.row.sourceData.soldInventories" v-if="parseInt(soldInventory.InventoryID) === parseInt(inventory.InventoryID)">
+                            {{soldInventory.StorageLocationName}} <span style="color: red"><Icon type="md-arrow-down" />{{soldInventory.quantity}}</span>
                         </span>
                     </div>
                     <div v-else-if="scope.row.source === 'inventoryDeleted' || scope.row.source === 'inventoryDeactivated'">
-                        <strong>
-                            <router-link :to="{ name: 'InventoryInfo', params: { 'inventoryID': scope.row.sourceData.InventoryID } }">
-                                {{ scope.row.sourceData.name }}
-                            </router-link>
-                        </strong><br>
-                        <i>{{ scope.row.sourceData.sku }}</i>
+                        <span v-for="stored in scope.row.sourceData.storageLocations">
+                            {{stored.name}} <span style="color: red"><Icon type="md-arrow-down" />{{stored.Inventory_Storage.quantity}}</span>
+                        </span>
                     </div>
                 </template>
-
             </el-table-column>
 
             <el-table-column min-width="80" prop="user" label="User"></el-table-column>
@@ -117,6 +135,7 @@
             </el-table-column>
 
         </el-table>
+
     </div>
 </template>
 <script>
@@ -125,12 +144,26 @@ import D from 'dottie'
 import _ from 'lodash'
 import moment from 'moment'
 
+
+import timelineContent from './components/inventory/timeline-content.vue'
+
 export default {
-    components: {},
+    components: {
+        timelineContent
+    },
     data () {
 
         return {
             spinShow: true,
+            inventory: {
+                name: String,
+                sku: String,
+                InventoryID: String,
+                timeline: {
+                    list: [],
+                    hasShortFall: Boolean
+                }
+            },
             movementRecords: [],
             categoryFilters: []
         }
@@ -138,14 +171,43 @@ export default {
     methods: {
         categoryFilterHandler (value, row) {
             return row.source.indexOf(value.toLowerCase()) === 0
-        }
+        },
+        getSummaries(param) {
+        const { columns, data } = param;
+        const sums = [];
+        columns.forEach((column, index) => {
+          if (index === 0) {
+            sums[index] = '';
+            return;
+          }
+          if (index === 1) {
+            sums[index] = 'Total quantity';
+            return;
+          }
+          const values = data.map(item => Number(item[column.property]));
+          if (!values.every(value => isNaN(value))) {
+            sums[index] = values.reduce((prev, curr) => {
+              const value = Number(curr);
+              if (!isNaN(value)) {
+                return prev + curr;
+              } else {
+                return prev;
+              }
+            }, 0);
+          } else {
+            sums[index] = 'N/A';
+          }
+        });
+
+        return sums;
+      }
     },
     created () {
 
         window.V = this
         var self = this
 
-        axios.get(this.DOMAIN + '/api/v2/inventory/movement-record/all').then(response => {
+        axios.get(this.DOMAIN + '/api/v2/inventory/one/audit-log/' + this.$route.params.inventoryID).then(response => {
 
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')
@@ -155,8 +217,8 @@ export default {
 
             let categoryArray = []
             // split up the skus and get the broad categories
-            for(let i=0; i<response.data.data.length; i++) {
-                let record = response.data.data[i]
+            for(let i=0; i<response.data.data.movementRecords.length; i++) {
+                let record = response.data.data.movementRecords[i]
                 let source = record.source
 
                 // discrepancy final count
@@ -203,7 +265,8 @@ export default {
             console.log(response.data.data)
 
             this.categoryFilters = categoryFilters
-            this.movementRecords = response.data.data
+            this.movementRecords = response.data.data.movementRecords
+            this.inventory = response.data.data.inventory
 
 
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })

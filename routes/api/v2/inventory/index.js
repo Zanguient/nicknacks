@@ -160,6 +160,58 @@ router.get('/all', (req, res, next) => {
 
 })
 
+router.get('/one/audit-log/:inventoryID', (req, res, next) => {
+
+    var _INVENTORY
+
+    DB.Inventory.findById(req.params.inventoryID, {
+        include: inventoryIncludes
+    }).then(inventory => {
+        if (!inventory) {
+            let error = new Error('Inventory not found by ID.')
+            Object.assign(error, {
+                status: 400,
+                level: 'low',
+                noLogging: true
+            })
+            throw error
+        }
+
+        _INVENTORY = inventory
+
+        return [
+            DB.Inventory_Storage.findAll({
+                where: {
+                    Inventory_inventoryID: inventory.InventoryID
+                },
+                include: inventoryStorageIncludes
+            }),
+            DB.InventoryMovement.findAll({
+                where: {
+                    involvedProductIDs: {
+                        $contains: [ inventory.InventoryID ]
+                    }
+                },
+                order: [['createdAt', 'DESC']]
+            })
+        ]
+
+    }).spread( (soldInventories, movementRecords) => {
+
+        let inventory = singleInventoryProcessor(_INVENTORY, soldInventories)
+        inventory.timeline = inventoryTimeLineFilter(inventory)
+
+        res.send({
+            success: true,
+            data: {
+                inventory,
+                movementRecords
+            }
+        })
+
+    }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
+})
+
 router.put('/add', (req, res, next) => {
 
     DB.Inventory.create(req.body, {returning: true}).then(inventory => {
@@ -179,6 +231,7 @@ router.put('/add', (req, res, next) => {
     }).spread( (inventory, soldInventories) => {
 
         let processed = singleInventoryProcessor(inventory, soldInventories)
+        processed.timeline = inventoryTimeLineFilter(processed)
 
         return res.send({
             success: true,
@@ -335,10 +388,8 @@ router.put('/sold', (req, res, next) => {
             throw err
         }
 
-        let promises = []
-
         // create the Sold Inventory Record and return it with associated models
-        let createSoldInventoryRecord = DB.SoldInventory.create({
+        return DB.SoldInventory.create({
             Inventory_Storage_inventory_StorageID: inventory_Storage.Inventory_StorageID,
             Transaction_transactionID: req.body.TransactionID,
             quantity: req.body.quantity
@@ -355,16 +406,29 @@ router.put('/sold', (req, res, next) => {
                 }]
             })
         })
-        promises.push(createSoldInventoryRecord)
 
+    }).then(soldInventory => {
 
-        let findInventory = DB.Inventory.findById(req.body.InventoryID)
-        promises.push(findInventory)
+        return [
 
+            soldInventory,
 
-        return promises;
+            DB.Inventory.findById(req.body.InventoryID, {
+                include: inventoryIncludes
+            }),
 
-    }).spread((soldInventory, inventory) => {
+            DB.Inventory_Storage.findAll({
+                where: {
+                    Inventory_inventoryID: req.body.InventoryID
+                },
+                include: inventoryStorageIncludes
+            })
+
+        ]
+    }).spread( (soldInventory, inventory, soldInventories) => {
+
+        let processed = singleInventoryProcessor(inventory, soldInventories)
+        processed.timeline = inventoryTimeLineFilter(processed)
 
         var obj = {};
 
@@ -381,7 +445,10 @@ router.put('/sold', (req, res, next) => {
 
         return res.send({
             success: true,
-            data: obj
+            data: {
+                inventory: processed,
+                soldInventory: obj
+            }
         })
 
     })
@@ -414,13 +481,42 @@ router.delete('/sold/delete', (req, res, next) => {
 
     }
 
-    DB.SoldInventory.destroy({
+    DB.SoldInventory.find({
         where: {
             SoldInventoryID: req.body.SoldInventoryID
-        }
-    }).then(() => {
+        },
+        include: [{
+            model: DB.Inventory_Storage
+        }]
+    })
+    .then(soldInventory => {
 
-        return res.send({ success: true })
+        return [
+
+            DB.Inventory.findById(soldInventory.Inventory_Storage.Inventory_inventoryID, {
+                include: inventoryIncludes
+            }),
+
+            DB.Inventory_Storage.findAll({
+                where: {
+                    Inventory_inventoryID: soldInventory.Inventory_Storage.Inventory_inventoryID
+                },
+                include: inventoryStorageIncludes
+            }),
+
+            soldInventory.destroy()
+
+        ]
+
+    }).spread( (inventory, soldInventories) => {
+
+        let processed = singleInventoryProcessor(inventory, soldInventories)
+        processed.timeline = inventoryTimeLineFilter(processed)
+
+        return res.send({
+            success: true,
+            data: processed
+        })
 
     }).catch(error => { API_ERROR_HANDLER(error, req, res, next) })
 
@@ -612,7 +708,8 @@ router.post('/transfer', function(req, res, next) {
             return createInventoryRecord(t, 'inventoryTransfer', {
 
                 inventory: inventory,
-                transfer: req.body.stock
+                transfer: req.body.stock,
+                reason: req.body.transferReason
 
             }, req.user).then(() => {
 

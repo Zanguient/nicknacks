@@ -3,7 +3,7 @@
         <Spin size="large" fix v-if="spinShow"></Spin>
         <Breadcrumb class="mainBreadCrumb">
             <BreadcrumbItem>Inventory</BreadcrumbItem>
-            <BreadcrumbItem to="/inventory">List</BreadcrumbItem>
+            <BreadcrumbItem>List</BreadcrumbItem>
         </Breadcrumb>
 
         <Button style="width:400;" type="primary" @click="addProduct()">Add product</Button>
@@ -19,29 +19,20 @@
             >
 
                 <template slot-scope="scope">
-                    <p>{{ scope.row.name }}</p>
+                    <p><router-link :to="{ name: 'InventoryInfo', params: { 'inventoryID': scope.row.InventoryID } }">{{ scope.row.name }}</router-link></p>
                     <p style="font-size: 10px;"><i>{{ scope.row.sku }}</i></p>
                 </template>
             </el-table-column>
 
             <el-table-column
                 min-width="97"
-                prop="list[0].stockAvailableAtCurrentDate"
                 label="Status"
                 sortable
                 :filters="stockLevelFilters"
                 :filter-method="stockLevelFilterHandler"
             >
                 <template slot-scope="scope">
-                    <Tag v-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 1" color="red">OOS</Tag>
-                    <Tag v-else-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 6" color="orange">Low stock</Tag>
-                    <Tag v-else-if="scope.row.timeline.list[0].stockAvailableAtCurrentDate < 11" color="lime">Re-order</Tag>
-                    <Tag v-else color="green">In stock</Tag>
-
-                    <div>
-                        <Button size="small" @click="showTimeline(scope.row)" :type="(scope.row.timeline.hasShortFall ? 'error' : 'success' )">Timeline</Button>
-                    </div>
-
+                    <inventory-status :inventory="scope.row"></inventory-status>
                 </template>
             </el-table-column>
 
@@ -112,9 +103,6 @@
             :stock="stockCache"
             :modalData="transferModal"></transfer-inventory-modal>
 
-
-        <timeline-modal :modalData="timelineModal"></timeline-modal>
-
         <Modal
             v-model="transitModal.show"
             title="Transit Info">
@@ -160,7 +148,7 @@ import transferInventoryModal from './components/inventory/transfer.vue'
 import editInventoryModal from './components/inventory/edit.vue'
 import addInventoryModal from './components/inventory/add.vue'
 import discrepancyModal from './components/inventory/discrepancy.vue'
-import timelineModal from './components/inventory/timeline.vue'
+import inventoryStatus from './components/inventory/inventory-status.vue'
 
 const domain = process.env.API_DOMAIN
 
@@ -170,7 +158,7 @@ export default {
         editInventoryModal,
         addInventoryModal,
         discrepancyModal,
-        timelineModal
+        inventoryStatus
     },
     data () {
 
@@ -222,18 +210,6 @@ export default {
             transferModal: {
                 show: false,
                 inventory: Object
-            },
-            timelineModal: {
-                show: false,
-                inventory: {
-                    name: String,
-                    sku: String,
-                    InventoryID: String,
-                    timeline: {
-                        list: Array,
-                        hasShortFall: Boolean
-                    }
-                }
             },
             stockLevelFilters: [{
                 text: 'In stock',
@@ -341,10 +317,6 @@ export default {
 
         addProduct() {
             this.addInventoryModal.show = true
-        },
-        showTimeline(inventory) {
-            this.timelineModal.inventory = inventory
-            this.timelineModal.show = true
         }
     },
     created () {
