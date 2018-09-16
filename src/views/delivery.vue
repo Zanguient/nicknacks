@@ -62,7 +62,17 @@
                         Product(s) tagged (<b>{{ salesReceipt.soldInventories.length }}</b>)
                         <p slot="content">
                             <Card v-for="soldInventory in salesReceipt.soldInventories" :key="soldInventory.SoldInventoryID">
-                                <p slot="title">{{ soldInventory.name }} <br></p>
+                                <p slot="title">
+                                    <router-link v-if="['', undefined].indexOf(soldInventory.InventoryID) === -1" target="_blank" :to="{ name: 'InventoryInfo', params: { 'inventoryID': soldInventory.InventoryID } }">
+                                        {{ soldInventory.name }}
+                                    </router-link>
+                                </p>
+                                <inventory-status
+                                    v-for="inventory in inventories"
+                                    v-if="parseInt(inventory.InventoryID) === parseInt(soldInventory.InventoryID)"
+                                    :inventory="inventory"
+                                    :key="'inventory_status_for_' + soldInventory.InventoryID"
+                                ></inventory-status>
                                 <a href="javascript:void(0);" slot="extra" type="primary" @click="removeSoldInventory(soldInventory, salesReceipt)">
                                     <Icon type="ios-trash"></Icon>
                                 </a>
@@ -112,9 +122,14 @@
 <script>
 import axios from 'axios'
 import D from 'dottie'
+import inventoryStatus from './components/inventory/inventory-status'
+
 const domain = process.env.API_DOMAIN
 
 export default {
+    components: {
+        inventoryStatus
+    },
     data () {
         return {
 
@@ -276,33 +291,43 @@ export default {
         deliverSalesReceipt (salesReceipt) {
 
             salesReceipt.submitLoading = true
+            let self = this
 
-            let payload = {
-                TransactionID: salesReceipt.TransactionID
-            }
+            this.$Modal.confirm({
+                title: 'Confirm deliver?',
+                content: '<p>This action is irreversible. Please check that your product tagging is correct.</p>',
+                loading: true,
+                onOk: () => {
+                    let payload = {
+                        TransactionID: salesReceipt.TransactionID
+                    }
 
-            axios.post(domain + '/api/v2/sales-receipt/deliver', payload).then(response => {
+                    axios.post(domain + '/api/v2/sales-receipt/deliver', payload).then(response => {
 
-                // if success: false
-                if (!response.data.success) {
-                    alert(response.data.message)
+                        // if success: false
+                        if (!response.data.success) {
+                            alert(response.data.message)
+                            this.$Modal.loading = false
+                            setTimeout(() => { self.$Modal.loading = true }, 1)
+                            return
+                        }
+
+                        this.$Message.success('Successfully delivered sales receipt!');
+
+                        // remove the successful entry
+                        this.salesReceipts.splice(this.salesReceipts.indexOf(salesReceipt), 1)
+                        this.$Modal.remove()
+
+                    }).catch(error => {
+
+                        this.$Message.error('Failed request!');
+                        CATCH_ERR_HANDLER(error)
+                    })
+                },
+                onCancel: () => {
                     salesReceipt.submitLoading = false
-                    return
                 }
-
-                this.$Message.success('Successfully delivered sales receipt!');
-
-                // remove the successful entry
-                this.salesReceipts.splice(this.salesReceipts.indexOf(salesReceipt), 1)
-
-            }).catch(error => {
-
-                this.$Message.error('Failed request!');
-                salesReceipt.submitLoading = false
-
-
-                CATCH_ERR_HANDLER(error)
-            })
+            });
 
         }
     },
