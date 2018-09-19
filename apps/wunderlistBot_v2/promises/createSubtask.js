@@ -1,4 +1,5 @@
 const debug = require('debug')('nn:apps:wunderlistBot:promises:createSubtask')
+debug.log = console.log.bind(console)
 
 function createSubtask(payload) {
     return new PROMISE(function(resolve, reject) {

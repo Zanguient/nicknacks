@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const debug = require('debug')('nn:api:inventory:movement-records')
+debug.log = console.log.bind(console)
 const _ = require('lodash')
 
 router.get('/all', (req, res, next) => {

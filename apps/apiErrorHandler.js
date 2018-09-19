@@ -24,13 +24,13 @@ function apiErrorHandler(err, req, res, next, config) {
 
     if (toLog) {
 
-        console.log('vvvvvvvvvvvvvvvvvvvvvvv')
+        console.error('vvvvvvvvvvvvvvvvvvvvvvv')
 
         // if severity is defined
         let level = D.get(err, 'level') || D.get(config, 'level')
         if (level) {
             if (severityDefaults.indexOf(level) < 0) {
-                console.log('**ERROR - HIGH ** Wrong error severity level defined. It can only be `high`, `medium or `low`.')
+                console.error('**ERROR - HIGH ** Wrong error severity level defined. It can only be `high`, `medium or `low`.')
             }
         }
 
@@ -38,19 +38,19 @@ function apiErrorHandler(err, req, res, next, config) {
         level = level || 'high'
 
         // logging
-        console.log('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
-        console.log(D.get(err, 'message') || D.get(config, 'message'))
-        console.log(err)
+        console.error('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
+        console.error(D.get(err, 'message') || D.get(config, 'message'))
+        console.error(err)
 
         // category dependent outputs
         if (err.category === 'QBO') {
-            console.log('====================')
-            console.log(err.category + ' error output:')
-            console.log(JSON.stringify(err.QBOResponse))
+            console.error('====================')
+            console.error(err.category + ' error output:')
+            console.error(JSON.stringify(err.QBOResponse))
         }
 
-        console.log('**END OUTPUT**')
-        console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^')
+        console.error('**END OUTPUT**')
+        console.error('^^^^^^^^^^^^^^^^^^^^^^^^^^')
 
     }
 

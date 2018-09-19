@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const debug = require('debug')('nn:api:sales-receipt')
+debug.log = console.log.bind(console)
 
 router.get('/pending/all', (req, res, next) => {
 

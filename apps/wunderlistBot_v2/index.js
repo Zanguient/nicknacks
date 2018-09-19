@@ -4,6 +4,7 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const S = require('string');
 const debug = require('debug')('nn:apps:wunderlistBot')
+debug.log = console.log.bind(console)
 
 const M = require('./errorObjectMerger');
 const makeIDObject = require('./makeIDObject.js');

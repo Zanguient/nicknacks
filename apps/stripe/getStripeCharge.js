@@ -1,7 +1,7 @@
 'use strict'
 
 const debug = require('debug')('nn:apps:stripe:getStripeCharge')
-
+debug.log = console.log.bind(console)
 
 function getStripeCharge(salesOrderNumber) {
 

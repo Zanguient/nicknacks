@@ -1,6 +1,8 @@
 'use strict';
 
 const debug = require('debug')('wunderlistBot:updateWunderlistTask')
+debug.log = console.log.bind(console)
+
 const makeIDObject = require('./makeIDObject.js')
 const _ = require('lodash')
 const getTaskByID = require('./promises/getTaskByID')

@@ -1,6 +1,7 @@
 'use strict'
 
 const debug = require('debug')('nn:stripe:calculateStripeCommissionAmount')
+debug.log = console.log.bind(console)
 
 function calculateStripeCommissionAmount(charge) {
 

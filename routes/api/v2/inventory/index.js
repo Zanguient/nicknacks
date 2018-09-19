@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const debug = require('debug')('nn:api:inventory')
+debug.log = console.log.bind(console)
 const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
 const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
 const _ = require('lodash')

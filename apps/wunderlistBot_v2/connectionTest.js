@@ -1,6 +1,7 @@
 'use strict'
 
 const debug = require('debug')('nn:wunderlistBot:connectionTest')
+debug.log = console.log.bind(console)
 
 function connectionTest(options) {
 

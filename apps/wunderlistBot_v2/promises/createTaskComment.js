@@ -1,4 +1,5 @@
 const debug = require('debug')('nn:apps:wunderlistBot:promises:createTaskComment')
+debug.log = console.log.bind(console)
 
 function createTaskComment(payload) {
     return new PROMISE(function(resolve, reject) {

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const debug = require('debug')('nn:api:shipment')
+debug.log = console.log.bind(console)
 const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
 
 /* GET home page. */

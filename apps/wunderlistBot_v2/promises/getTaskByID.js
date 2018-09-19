@@ -1,4 +1,5 @@
 const debug = require('debug')('nn:apps:wunderlistBot:promises:getTaskByID')
+debug.log = console.log.bind(console)
 
 function getTaskByID(payload) {
     return new PROMISE(function(resolve, reject) {

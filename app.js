@@ -1,6 +1,9 @@
 //load environment variables
 require('dotenv').load();
 
+// path related globals
+global.__appsDir = __dirname + '/apps'
+
 //load models the last because it has dependencies on the previous globals.
 global.Promise = global.PROMISE = require('bluebird')
 global.DB = require('./models/index.js')
@@ -10,8 +13,7 @@ global.API_ERROR_HANDLER = require('./apps/apiErrorHandler')
 
 global.serverStatus = [];
 
-// path related globals
-global.__appsDir = __dirname + '/apps'
+
 
 const WunderlistSDK = require('wunderlist');
 global.WL = new WunderlistSDK({

@@ -1,4 +1,5 @@
 const debug = require('debug')('nn:apps:wunderlistBot:promises:updateTask')
+debug.log = console.log.bind(console)
 
 function updateTask(id, rev, payload) {
     return new PROMISE(function(resolve, reject) {

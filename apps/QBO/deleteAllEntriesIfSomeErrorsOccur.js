@@ -1,9 +1,11 @@
+const debug = require('debug')('nn:apps:QBO:deleteAllEntriesIfSomeErrorsOccur')
+
 function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
     return PROMISE.resolve().then(function() {
 
         var deleteSalesReceipt, deleteExpense, deleteJournalCOGS;
 
-        console.log('INFO: Some errors occured, looking for created documents to delete.')
+        console.error('INFO: Some errors occured, looking for created documents to delete.')
 
         // Finding the "Fault branch" to be sure that the QBO documents were created
 
@@ -11,7 +13,7 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
         // of can be false (if the error was thrown later)
 
         if ([undefined, false].indexOf(salesReceipt) === -1 && !D.get(salesReceipt, "Fault") && salesReceipt.Id) {
-            console.log('INFO: Sales receipt found. Deleting...')
+            console.error('INFO: Sales receipt found. Deleting...')
             var deleteSalesReceipt = QBO.deleteSalesReceiptAsync({
                 "Id": salesReceipt.Id,
                 "SyncToken": salesReceipt.SyncToken
@@ -19,7 +21,7 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
         }
 
         if ([undefined, false].indexOf(expense) === -1 && !D.get(expense, "Fault") && expense.Id) {
-            console.log('INFO: Expense document found. Deleting...')
+            console.error('INFO: Expense document found. Deleting...')
             var deleteExpense = QBO.deletePurchaseAsync({
                 "Id": expense.Id,
                 "SyncToken": expense.SyncToken
@@ -27,7 +29,7 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
         }
 
         if ([undefined, false].indexOf(journalCOGS) === -1 && !D.get(journalCOGS, "Fault") && journalCOGS.Id) {
-            console.log('INFO: Journal found. Deleting...')
+            console.error('INFO: Journal found. Deleting...')
             var deleteJournalCOGS = QBO.deleteJournalEntryAsync({
                 "Id": journalCOGS.Id,
                 "SyncToken": journalCOGS.SyncToken
@@ -41,8 +43,8 @@ function deleteAllEntriesIfSomeErrorsOccur(salesReceipt, expense, journalCOGS) {
         ];
 
     }).catch(function(err) {
-        console.log('CRITCAL: Errors occured when reversing entries.')
-        console.log(err)
+        console.error('CRITCAL: Errors occured when reversing entries.')
+        console.error(err)
     });
 }
 module.exports = deleteAllEntriesIfSomeErrorsOccur
