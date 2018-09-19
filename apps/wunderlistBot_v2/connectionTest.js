@@ -29,7 +29,7 @@ function connectionTest(options) {
             // if retries hits the limit. It is better to not use equality because if somehow the
             // retry counts when above the limit, the system goes into unintended retry operations
             // and cannot self recover
-            if (retries < options.retryLimit + 1) throw new Error('CRITICAL: Wunderlist connection failed.')
+            if (retries > options.retryLimit) throw new Error('CRITICAL: Wunderlist connection failed.')
 
             retries += 1
 
