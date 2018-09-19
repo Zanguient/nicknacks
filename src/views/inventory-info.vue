@@ -6,6 +6,8 @@
             <BreadcrumbItem>{{ inventory.name }}</BreadcrumbItem>
         </Breadcrumb>
 
+        <p>SKU: {{inventory.sku}}</p>
+
         <h1>Stock level</h1>
 
         <el-table
