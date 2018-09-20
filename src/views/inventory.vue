@@ -10,7 +10,7 @@
 
         <el-table :data="inventories">
             <el-table-column
-                min-width="140"
+                min-width="135"
                 prop="name"
                 label="Name"
                 sortable
@@ -25,9 +25,9 @@
             </el-table-column>
 
             <el-table-column
-                min-width="97"
+                min-width="75"
                 label="Status"
-                sortable
+                prop="timeline"
                 :filters="stockLevelFilters"
                 :filter-method="stockLevelFilterHandler"
             >
@@ -36,7 +36,7 @@
                 </template>
             </el-table-column>
 
-            <el-table-column min-width="100" label="Stock">
+            <el-table-column min-width="105" label="Stock">
                 <template slot-scope="scope">
 
                     <span style="font-size:11px; line-height: 12px;" v-for="location in scope.row.stock">
@@ -223,12 +223,22 @@ export default {
             }, {
                 text: 'OOS',
                 value: "-9999999999,0"
+            }, {
+                text: 'Bad timeline',
+                value: 'badTimeline'
             }]
         }
 
     },
     methods: {
         stockLevelFilterHandler (value, row) {
+
+            // bad timeline filter
+            if (value === 'badTimeline') {
+                return row.timeline.hasShortFall
+            }
+
+            // the rest
             var value = value.split(',')
             return (parseInt(row.timeline.list[0].stockAvailableAtCurrentDate) > parseInt(value[0])) && (parseInt(row.timeline.list[0].stockAvailableAtCurrentDate) < parseInt(value[1]))
         },
