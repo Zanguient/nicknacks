@@ -99,9 +99,6 @@ export default {
                     self.$Message.success('Reset is successful!')
                     self.$router.push({name: 'Sales'})
 
-                    // redirect
-                    router.push('Sales')
-
                 }).catch(error => {
 
                     CATCH_ERR_HANDLER(error)
