@@ -322,7 +322,10 @@ export default {
                 loading: true,
                 onOk: () => {
 
-                    axios.delete(domain + '/api/v2/inventory/sold/delete', { data: { SoldInventoryID: soldInventory.SoldInventoryID }}).then(response => {
+                    axios.delete(domain + '/api/v2/inventory/sold/delete', {
+                        data: { SoldInventoryID: soldInventory.SoldInventoryID },
+                        withCredentials: true
+                    }).then(response => {
                         if (!response.data.success) {
                             let error = new Error('API operation not successful.')
                             error.reponse = response
@@ -374,7 +377,9 @@ export default {
                         comments: salesReceipt.comments
                     }
 
-                    axios.post(domain + '/api/v2/sales-receipt/create-sales-receipt', payload).then(response => {
+                    axios.post(domain + '/api/v2/sales-receipt/create-sales-receipt', payload, {
+                        withCredentials: true
+                    }).then(response => {
 
                         // if success: false
                         if (!response.data.success) {
@@ -410,7 +415,9 @@ export default {
         window.V = this
         window.M = M
 
-        axios.get(domain + '/api/v2/sales-receipt/pending/all').then(response => {
+        axios.get(domain + '/api/v2/sales-receipt/pending/all', {
+            withCredentials: true
+        }).then(response => {
 
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')
@@ -439,7 +446,9 @@ export default {
 
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 
-        axios.get(domain + '/api/v2/inventory/all').then(response => {
+        axios.get(domain + '/api/v2/inventory/all', {
+            withCredentials: true
+        }).then(response => {
 
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')

@@ -84,7 +84,9 @@ module.exports = {
                     cogs: this.modalData.form.cogs
                 }
 
-                axios.put(this.DOMAIN + '/api/v2/inventory/add', payload).then(response => {
+                axios.put(this.DOMAIN + '/api/v2/inventory/add', payload, {
+                    withCredentials: true
+                }).then(response => {
                     if (!response.data.success) {
                         let error = new Error('API operation not successful.')
                         error.reponse = response
