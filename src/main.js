@@ -7,15 +7,17 @@ import App from './app.vue'
 import 'iview/dist/styles/iview.css'
 import locale from 'iview/dist/locale/en-US'
 import D from 'dottie'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import Element from 'element-ui'
 import El_locale from 'element-ui/lib/locale/lang/en'
 import VueJsonPretty from 'vue-json-pretty'
+import Vuex from 'vuex'
 
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
 Vue.use(Element, { El_locale })
 Vue.use(VueJsonPretty)
+Vue.use(Vuex)
 
 Vue.component('vue-json-pretty', VueJsonPretty)
 
@@ -34,11 +36,11 @@ Vue.filter('unixToDate', value => {
         return undefined
     }
 
-    return moment(parseInt(str)).format('DD MMM YYYY');
+    return moment(parseInt(str)).tz('Asia/Singapore').format('DD MMM YYYY');
 })
 //filters
 Vue.filter('timestampToDate', value => {
-    return moment(value).format('DD MMM YYYY hh:mm')
+    return moment(value).tz('Asia/Singapore').format('DD MMM YYYY hh:mm')
 })
 Vue.mixin({
    data: function() {
@@ -71,23 +73,56 @@ router.afterEach((to, from, next) => {
     window.scrollTo(0, 0)
 })
 
+const store = new Vuex.Store({
+    state: {
+        isAuthenticated: false,
+        user: {}
+    },
+    mutations: {
+        authenticated (state, payload) {
+            state.isAuthenticated = true
+            state.user = payload
+        },
+        logout (state) {
+            state.isAuthenticated = false
+            state.user = {}
+        }
+    }
+})
+
 new Vue({
     el: '#app',
+    store,
     router: router,
     render: h => h(App)
 })
 
 window.CATCH_ERR_HANDLER = (err) => {
-    console.log('CATCH_ERR_HANDLER output:')
-    console.log(err)
 
-    let response = D.get(err , 'response')
+    return (function(store) {
+        return function() {
+            let response = D.get(err , 'response')
 
-    //if this is an api response
-    if(response) {
-        console.log(response)
-        alert(D.get(response, 'data.error.message'))
-    } else {
-        alert(err)
-    }
+            //if this is an api response
+            if(response) {
+
+                if (response.status === 401) {
+                    store.state.logout()
+                    return
+                }
+
+                if (response.status === 403) {
+                    return alert('Oops. Looks like you don\'t have enough rights to access this resource.')
+                }
+
+                console.log(response)
+                alert(D.get(response, 'data.message'))
+
+
+            } else {
+                alert(err)
+            }
+        }
+    })(store)
+
 }

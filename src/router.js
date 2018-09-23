@@ -50,6 +50,14 @@ const routers = [
                 title: 'Shipment'
             },
             component: (resolve) => require(['./views/shipment.vue'], resolve)
+        }, {
+            path: '/login/forget-password-reset/:token',
+            title: 'Forget Password Reset',
+            name: 'ForgetPasswordReset',
+            meta: {
+                title: 'Forget Password Reset'
+            },
+            component: (resolve) => require(['./views/forget-password-reset.vue'], resolve)
         }]
     }
 ];

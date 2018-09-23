@@ -5,17 +5,34 @@
 
 function apiErrorHandler(err, req, res, next, config) {
 
-    if(D.get(err, 'status') === 404) {
+    if(D.get(err, 'status') === 404 && !res.headersSent) {
         return res.status(404).send({
             success: false,
             message: 'Not found.'
         })
     }
 
+
     res.status(D.get(err, 'status') || D.get(config, 'status') || 500);
 
     // use simple timestamps to mark 500 errors.
     let timestamp = (new Date()).getTime()
+
+    // send email to wake the administrator from his sleep.
+    if(D.get(err, 'sendEmail')) {
+        SGMAIL.send({
+          to:       'calvin@greyandsanders.com',
+          from:     'calvin@greyandsanders.com',
+          fromname: 'Calvin Wilton Tan',
+          subject:  '[Server Error] ' + D.get(err, 'message') + ' (' + timestamp + ')',
+          html:     JSON.stringify(err)
+        }, function(err, json){
+          if (err) {
+              console.error('Error in sending out server error email.')
+              console.error(err.stack);
+          }
+        })
+    }
 
     // severity
     let severityDefaults = ['high', 'medium', 'low']
@@ -100,7 +117,7 @@ function apiErrorHandler(err, req, res, next, config) {
     }
 
     // pass the timestamp to the frontend.
-    return res.send(responseObject)
-
+    if (!res.headersSent) res.send(responseObject)
+    return
 }
 module.exports = apiErrorHandler

@@ -205,27 +205,44 @@ export default {
 
                     axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
                         if (!response.data.success) {
-                            alert(response.data.message)
-                            this.addInventoryModal.loading = false
-                            return
+                            let error = new Error('API operation not successful.')
+                            error.reponse = response
+                            throw error
                         }
-                        salesReceipt.soldInventories.push(response.data.data)
 
-                        this.$Message.success('Success!');
+                        salesReceipt.soldInventories.push(response.data.data.soldInventory)
+
+                        // refresh the inventory
+                        let index = _.findIndex(this.inventories, ['InventoryID', response.data.data.inventory.InventoryID])
+                        this.$set(this.inventories, index, response.data.data.inventory)
+
+                        // re-compute the totalCOGS
+                        salesReceipt.totalCOGS = 0
+                        for(let i=0; i<salesReceipt.soldInventories.length; i++) {
+                            let soldInventory = salesReceipt.soldInventories[i]
+                            salesReceipt.totalCOGS += parseFloat(soldInventory.totalCOGS)
+                        }
+                        salesReceipt.totalCOGS = salesReceipt.totalCOGS.toFixed(2)
+
+                        this.$Message.success('Success!')
                         this.addInventoryModal.show = false
-                        this.addInventoryModal.loading = false
 
                     }).catch(error => {
 
                         CATCH_ERR_HANDLER(error)
+                        this.$Message.error('Failed request!')
 
+                    }).then(() => {
+                        let self = this
                         this.addInventoryModal.loading = false
-                        this.$Message.error('Failed request!');
+                        setTimeout(() => { self.addInventoryModal.loading = true }, 1)
                     })
 
                 } else {
+                    let self = this
                     this.addInventoryModal.loading = false
-                    this.$Message.error('Check your entry!');
+                    setTimeout(() => { self.addInventoryModal.loading = true }, 1)
+                    this.$Message.error('Check your entry!')
                 }
             })
         },

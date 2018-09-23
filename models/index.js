@@ -3,6 +3,7 @@ var logging = process.env.DB_LOGGING ? console.log : false;
 var fs = require('fs');
 var path = require('path');
 var Sequelize = require('sequelize');
+var ssaclAttributeRoles = require('ssacl-attribute-roles');
 
 var cls = require('continuation-local-storage');
 const namespace = cls.createNamespace('sequelizeTransactionNameSpace')
@@ -41,7 +42,7 @@ Object.keys(db).forEach(function (modelName) {
 //call db.[Model].sync() to sync only one model.
 //db.WunderlistTask.sync();
 //db.Token.sync({force: true});
-sequelize.sync();
+//sequelize.sync();
 
 
 db.sequelize = sequelize;

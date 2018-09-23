@@ -7,11 +7,23 @@ function connectionTest(options) {
 
     let retries = 0
 
+    // if somehow WL token is not valid, check and send email. Don't let nicknacks crash.
+    if (!D.get(WL, 'initialized.done')) {
+        let error = new Error('CRITIAL: Wunderlist initialization.done() not defined.')
+        Object.assign(error, {
+            level: 'high',
+            sendEmail: true
+        })
+        throw error
+    }
+
     WL.initialized.done(function () {
         _getAllLists(options, retries)
     }).fail(function () {
-        console.error('CRITICAL: Wunderlist initialization failed.');
-        throw new Error('CRITICAL: Wunderlist initialization failed.');
+        console.error('CRITICAL: Wunderlist initialization failed.')
+        let error = new Error('CRITICAL: Wunderlist initialization failed.')
+        error.level = 'high'
+        throw error
     });
 
     function _getAllLists(options, retries) {

@@ -1,9 +1,10 @@
 const express = require('express')
 const router = express.Router()
+const permit = require(__appsDir + '/passport/permit')('/api/v2/sales-receipt')
 const debug = require('debug')('nn:api:sales-receipt')
 debug.log = console.log.bind(console)
 
-router.get('/pending/all', (req, res, next) => {
+router.get('/pending/all', permit('/pending/all', 1), (req, res, next) => {
 
     let options = {
         where: {
@@ -51,7 +52,7 @@ router.get('/pending/all', (req, res, next) => {
 
 })
 
-router.get('/pending-delivery/all', (req, res, next) => {
+router.get('/pending-delivery/all', permit('/pending-delivery/all', 1), (req, res, next) => {
 
     let options = {
         where: {
@@ -103,7 +104,7 @@ router.get('/pending-delivery/all', (req, res, next) => {
 
 })
 
-router.post('/create-sales-receipt', (req, res, next) => {
+router.post('/create-sales-receipt', permit('/create-sales-receipt', 8), (req, res, next) => {
 
     debug(req.body)
 
@@ -393,7 +394,7 @@ router.post('/create-sales-receipt', (req, res, next) => {
 
 })
 
-router.post('/deliver', (req, res, next) => {
+router.post('/deliver', permit('/deliver', 8), (req, res, next) => {
 
     DB.Transaction.findOne({
         where: { TransactionID: req.body.TransactionID },

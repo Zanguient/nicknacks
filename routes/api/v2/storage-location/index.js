@@ -1,7 +1,8 @@
 var express = require('express');
 var router = express.Router();
+const permit = require(__appsDir + '/passport/permit')('/api/v2/storage-location')
 
-router.get('/all', function(req, res, next) {
+router.get('/all', permit('/all', 1), function(req, res, next) {
 
     DB.StorageLocation.findAll({
         order: [ ['name', 'ASC'] ]

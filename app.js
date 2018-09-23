@@ -6,14 +6,13 @@ global.__appsDir = __dirname + '/apps'
 
 //load models the last because it has dependencies on the previous globals.
 global.Promise = global.PROMISE = require('bluebird')
+global.SGMAIL = require('@sendgrid/mail')
+SGMAIL.setApiKey(process.env.SENDGRID_API_KEY)
 global.DB = require('./models/index.js')
 global.MOMENT = require('moment')
 global.D = require('dottie')
+
 global.API_ERROR_HANDLER = require('./apps/apiErrorHandler')
-
-global.serverStatus = [];
-
-
 
 const WunderlistSDK = require('wunderlist');
 global.WL = new WunderlistSDK({
@@ -44,6 +43,14 @@ var parseString = require('xml2js').parseString;
 var retry = require('retry');
 var cors = require('cors');
 
+
+// /*passport, session and pg session */
+const passport = global.PASSPORT = require('passport')
+require('./apps/passport/passportConfig.js')(passport); //this has to be before routes
+var session = require('express-session');
+var pgSession = require('connect-pg-simple')(session);
+
+
 var QBO, QBO_TOKEN, QBO_SECRET;
 
 var app = express();
@@ -60,10 +67,25 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 //app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'dist')));
-app.use(session({resave: false, saveUninitialized: false, secret: 'smith'}));
 
 // enable cors
 app.use(cors());
+
+// Authentication
+app.use(session({
+    store: new pgSession({
+        conString: DB.databaseUrl,
+        tableName: 'Session'
+    }),
+    secret: process.env.SESSION_SECRET,
+    cookie: {maxAge: 31536000000000 /*10 years*/},
+    resave: false,
+    saveUninitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session()); // persistent login sessions
+
 
 app.use('/', require('./routes/index'));
 app.use('/qbo', require('./routes/qbo'));
@@ -85,6 +107,7 @@ app.use('/api/v2/inventory', require('./routes/api/v2/inventory'));
 app.use('/api/v2/shipment', require('./routes/api/v2/shipment'));
 app.use('/api/v2/stripe-webhooks', require('./routes/api/v2/stripe-webhooks'));
 app.use('/api/v2/storage-location', require('./routes/api/v2/storage-location'));
+app.use('/api/v2/login', require('./routes/api/v2/login'));
 
 
 /* SAFARI/IOS Bug */
@@ -104,7 +127,7 @@ QBOToken()
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    var err = new Error('Not Found');
+    var err = new Error('404: Not Found');
     err.status = 404;
     next(err);
 });

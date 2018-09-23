@@ -1,9 +1,24 @@
 #IMPORTANT: All conventions below are to be strictly adhered to. Non-compliance with the below mentioned conventions will result in severe liver damage.
 
+# Access Rights
+
+Access rights:
+
+1 ("Read only"): Read only for everything
+2 ("Basic"): Able to do edit products and tag products
+3: Nothing special
+4: Nothing special
+5: Nothing special
+6 ("Advanced"): Can edit product
+7 ("Advanced+"): Can add product and transfer inventory, and add, edit and create shipments
+8 ("Administrator"): Can do submission of sales receipts and delivering items
+9 ("Full rights"): Can do discrepancy vouchers or deactivate/delete inventory
+10 ("Super Admin"): Can add or delele users
+
 #Standard error response:
 
     res.status(400).send({
-        success: false, 
+        success: false,
         message: 'An error has occurred, please try again.',
         hideMessage: false,
         debug: {

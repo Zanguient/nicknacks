@@ -1,18 +1,19 @@
 const express = require('express');
 const router = express.Router();
+const permit = require(__appsDir + '/passport/permit')('/api/v2/shipment')
 const debug = require('debug')('nn:api:shipment')
 debug.log = console.log.bind(console)
 const createInventoryRecord = require(__appsDir + '/inventory/createInventoryRecord')
 
 /* GET home page. */
-router.get('/', function (req, res, next) {
+router.get('/', permit('/', 1), function (req, res, next) {
     res.send({
         sucess: true,
         data: {}
     });
 });
 
-router.get('/all', (req, res, next) => {
+router.get('/all', permit('/all', 1), (req, res, next) => {
 
     let where = {
         hasArrived: { $ne: true }
@@ -41,7 +42,7 @@ router.get('/all', (req, res, next) => {
 
 });
 
-router.get('/one/:shipmentID', function(req, res, next) {
+router.get('/one/:shipmentID', permit('/one/:shipmentID', 1), function(req, res, next) {
 
     DB.Shipment.findOne({
         where: { ShipmentID: req.params.shipmentID },
@@ -98,7 +99,7 @@ router.get('/one/:shipmentID', function(req, res, next) {
 
 });
 
-router.post('/shipout', function(req, res, next) {
+router.post('/shipout', permit('/shipout', 7), function(req, res, next) {
 
     debug(req.body);
 
@@ -139,7 +140,7 @@ router.post('/shipout', function(req, res, next) {
 
 })
 
-router.put('/create', function(req, res, next) {
+router.put('/create', permit('/create', 7), function(req, res, next) {
 
     debug(req.body);
 
@@ -185,7 +186,7 @@ router.put('/create', function(req, res, next) {
 
 });
 
-router.post('/edit', function(req, res, next) {
+router.post('/edit', permit('/edit', 7), function(req, res, next) {
 
     debug(req.body);
 
@@ -266,7 +267,7 @@ router.post('/edit', function(req, res, next) {
     .catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
 });
 
-router.delete('/delete', function(req, res, next) {
+router.delete('/delete', permit('/delete', 7), function(req, res, next) {
 
     debug(req.body);
 
@@ -284,7 +285,7 @@ router.delete('/delete', function(req, res, next) {
     }).catch(function(error) { API_ERROR_HANDLER(error, req, res, next) });
 });
 
-router.post('/arrive', function(req, res, next) {
+router.post('/arrive', permit('/arrive', 7), function(req, res, next) {
 
     debug(req.body);
 

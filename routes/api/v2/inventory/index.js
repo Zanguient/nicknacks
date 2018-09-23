@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const permit = require(__appsDir + '/passport/permit')('/api/v2/inventory')
 const debug = require('debug')('nn:api:inventory')
 debug.log = console.log.bind(console)
 const singleInventoryProcessor = require(__appsDir + '/inventory/singleInventoryProcessor')
@@ -56,7 +57,7 @@ let inventoryStorageIncludes = [{
     required: true
 }]
 
-router.get('/all', (req, res, next) => {
+router.get('/all', permit('/all', 1), (req, res, next) => {
 
     PROMISE.resolve().then(() => {
 
@@ -161,7 +162,7 @@ router.get('/all', (req, res, next) => {
 
 })
 
-router.get('/one/audit-log/:inventoryID', (req, res, next) => {
+router.get('/one/audit-log/:inventoryID', permit('/one/audit-log/:inventoryID', 1), (req, res, next) => {
 
     var _INVENTORY
 
@@ -213,7 +214,7 @@ router.get('/one/audit-log/:inventoryID', (req, res, next) => {
     }).catch( error => { API_ERROR_HANDLER(error, req, res, next) })
 })
 
-router.put('/add', (req, res, next) => {
+router.put('/add', permit('/add', 7), (req, res, next) => {
 
     DB.Inventory.create(req.body, {returning: true}).then(inventory => {
 
@@ -243,7 +244,7 @@ router.put('/add', (req, res, next) => {
 
 })
 
-router.post('/update', (req, res, next) => {
+router.post('/update', permit('/update', 6), (req, res, next) => {
 
     debug(req.body)
 
@@ -279,7 +280,7 @@ router.post('/update', (req, res, next) => {
 
 });
 
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', permit('/delete', 9), (req, res, next) => {
 
     debug(req.body)
 
@@ -322,7 +323,7 @@ router.delete('/delete', (req, res, next) => {
 
 })
 
-router.post('/deactivate', (req, res, next) => {
+router.post('/deactivate', permit('/deactivate', 9), (req, res, next) => {
 
     let where = { InventoryID: req.body.InventoryID };
 
@@ -371,7 +372,7 @@ router.post('/deactivate', (req, res, next) => {
 
 });
 
-router.put('/sold', (req, res, next) => {
+router.put('/sold', permit('/sold', 2), (req, res, next) => {
 
     debug(req.body)
 
@@ -472,7 +473,7 @@ router.put('/sold', (req, res, next) => {
 
 })
 
-router.delete('/sold/delete', (req, res, next) => {
+router.delete('/sold/delete', permit('/sold/delete', 2), (req, res, next) => {
 
     if(!req.body.SoldInventoryID || isNaN(parseInt(req.body.SoldInventoryID))) {
 
@@ -523,7 +524,7 @@ router.delete('/sold/delete', (req, res, next) => {
 
 })
 
-router.post('/discrepancy', (req, res, next) => {
+router.post('/discrepancy', permit('/discrepancy', 9), (req, res, next) => {
 
     var error
 
@@ -649,7 +650,7 @@ router.post('/discrepancy', (req, res, next) => {
 
 })
 
-router.post('/transfer', function(req, res, next) {
+router.post('/transfer', permit('/transfer', 7), function(req, res, next) {
 
     debug(req.body);
 
