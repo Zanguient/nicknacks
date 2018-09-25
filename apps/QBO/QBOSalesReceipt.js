@@ -103,8 +103,8 @@ var QBOSalesReceiptModel = (transaction, customer) => {
         defaults.PaymentMethodRef.value = 4
         defaults.PaymentMethodRef.name = "Bank Transfer"
 
-        defaults.DepositToAccountRef.value = "64"
-        defaults.DepositToAccountRef.name = "DBS Current"
+        defaults.DepositToAccountRef.value = "77"
+        defaults.DepositToAccountRef.name = "Accounts Receivable"
 
         return defaults
     }
