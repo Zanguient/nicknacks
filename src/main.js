@@ -13,6 +13,10 @@ import El_locale from 'element-ui/lib/locale/lang/en'
 import VueJsonPretty from 'vue-json-pretty'
 import Vuex from 'vuex'
 
+import axios from 'axios'
+axios.defaults.withCredentials = true
+axios.defaults.crossDomain = true
+
 Vue.use(VueRouter)
 Vue.use(iView, { locale })
 Vue.use(Element, { El_locale })
@@ -43,13 +47,16 @@ Vue.filter('timestampToDate', value => {
     return moment(value).tz('Asia/Singapore').format('DD MMM YYYY hh:mm')
 })
 Vue.mixin({
-   data: function() {
-      return {
-       get DOMAIN() {
-         return process.env.API_DOMAIN
-       }
-     }
-   }
+    data: function() {
+        return {
+            get DOMAIN() {
+                return process.env.API_DOMAIN
+            },
+            get AXIOS() {
+                return axios
+            }
+        }
+    }
 })
 
 // 路由配置
@@ -90,6 +97,29 @@ const store = new Vuex.Store({
     }
 })
 
+const authInterceptor = (function(store) {
+    return function(err) {
+        let response = D.get(err , 'response')
+
+        //if this is an api response
+        if(response) {
+
+            if (response.status === 401) {
+                store.commit('logout')
+                return
+            }
+
+            if (response.status === 403) {
+                return alert('Oops. Looks like you don\'t have enough rights to access this resource.')
+            }
+        }
+    }
+})(store)
+
+axios.interceptors.response.use((response) => {
+    return response
+}, authInterceptor)
+
 new Vue({
     el: '#app',
     store,
@@ -100,13 +130,14 @@ new Vue({
 window.CATCH_ERR_HANDLER = (err) => {
 
     return (function(store) {
-        return function() {
+        return function(err) {
             let response = D.get(err , 'response')
 
             //if this is an api response
             if(response) {
 
                 if (response.status === 401) {
+                    console.log(1111)
                     store.state.logout()
                     return
                 }

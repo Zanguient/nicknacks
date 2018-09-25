@@ -11,8 +11,12 @@ module.exports = {
     vendors: './src/vendors'
   },
   devServer: {
-        host: '0.0.0.0',
-        disableHostCheck: true
+        host: 'localhost',
+        disableHostCheck: true,
+        headers: {
+            "Access-Control-Allow-Origin": "http://localhost:8080",
+            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept"
+        }
   },
   output: {
     path: path.join(__dirname, '../dist')

@@ -1,6 +1,6 @@
 'use strict';
 
-const debug = require('debug')('nn:apps:passport:checkAuth')
+const debug = require('debug')('nn:apps:passport:permit')
 debug.log = console.log.bind(console)
 
 function permit(parentPath, expressRouter) {

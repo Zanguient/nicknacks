@@ -121,7 +121,7 @@ export default {
 
         // check with server on authentication status
         this.spinShow = true
-        axios.get(domain + '/api/v2/login/am-i-authenticated').then(response => {
+        this.AXIOS.get(domain + '/api/v2/login/am-i-authenticated').then(response => {
 
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')

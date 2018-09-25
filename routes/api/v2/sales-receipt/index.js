@@ -5,7 +5,7 @@ const debug = require('debug')('nn:api:sales-receipt')
 debug.log = console.log.bind(console)
 
 router.get('/pending/all', permit('/pending/all', 1), (req, res, next) => {
-
+    
     let options = {
         where: {
             status: 'pending'

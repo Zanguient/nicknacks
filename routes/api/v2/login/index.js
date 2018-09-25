@@ -87,7 +87,7 @@ router.post('/password/forget', permit('/password/forget', 0), (req, res, next) 
     }
 
     DB.User.find({
-        where: { email: req.body.email }
+        where: { email: req.body.email.toLowerCase() }
     })
     .then(function(user) {
         if (!user) {

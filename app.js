@@ -69,7 +69,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // enable cors
-app.use(cors());
+app.use(cors({
+    credentials: true,
+    origin: true,
+    methods: ['GET, HEAD, PUT, PATCH, POST, DELETE'],
+    maxAge: 31536000000000,
+    preflightContinue: true
+}));
 
 // Authentication
 app.use(session({
