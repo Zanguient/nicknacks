@@ -88,7 +88,7 @@
     </Modal>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 
@@ -149,7 +149,7 @@ module.exports = {
 
                 payload.actualArrival = moment.utc(moment(payload.actualArrival).startOf('day').format('LL')).valueOf();
 
-                axios.post(domain + '/api/v2/shipment/arrive', payload).then(response => {
+                this.AXIOS.post(domain + '/api/v2/shipment/arrive', payload).then(response => {
 
                     // if success: false
                     if (!response.data.success) {

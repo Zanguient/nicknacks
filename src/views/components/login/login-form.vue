@@ -67,7 +67,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 
 export default {
@@ -111,7 +111,7 @@ export default {
                     password: self.form.password
                 }
 
-                axios.post(this.DOMAIN + '/api/v2/login', payload).then(response => {
+                this.AXIOS.post(this.DOMAIN + '/api/v2/login', payload).then(response => {
                     if (!response.data.success) {
                         let error = new Error('API operation not successful.')
                         error.reponse = response
@@ -150,7 +150,7 @@ export default {
                     email: self.form.user + '@greyandsanders.com'
                 }
 
-                axios.post(this.DOMAIN + '/api/v2/login/password/forget', payload).then(response => {
+                this.AXIOS.post(this.DOMAIN + '/api/v2/login/password/forget', payload).then(response => {
                     if (!response.data.success) {
                         let error = new Error('API operation not successful.')
                         error.reponse = response

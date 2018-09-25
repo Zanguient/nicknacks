@@ -67,7 +67,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import loginForm from './components/login/login-form'
 const domain = process.env.API_DOMAIN
@@ -90,7 +90,7 @@ export default {
                 loading: true,
                 onOk: () => {
 
-                    axios.post(this.DOMAIN + '/api/v2/login/logout').then(response => {
+                    this.AXIOS.post(this.DOMAIN + '/api/v2/login/logout').then(response => {
                         if (!response.data.success) {
                             let error = new Error('API operation not successful.')
                             error.reponse = response

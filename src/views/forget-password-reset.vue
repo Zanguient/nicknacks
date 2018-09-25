@@ -34,7 +34,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 
 export default {
@@ -89,7 +89,7 @@ export default {
                     token: self.$route.params.token
                 }
 
-                axios.post(this.DOMAIN + '/api/v2/login/password/reset', payload).then(response => {
+                this.AXIOS.post(this.DOMAIN + '/api/v2/login/password/reset', payload).then(response => {
                     if (!response.data.success) {
                         let error = new Error('API operation not successful.')
                         error.reponse = response

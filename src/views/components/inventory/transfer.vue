@@ -120,7 +120,7 @@
 
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 
@@ -232,7 +232,7 @@ module.exports = {
 
                 console.log(payload)
 
-                axios.post(domain + '/api/v2/inventory/transfer', payload).then(response => {
+                this.AXIOS.post(domain + '/api/v2/inventory/transfer', payload).then(response => {
                     if (!response.data.success) {
                         let error = new Error('API operation not successful.')
                         error.reponse = response

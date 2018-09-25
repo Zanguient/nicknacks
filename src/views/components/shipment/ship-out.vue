@@ -26,7 +26,7 @@
 
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 
@@ -90,7 +90,7 @@ module.exports = {
                 payload.actualShipOut = moment.utc(moment(payload.actualShipOut).startOf('day').format('LL')).valueOf()
                 payload.expectedArrival = moment.utc(moment(payload.expectedArrival).startOf('day').format('LL')).valueOf();
 
-                axios.post(domain + '/api/v2/shipment/shipout', payload).then(response => {
+                this.AXIOS.post(domain + '/api/v2/shipment/shipout', payload).then(response => {
 
                     // if success: false
                     if (!response.data.success) {

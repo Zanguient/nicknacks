@@ -69,7 +69,7 @@
     </Modal>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 
@@ -153,9 +153,9 @@ module.exports = {
 
                 var ajax
                 if (this.modalData.mode === 'add') {
-                    ajax = axios.put(domain + '/api/v2/shipment/create', payload)
+                    ajax = this.AXIOS.put(domain + '/api/v2/shipment/create', payload)
                 } else if (this.modalData.mode === 'edit') {
-                    ajax = axios.post(domain + '/api/v2/shipment/edit', payload)
+                    ajax = this.AXIOS.post(domain + '/api/v2/shipment/edit', payload)
                 } else {
                     throw new Error('addOrEditShipmentModal `mode` not defined.')
                 }
@@ -223,7 +223,7 @@ module.exports = {
                 content: '<p>Confirm delete shipment <strong>' + shipment.name + '</strong>?</p>',
                 loading: true,
                 onOk: () => {
-                    axios.delete(domain + '/api/v2/shipment/delete', { data: { ShipmentID }}).then(response => {
+                    this.AXIOS.delete(domain + '/api/v2/shipment/delete', { data: { ShipmentID }}).then(response => {
 
                         if (!response.data.success) {
                             let error = new Error('API operation not successful.')

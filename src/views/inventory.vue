@@ -140,7 +140,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 import moment from 'moment'
@@ -333,7 +333,7 @@ export default {
 
         window.V = this
 
-        axios.get(domain + '/api/v2/inventory/all').then(response => {
+        this.AXIOS.get(domain + '/api/v2/inventory/all').then(response => {
 
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')
@@ -376,7 +376,7 @@ export default {
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 
         // get all storage location info
-        axios.get(domain + '/api/v2/storage-location/all').then(response => {
+        this.AXIOS.get(domain + '/api/v2/storage-location/all').then(response => {
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')
                 error.reponse = response

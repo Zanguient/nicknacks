@@ -118,7 +118,7 @@
     </Modal>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 
@@ -185,7 +185,7 @@ module.exports = {
                 return
             }
 
-            axios.post(this.DOMAIN + '/api/v2/inventory/discrepancy', payload).then(response => {
+            this.AXIOS.post(this.DOMAIN + '/api/v2/inventory/discrepancy', payload).then(response => {
                 if (!response.data.success) {
                     let error = new Error('API operation not successful.')
                     error.reponse = response

@@ -157,7 +157,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 import moment from 'moment'
@@ -266,7 +266,7 @@ export default {
         window.V = this
         var self = this
 
-        axios.get(this.DOMAIN + '/api/v2/inventory/one/audit-log/' + this.$route.params.inventoryID).then(response => {
+        this.AXIOS.get(this.DOMAIN + '/api/v2/inventory/one/audit-log/' + this.$route.params.inventoryID).then(response => {
 
             if (!response.data.success) {
                 let error = new Error('API operation not successful.')

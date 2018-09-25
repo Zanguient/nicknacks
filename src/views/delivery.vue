@@ -120,7 +120,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import inventoryStatus from './components/inventory/inventory-status'
 
@@ -203,7 +203,7 @@ export default {
                         quantity: this.addInventoryModal.form.quantity
                     }
 
-                    axios.put(domain + '/api/v2/inventory/sold', payload).then(response => {
+                    this.AXIOS.put(domain + '/api/v2/inventory/sold', payload).then(response => {
                         if (!response.data.success) {
                             let error = new Error('API operation not successful.')
                             error.reponse = response
@@ -276,7 +276,7 @@ export default {
                 loading: true,
                 onOk: () => {
 
-                    axios.delete(domain + '/api/v2/inventory/sold/delete', { data: { SoldInventoryID: soldInventory.SoldInventoryID }}).then(response => {
+                    this.AXIOS.delete(domain + '/api/v2/inventory/sold/delete', { data: { SoldInventoryID: soldInventory.SoldInventoryID }}).then(response => {
                         if (!response.data.success) return alert(response.data.message)
 
                         // remove the deleted entry
@@ -319,7 +319,7 @@ export default {
                         TransactionID: salesReceipt.TransactionID
                     }
 
-                    axios.post(domain + '/api/v2/sales-receipt/deliver', payload).then(response => {
+                    this.AXIOS.post(domain + '/api/v2/sales-receipt/deliver', payload).then(response => {
 
                         // if success: false
                         if (!response.data.success) {
@@ -353,7 +353,7 @@ export default {
 
         window.V = this
 
-        axios.get(domain + '/api/v2/sales-receipt/pending-delivery/all').then(response => {
+        this.AXIOS.get(domain + '/api/v2/sales-receipt/pending-delivery/all').then(response => {
 
             if (!response.data.success) return alert(response.data.message)
 
@@ -368,7 +368,7 @@ export default {
 
         }).catch(CATCH_ERR_HANDLER).then(() => { this.spinShow = false })
 
-        axios.get(domain + '/api/v2/inventory/all').then(response => {
+        this.AXIOS.get(domain + '/api/v2/inventory/all').then(response => {
             if (!response.data.success) return alert(response.data.message)
             console.log(response.data.data)
             this.inventories = response.data.data

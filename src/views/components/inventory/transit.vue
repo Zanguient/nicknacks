@@ -17,7 +17,7 @@
     </Modal>
 </template>
 <script>
-import axios from 'axios'
+
 import D from 'dottie'
 import _ from 'lodash'
 
@@ -92,7 +92,7 @@ module.exports = {
                     cogs: this.modalData.form.cogs
                 }
 
-                axios.post(self.DOMAIN + '/api/v2/inventory/update', payload).then(response => {
+                this.AXIOS.post(self.DOMAIN + '/api/v2/inventory/update', payload).then(response => {
 
                     if (!response.data.success) {
                         let error = new Error('API operation not successful.')
@@ -143,7 +143,7 @@ module.exports = {
                     }
 
                     // do delete
-                    axios.post(this.DOMAIN + '/api/v2/inventory/deactivate', { InventoryID: inventory.InventoryID }).then(response => {
+                    this.AXIOS.post(this.DOMAIN + '/api/v2/inventory/deactivate', { InventoryID: inventory.InventoryID }).then(response => {
                         if (!response.data.success) {
                             let error = new Error('API operation not successful.')
                             error.reponse = response
@@ -201,7 +201,7 @@ module.exports = {
                     }
 
                     // do delete
-                    axios.delete(self.DOMAIN + '/api/v2/inventory/delete', { data: {InventoryID: inventory.InventoryID} }).then(response => {
+                    this.AXIOS.delete(self.DOMAIN + '/api/v2/inventory/delete', { data: {InventoryID: inventory.InventoryID} }).then(response => {
                         if (!response.data.success) {
                             let error = new Error('API operation not successful.')
                             error.reponse = response
