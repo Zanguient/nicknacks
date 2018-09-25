@@ -5,21 +5,22 @@
 
 function apiErrorHandler(err, req, res, next, config) {
 
-    if(D.get(err, 'status') === 404 && !res.headersSent) {
+    let status = (D.get(err, 'status') || D.get(config, 'status')) || 500
+
+    if(status === 404 && !res.headersSent) {
         return res.status(404).send({
             success: false,
             message: 'Not found.'
         })
     }
 
-
-    res.status(D.get(err, 'status') || D.get(config, 'status') || 500);
+    res.status(status)
 
     // use simple timestamps to mark 500 errors.
     let timestamp = (new Date()).getTime()
 
     // send email to wake the administrator from his sleep.
-    if(D.get(err, 'sendEmail')) {
+    if(D.get(err, 'sendEmail') || status === 500) {
         SGMAIL.send({
           to:       'calvin@greyandsanders.com',
           from:     'calvin@greyandsanders.com',
@@ -39,15 +40,18 @@ function apiErrorHandler(err, req, res, next, config) {
 
     let toLog = !D.get(err, 'noLogging')
 
+
+    let logger = (status === 500) ? console.error : console.log
+
     if (toLog) {
 
-        console.error('vvvvvvvvvvvvvvvvvvvvvvv')
+        logger('vvvvvvvvvvvvvvvvvvvvvvv')
 
         // if severity is defined
         let level = D.get(err, 'level') || D.get(config, 'level')
         if (level) {
             if (severityDefaults.indexOf(level) < 0) {
-                console.error('**ERROR - HIGH ** Wrong error severity level defined. It can only be `high`, `medium or `low`.')
+                logger('**ERROR - HIGH ** Wrong error severity level defined. It can only be `high`, `medium or `low`.')
             }
         }
 
@@ -55,19 +59,19 @@ function apiErrorHandler(err, req, res, next, config) {
         level = level || 'high'
 
         // logging
-        console.error('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
-        console.error(D.get(err, 'message') || D.get(config, 'message'))
-        console.error(err)
+        logger('**API ERROR OUTPUT - ' + level.toUpperCase() + ' ** (TS: ' + timestamp + ')')
+        logger(D.get(err, 'message') || D.get(config, 'message'))
+        logger(err)
 
         // category dependent outputs
         if (err.category === 'QBO') {
-            console.error('====================')
-            console.error(err.category + ' error output:')
-            console.error(JSON.stringify(err.QBOResponse))
+            logger('====================')
+            logger(err.category + ' error output:')
+            logger(JSON.stringify(err.QBOResponse))
         }
 
-        console.error('**END OUTPUT**')
-        console.error('^^^^^^^^^^^^^^^^^^^^^^^^^^')
+        logger('**END OUTPUT**')
+        logger('^^^^^^^^^^^^^^^^^^^^^^^^^^')
 
     }
 
