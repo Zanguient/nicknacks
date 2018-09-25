@@ -3,10 +3,6 @@ const Encryptor = {
   // Encrypts a given value and generates a salt if none is provided.
   generateHash: function(value, salt) {
     if (!salt) { salt = this.generateSalt(); }
-
-    console.log(value)
-    console.log(salt)
-
     var hashedPassword = crypto.pbkdf2Sync(value, salt, 10000, 64, 'sha512').toString('hex');
     return {
       hash: hashedPassword,
