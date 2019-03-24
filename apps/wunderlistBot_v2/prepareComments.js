@@ -1,6 +1,7 @@
 'use strict';
 
 const makeIDObject = require('./makeIDObject')
+const jsonFormat = require('json-format')
 
 function prepareComments(fromMagento) {
 
