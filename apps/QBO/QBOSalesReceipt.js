@@ -109,6 +109,14 @@ var QBOSalesReceiptModel = (transaction, customer) => {
         return defaults
     }
 
+    if (transaction.paymentMethod.toLowerCase() === 'no payment information') {
+
+        defaults.PaymentMethodRef.value = 4
+        defaults.PaymentMethodRef.name = "Bank Transfer"
+
+        return defaults
+    }
+
     throw new Error('`paymentMethod` invalid.')
 }
 module.exports = QBOSalesReceiptModel;
