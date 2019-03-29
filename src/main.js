@@ -137,7 +137,6 @@ window.CATCH_ERR_HANDLER = (err) => {
             if(response) {
 
                 if (response.status === 401) {
-                    console.log(1111)
                     store.state.logout()
                     return
                 }
