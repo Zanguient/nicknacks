@@ -109,7 +109,7 @@ var QBOSalesReceiptModel = (transaction, customer) => {
         return defaults
     }
 
-    if (transaction.paymentMethod.toLowerCase() === 'no payment information') {
+    if (transaction.paymentMethod.toLowerCase() === 'no payment information required') {
 
         defaults.PaymentMethodRef.value = 4
         defaults.PaymentMethodRef.name = "Bank Transfer"
