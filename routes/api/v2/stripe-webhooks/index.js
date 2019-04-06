@@ -170,7 +170,7 @@ router.post('/refunded', function (req, res, next) {
 
 });
 
-router.post('/payout-paid', function (req, res) {
+router.post('/payout-paid', function (req, res, next) {
 
     if(D.get(req, 'body.livemode') === 'false') {
         console.log(req.body);
