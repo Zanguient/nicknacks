@@ -38,9 +38,9 @@ function Passport(passport) {
     passport.deserializeUser(function (id, done) {
         debug('Deserialising user.');
         return DB.User.findById(id).then(function (user) {
-            done(null, user.get({role: 'self'}))
+            return done(null, user.get({role: 'self'}))
         }).catch(function (err) {
-            done(err, null);
+            return done(err, null);
         });
     });
 
