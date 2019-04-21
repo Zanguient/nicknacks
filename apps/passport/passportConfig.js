@@ -37,10 +37,12 @@ function Passport(passport) {
     // used to deserialize the user
     passport.deserializeUser(function (id, done) {
         debug('Deserialising user.');
-        return DB.User.findById(id).then(function (user) {
-            return done(null, user.get({role: 'self'}))
+        DB.User.findById(id).then(function (user) {
+            done(null, user.get({role: 'self'}))
+            return null
         }).catch(function (err) {
-            return done(err, null);
+            done(err, null)
+            return null
         });
     });
 
