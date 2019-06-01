@@ -22,7 +22,7 @@ function apiErrorHandler(err, req, res, next, config) {
     // send email to wake the administrator from his sleep.
     if(D.get(err, 'sendEmail') || status === 500) {
         SGMAIL.send({
-          to:       'calvin@greyandsanders.com',
+          to:       ['calvin@greyandsanders.com', 'sayhi@greyandsanders.com'],
           from:     'calvin@greyandsanders.com',
           fromname: 'Calvin Wilton Tan',
           subject:  '[Server Error] ' + D.get(err, 'message') + ' (' + timestamp + ')',
