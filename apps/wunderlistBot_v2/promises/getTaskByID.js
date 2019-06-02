@@ -14,11 +14,17 @@ function getTaskByID(payload) {
                 resolve(data)
             }
         }).fail((resp, code) => {
+
+            // we want 404 to resolve because 404 means the task cannot be found
+            // rather than a URI/server failure
+            if (code == 404) return resolve({ resp: resp, code: code })
+
             let error = new Error(D.get(resp, 'error.message'))
+
             error.WLResp = resp
             error.WLResp.code = code
-            // we want 404 to resolve...
-            if (code == 404) resolve({ resp: resp, code: code })
+            error.WLPayload = payload
+
             reject(error)
         })
     })

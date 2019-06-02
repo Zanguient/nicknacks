@@ -17,6 +17,7 @@ function createTask(payload) {
             let error = new Error(D.get(resp, 'error.message'))
             error.WLResp = resp
             error.WLResp.code = code
+            error.WLPayload = payload
             reject(error)
         })
     })
