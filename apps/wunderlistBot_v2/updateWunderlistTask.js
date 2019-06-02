@@ -10,6 +10,7 @@ const createTaskComment = require('./promises/createTaskComment')
 const updateTask = require('./promises/updateTask')
 const prepareComments = require('./prepareComments')
 const createSubtask = require('./promises/createSubtask')
+const updateTitleDeliveryProvider = require('./updateTitleDeliveryProvider.js')
 
 
 function updateWunderlistTask(fromMagento, options) {
@@ -68,6 +69,7 @@ function updateWunderlistTask(fromMagento, options) {
         // NOTE: ONLY ORDER COMMENT, DELIVERY ORDER, or DELIVERY ORDER COMMENT updates due date (delivery date) and starred (delivery arranged)
 
         if (['ordercomment', 'shipment', 'shipmentcomment'].indexOf(fromMagento.type.toLowerCase()) !== -1) {
+
             // we also need to update the task attributes after adding the comment
             let deliveryDate = (fromMagento.data.delivery_date) ? MOMENT.unix(fromMagento.data.delivery_date).format('YYYY-MM-DD') : false
 
@@ -75,12 +77,24 @@ function updateWunderlistTask(fromMagento, options) {
             // for all the rest, we consider it to be beyond delivery arrangement phase
             let starred = (fromMagento.type.toLowerCase() === 'ordercomment') ? true : false
 
-            if (wunderlistTask.due_date !== deliveryDate || wunderlistTask.starred !== starred) {
+            // amending title to indicated which delivery service tagged
+            // if nothing changed in the title, it will not update wunderlist
+            let updatedTitle = false
+            if (['shipment', 'shipmentcomment'].indexOf(fromMagento.type.toLowerCase()) !== -1) {
+                updatedTitle = updateTitleDeliveryProvider(fromMagento, wunderlistTask)
+            }
+
+            if (wunderlistTask.due_date !== deliveryDate || wunderlistTask.starred !== starred || updatedTitle !== false) {
                 debug(obj.ID.withoutHex + ': Updating task because either `due_date` or `starred` is different. With payload:')
                 let taskUpdatePayload = {
                     due_date: deliveryDate,
                     starred: starred
                 }
+
+                if (updatedTitle) {
+                    taskUpdatePayload.title = updatedTitle
+                }
+
                 debug(taskUpdatePayload)
                 return updateTask(wunderlistTask.id, wunderlistTask.revision, taskUpdatePayload)
             } else {
