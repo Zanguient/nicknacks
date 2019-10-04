@@ -109,6 +109,18 @@ var QBOSalesReceiptModel = (transaction, customer) => {
         return defaults
     }
 
+
+    if (transaction.paymentMethod.toLowerCase().indexOf('mobile payment') === 0) {
+
+        defaults.PaymentMethodRef.value = 4
+        defaults.PaymentMethodRef.name = "Bank Transfer"
+
+        defaults.DepositToAccountRef.value = "64"
+        defaults.DepositToAccountRef.name = "DBS Current"
+
+        return defaults
+    }
+
     if (transaction.paymentMethod.toLowerCase() === 'no payment information required') {
 
         defaults.PaymentMethodRef.value = 4
