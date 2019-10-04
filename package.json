@@ -39,7 +39,7 @@
     "mail-notifier": "^0.5.0",
     "moment": "^2.22.2",
     "moment-timezone": "^0.5.21",
-    "morgan": "^1.9.0",
+    "morgan": "^1.9.1",
     "node-quickbooks": "git+https://github.com/oneelement/node-quickbooks.git",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
