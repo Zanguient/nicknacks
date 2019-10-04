@@ -35,7 +35,7 @@
     "html-to-text": "^3.3.0",
     "iview": "^3.1.1-rc.1",
     "json-format": "^1.0.1",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.13",
     "mail-notifier": "^0.5.0",
     "moment": "^2.22.2",
     "moment-timezone": "^0.5.21",
